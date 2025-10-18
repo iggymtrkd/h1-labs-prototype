@@ -14,11 +14,13 @@ export default function Whitepaper() {
     fetch("/whitepaper.md")
       .then((res) => res.text())
       .then((text) => {
-        setContent(text);
-        
-        // Extract headings for navigation
+        const appendixIndex = text.search(/^\s*##\s+Appendix:/m);
+        const mainText = appendixIndex !== -1 ? text.slice(0, appendixIndex).trimEnd() : text;
+        setContent(mainText);
+
+        // Extract headings for navigation (excluding appendices)
         const headingRegex = /^(#{1,3})\s+(.+)$/gm;
-        const matches = [...text.matchAll(headingRegex)];
+        const matches = [...mainText.matchAll(headingRegex)];
         const tocSections = matches.map((match) => ({
           level: match[1].length,
           title: match[2].replace(/\*/g, ""),
