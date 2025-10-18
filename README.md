@@ -1,73 +1,132 @@
-# Welcome to your Lovable project
+# 🧬 H1 Labs — Prototype Frontend
 
-## Project info
+### The decentralized gateway between **AI**, **data provenance**, and **human validation**
 
-**URL**: https://lovable.dev/projects/6377498b-0cfb-490e-9f41-aeda7191c42c
+H1 Labs is building a **provable AI ecosystem** — where every dataset, validator, and model action is transparently tracked and rewarded. This repository hosts the **frontend prototype**, built to demonstrate the core user experience of staking, validation, and ecosystem exploration.
 
-## How can I edit this code?
+---
 
-There are several ways of editing your application.
+## 🌌 Overview
+The H1 Labs prototype is a sleek, dark-themed Web3 application showcasing how human and AI systems coexist through a gamified and compliant onchain interface.
 
-**Use Lovable**
+- **Design Philosophy:** Elegant minimalism meets kinetic energy.
+- **Visual Identity:** Neon gradients (green–purple–blue), interactive glow effects, and smooth transitions.
+- **Built for:** Demos, investor presentations, and early integration with Base / Coinbase SDK.
 
-Simply visit the [Lovable Project](https://lovable.dev/projects/6377498b-0cfb-490e-9f41-aeda7191c42c) and start prompting.
+---
 
-Changes made via Lovable will be committed automatically to this repo.
+## 🧱 Stack
+| Layer | Technology |
+|--------|-------------|
+| **Framework** | React (Vite / Next.js ready) |
+| **UI Library** | TailwindCSS + Framer Motion |
+| **Charts** | Recharts (dynamic data visualizations) |
+| **Fonts** | Inter + Space Mono |
+| **Wallet** | Base / Coinbase Wallet SDK (simulated) |
+| **Hosting** | Vercel / Static Web App ready |
 
-**Use your preferred IDE**
+---
 
-If you want to work locally using your own IDE, you can clone this repo and push changes. Pushed changes will also be reflected in Lovable.
+## 🎨 Design System
+- **Dark Mode First** with custom gradients and color tokens.
+- **Fonts:** `Inter` for readability + `Space Mono` for tech aesthetics.
+- **Animations:** Framer Motion with ease-out transitions.
+- **Confetti Engine:** Used for staking celebration moments.
+- **Semantic Tokens:** Consistent theming for all data visualizations and badges.
 
-The only requirement is having Node.js & npm installed - [install with nvm](https://github.com/nvm-sh/nvm#installing-and-updating)
+---
 
-Follow these steps:
+## 🧭 Pages
+### 🏠 Home
+A cinematic hero section with an **animated network diagram** visualizing H1 Labs’ vision — connecting validators, datasets, and AI.
 
-```sh
-# Step 1: Clone the repository using the project's Git URL.
-git clone <YOUR_GIT_URL>
+### 📊 Dashboard
+A **token marketplace** inspired by Pump.fun, featuring live $LABS and H1 token stats, sparkline charts, and mock trading metrics.
 
-# Step 2: Navigate to the project directory.
-cd <YOUR_PROJECT_NAME>
+### 💎 Staking
+Stake your $LABS tokens and unlock new Labs. Includes animated confetti celebration effects and reward summaries.
 
-# Step 3: Install the necessary dependencies.
-npm i
+### 🧩 App Store
+Browse healthcare and other domain apps built on the H1 SDK. Each app card shows developer info, purpose, and mock revenue generation.
 
-# Step 4: Start the development server with auto-reloading and an instant preview.
+### 🧑‍🚀 Profile
+Gamified user progression with badges and XP rewards:
+- **Badges** for staking milestones, validator achievements, and long-term holding.
+- **XP System** tied to engagement (staking, validation, referrals).
+
+### 📜 Whitepaper
+Integrated **GitBook-style viewer** with in-app navigation and anchored sections for easy investor browsing.
+
+### 🧭 About
+Chronological **timeline roadmap** of H1 Labs milestones, mission statement, and vision for the future of ethical AI.
+
+### 🧪 Lab Detail
+Dynamic lab page showing:
+- Token performance charts
+- Validator activity
+- Recent transactions
+- Mock dataset trading metrics
+
+---
+
+## ⚙️ Features
+- **Base Wallet Connection:** Simulated for prototype (Coinbase SDK ready)
+- **Responsive Navigation:** Smooth mobile-first menu animations
+- **Token Cards:** Real-time visuals and price animations
+- **Achievement System:** Persistent progress tracking with level-up visuals
+- **Recharts Integration:** Data visualizations for staking, liquidity, and metrics
+- **Page Transitions:** Soft fade-ins and parallax interactions
+
+---
+
+## 🚀 Quick Start
+```bash
+git clone https://github.com/yourusername/h1labs-prototype.git
+cd h1labs-prototype
+npm install
 npm run dev
 ```
+Then open [http://localhost:3000](http://localhost:3000) ✨
 
-**Edit a file directly in GitHub**
+---
 
-- Navigate to the desired file(s).
-- Click the "Edit" button (pencil icon) at the top right of the file view.
-- Make your changes and commit the changes.
+## 🧩 Folder Structure
+```
+/h1labs-prototype
+│
+├── /public              # Assets & icons
+├── /src
+│   ├── /components      # UI components & animations
+│   ├── /pages           # React routes (Home, Dashboard, etc.)
+│   ├── /styles          # Tailwind & gradient tokens
+│   ├── /data            # Mock tokens & validator data
+│   ├── /charts          # Recharts configs
+│   └── /utils           # Wallet simulation & XP system
+└── package.json
+```
 
-**Use GitHub Codespaces**
+---
 
-- Navigate to the main page of your repository.
-- Click on the "Code" button (green button) near the top right.
-- Select the "Codespaces" tab.
-- Click on "New codespace" to launch a new Codespace environment.
-- Edit files directly within the Codespace and commit and push your changes once you're done.
+## 🧠 Roadmap (Prototype → MVP)
+| Stage | Description |
+|--------|-------------|
+| **Prototype** | Current repo — visual frontend + simulated interactions |
+| **MVP** | Live smart contracts, wallet integration, validator portal |
+| **Post-MVP** | H1 SDK integration, chat system, cross-domain app support, data marketplace |
 
-## What technologies are used for this project?
+---
 
-This project is built with:
+## 🧬 Vision
+> "H1 Labs bridges the gap between **human validation** and **machine intelligence**, creating a transparent ecosystem where every contribution matters and every dataset has provenance."
 
-- Vite
-- TypeScript
-- React
-- shadcn-ui
-- Tailwind CSS
+---
 
-## How can I deploy this project?
+## 🧑‍💻 Authors & Credits
+Built with 💜 by **H1 Labs Core Team**  
+[https://h1labs.ai](https://h1labs.ai)  -- coming soon
 
-Simply open [Lovable](https://lovable.dev/projects/6377498b-0cfb-490e-9f41-aeda7191c42c) and click on Share -> Publish.
+---
 
-## Can I connect a custom domain to my Lovable project?
+## 🪙 License
+MIT License © 2025 H1 Labs
 
-Yes, you can!
-
-To connect a domain, navigate to Project > Settings > Domains and click Connect Domain.
-
-Read more here: [Setting up a custom domain](https://docs.lovable.dev/features/custom-domain#custom-domain)
