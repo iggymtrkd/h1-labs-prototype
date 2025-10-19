@@ -1,9 +1,13 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Users, TrendingUp } from "lucide-react";
+import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function Home() {
+interface HomeProps {
+  onConnect: () => void;
+}
+
+export default function Home({ onConnect }: HomeProps) {
   return (
     <div className="min-h-screen pt-16">
       {/* Hero Section */}
@@ -30,12 +34,14 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/dashboard">
-                <Button size="lg" className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8">
-                  Explore Labs
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
+                onClick={onConnect}
+              >
+                Connect Wallet
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link to="/whitepaper">
                 <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8">
                   Read Whitepaper
@@ -167,6 +173,184 @@ export default function Home() {
         </div>
       </section>
 
+      {/* Medical Use Case Section */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <div className="max-w-5xl mx-auto">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6 }}
+              className="text-center mb-12"
+            >
+              <h2 className="text-4xl font-bold mb-4 glow-green">Our First Beachhead: Medical</h2>
+              <p className="text-xl text-muted-foreground">Revolutionizing Healthcare Through AI and Blockchain</p>
+            </motion.div>
+
+            <div className="grid md:grid-cols-2 gap-8 mb-12">
+              <motion.div
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5 }}
+                className="bg-destructive/10 border-l-4 border-destructive p-8 rounded-lg"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <Stethoscope className="h-8 w-8 text-destructive" />
+                  <h3 className="text-2xl font-bold">The Problem</h3>
+                </div>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Doctors are overworked, underpaid, and walking away. The healthcare system is failing 
+                  both providers and patients, leading to burnout and declining care quality.
+                </p>
+              </motion.div>
+
+              <motion.div
+                initial={{ opacity: 0, x: 20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: 0.2 }}
+                className="bg-primary/10 border-l-4 border-primary p-8 rounded-lg"
+              >
+                <div className="flex items-center gap-3 mb-4">
+                  <Heart className="h-8 w-8 text-primary" />
+                  <h3 className="text-2xl font-bold">The Solution</h3>
+                </div>
+                <p className="text-lg text-muted-foreground leading-relaxed">
+                  Clinical apps that improve patient outcomes and MD income. Patient Care Apps. 
+                  MD Care Apps. One Ecosystem.
+                </p>
+              </motion.div>
+            </div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.6, delay: 0.3 }}
+              className="bg-gradient-card p-8 rounded-xl border border-primary/30 text-center"
+            >
+              <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
+              <h3 className="text-2xl font-bold mb-3">The Next Generation of Doctors are Founders, not Employees</h3>
+              <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
+                We're empowering medical professionals to build and own the AI-powered tools that will 
+                transform healthcare delivery, patient outcomes, and their own financial independence.
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
+      {/* Roadmap Section */}
+      <section className="py-20 bg-muted/20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="text-center mb-12"
+          >
+            <h2 className="text-4xl font-bold mb-4 glow-purple">Our Roadmap: Beyond Medical</h2>
+            <p className="text-xl text-muted-foreground">Expanding to Regulated Industries Worldwide</p>
+          </motion.div>
+
+          <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5 }}
+              className="relative p-6 pt-8 bg-card rounded-xl border-2 border-primary shadow-neon-green"
+            >
+              <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                1
+              </div>
+              <Target className="h-10 w-10 text-primary mb-3" />
+              <h3 className="text-xl font-bold mb-2">Medical & Healthcare</h3>
+              <p className="text-muted-foreground text-sm">
+                Clinical apps, diagnostic tools, patient care systems
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.1 }}
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+            >
+              <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                2
+              </div>
+              <Zap className="h-10 w-10 text-secondary mb-3" />
+              <h3 className="text-xl font-bold mb-2">Robotics & Automation</h3>
+              <p className="text-muted-foreground text-sm">
+                Industrial automation, autonomous systems, smart manufacturing
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.2 }}
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+            >
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                3
+              </div>
+              <Shield className="h-10 w-10 text-primary mb-3" />
+              <h3 className="text-xl font-bold mb-2">Financial Services</h3>
+              <p className="text-muted-foreground text-sm">
+                Compliance, risk assessment, fraud detection systems
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.3 }}
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+            >
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                4
+              </div>
+              <Users className="h-10 w-10 text-secondary mb-3" />
+              <h3 className="text-xl font-bold mb-2">Legal & Compliance</h3>
+              <p className="text-muted-foreground text-sm">
+                Contract analysis, regulatory compliance, case management
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.4 }}
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+            >
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                5
+              </div>
+              <TrendingUp className="h-10 w-10 text-primary mb-3" />
+              <h3 className="text-xl font-bold mb-2">Education & Training</h3>
+              <p className="text-muted-foreground text-sm">
+                Personalized learning, skill assessment, certification systems
+              </p>
+            </motion.div>
+
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              whileInView={{ opacity: 1, y: 0 }}
+              transition={{ duration: 0.5, delay: 0.5 }}
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+            >
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+                6
+              </div>
+              <Zap className="h-10 w-10 text-secondary mb-3" />
+              <h3 className="text-xl font-bold mb-2">And Beyond...</h3>
+              <p className="text-muted-foreground text-sm">
+                Any industry requiring compliant, high-quality AI training data
+              </p>
+            </motion.div>
+          </div>
+        </div>
+      </section>
+
       {/* CTA Section */}
       <section className="py-20">
         <div className="container mx-auto px-4">
@@ -175,12 +359,14 @@ export default function Home() {
             <p className="text-xl text-muted-foreground mb-8">
               Connect your wallet and start participating in the future of AI training
             </p>
-            <Link to="/dashboard">
-              <Button size="lg" className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8">
-                Get Started Now
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </Link>
+            <Button 
+              size="lg" 
+              className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
+              onClick={onConnect}
+            >
+              Get Started Now
+              <ArrowRight className="ml-2 h-5 w-5" />
+            </Button>
           </div>
         </div>
       </section>

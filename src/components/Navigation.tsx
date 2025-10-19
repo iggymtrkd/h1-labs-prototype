@@ -15,16 +15,18 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance }: Nav
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  const navLinks = [
-    { name: "Home", path: "/" },
-    { name: "Dashboard", path: "/dashboard" },
-    { name: "Staking", path: "/staking" },
-    { name: "App Store", path: "/apps" },
-    { name: "Whitepaper", path: "/whitepaper" },
+  // Pre-login navigation (only About and Whitepaper)
+  const preLoginLinks = [
     { name: "About", path: "/about" },
+    { name: "Whitepaper", path: "/whitepaper" },
   ];
 
+  const navLinks = isConnected ? [] : preLoginLinks;
+
   const isActive = (path: string) => location.pathname === path;
+
+  // Only show top nav when not connected
+  if (isConnected) return null;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
@@ -55,25 +57,10 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance }: Nav
 
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center gap-4">
-            {isConnected && labsBalance && (
-              <div className="px-4 py-2 bg-muted rounded-lg">
-                <span className="text-sm text-muted-foreground">$LABS:</span>
-                <span className="ml-2 font-bold text-primary">{labsBalance}</span>
-              </div>
-            )}
-            {isConnected && address ? (
-              <Link to="/profile">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  {address.slice(0, 6)}...{address.slice(-4)}
-                </Button>
-              </Link>
-            ) : (
-              <Button onClick={onConnect} className="bg-gradient-primary border-0 hover:opacity-90">
-                <Wallet className="mr-2 h-4 w-4" />
-                Connect Wallet
-              </Button>
-            )}
+            <Button onClick={onConnect} className="bg-gradient-primary border-0 hover:opacity-90">
+              <Wallet className="mr-2 h-4 w-4" />
+              Connect Wallet
+            </Button>
           </div>
 
           {/* Mobile Menu Button */}
@@ -103,25 +90,10 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance }: Nav
               </Link>
             ))}
             <div className="mt-4 px-4">
-              {isConnected && labsBalance && (
-                <div className="mb-3 px-4 py-2 bg-muted rounded-lg">
-                  <span className="text-sm text-muted-foreground">$LABS:</span>
-                  <span className="ml-2 font-bold text-primary">{labsBalance}</span>
-                </div>
-              )}
-              {isConnected && address ? (
-                <Link to="/profile" onClick={() => setMobileMenuOpen(false)}>
-                  <Button variant="outline" className="w-full border-primary text-primary">
-                    <Wallet className="mr-2 h-4 w-4" />
-                    {address.slice(0, 6)}...{address.slice(-4)}
-                  </Button>
-                </Link>
-              ) : (
-                <Button onClick={onConnect} className="w-full bg-gradient-primary border-0">
-                  <Wallet className="mr-2 h-4 w-4" />
-                  Connect Wallet
-                </Button>
-              )}
+              <Button onClick={onConnect} className="w-full bg-gradient-primary border-0">
+                <Wallet className="mr-2 h-4 w-4" />
+                Connect Wallet
+              </Button>
             </div>
           </div>
         )}

@@ -71,8 +71,8 @@ export default function About() {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
-      <div className="container mx-auto px-4 max-w-6xl">
+    <div className="min-h-screen pt-8 md:pt-24 pb-12 overflow-x-hidden">
+      <div className="container mx-auto px-4 max-w-6xl overflow-x-hidden">
         {/* Mission Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -189,7 +189,7 @@ export default function About() {
             <Users className="h-8 w-8 text-primary" />
             What We're Building
           </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {team.map((area, index) => (
               <motion.div
                 key={index}

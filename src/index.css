@@ -70,6 +70,30 @@ All colors MUST be HSL.
                       radial-gradient(circle at 80% 80%, hsl(120 100% 62% / 0.05) 0%, transparent 50%);
   }
 
+  /* Custom Scrollbar Styles */
+  ::-webkit-scrollbar {
+    width: 12px;
+    height: 12px;
+  }
+
+  ::-webkit-scrollbar-track {
+    @apply bg-muted;
+  }
+
+  ::-webkit-scrollbar-thumb {
+    @apply bg-secondary rounded-lg;
+    border: 2px solid hsl(var(--muted));
+  }
+
+  ::-webkit-scrollbar-thumb:hover {
+    @apply bg-secondary-light;
+  }
+
+  * {
+    scrollbar-width: thin;
+    scrollbar-color: hsl(var(--secondary)) hsl(var(--muted));
+  }
+
   h1, h2, h3, h4, h5, h6 {
     @apply font-space-mono;
   }
