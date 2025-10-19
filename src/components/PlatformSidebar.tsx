@@ -6,11 +6,17 @@ import logo from "@/assets/logo.png";
 interface PlatformSidebarProps {
   address?: string;
   labsBalance?: string;
+  collapsed?: boolean;
+  onCollapsedChange?: (collapsed: boolean) => void;
 }
 
-export const PlatformSidebar = ({ address, labsBalance }: PlatformSidebarProps) => {
+export const PlatformSidebar = ({ 
+  address, 
+  labsBalance, 
+  collapsed = false, 
+  onCollapsedChange 
+}: PlatformSidebarProps) => {
   const location = useLocation();
-  const [collapsed, setCollapsed] = useState(false);
 
   const mainLinks = [
     { name: "Marketplace", path: "/dashboard", icon: Home },
@@ -50,7 +56,7 @@ export const PlatformSidebar = ({ address, labsBalance }: PlatformSidebarProps) 
 
       {/* Collapse Toggle */}
       <button
-        onClick={() => setCollapsed(!collapsed)}
+        onClick={() => onCollapsedChange?.(!collapsed)}
         className="flex items-center justify-center p-2 m-2 rounded-lg hover:bg-muted transition-colors flex-shrink-0"
       >
         {collapsed ? <ChevronRight className="h-5 w-5" /> : <ChevronLeft className="h-5 w-5" />}

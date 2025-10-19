@@ -32,6 +32,9 @@ const AppContent = () => {
   const [labsBalance, setLabsBalance] = useState(() => {
     return localStorage.getItem("labs_balance") || "8,320";
   });
+  const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
+    return localStorage.getItem("sidebar_collapsed") === "true";
+  });
 
   const handleConnectWallet = async () => {
     try {
@@ -75,11 +78,23 @@ const AppContent = () => {
 
       {/* Platform sidebar (desktop only, when connected) */}
       {isConnected && (
-        <PlatformSidebar address={address} labsBalance={labsBalance} />
+        <PlatformSidebar 
+          address={address} 
+          labsBalance={labsBalance}
+          collapsed={sidebarCollapsed}
+          onCollapsedChange={(collapsed) => {
+            setSidebarCollapsed(collapsed);
+            localStorage.setItem("sidebar_collapsed", collapsed.toString());
+          }}
+        />
       )}
 
       {/* Main content area */}
-      <main className={`flex-1 ${isConnected ? "mb-20 md:mb-0 md:ml-64" : ""}`}>
+      <main className={`flex-1 transition-all duration-300 ${
+        isConnected 
+          ? `mb-20 md:mb-0 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}` 
+          : ""
+      }`}>
         <Routes>
           <Route path="/" element={<Home onConnect={handleConnectWallet} />} />
           <Route path="/dashboard" element={<Dashboard />} />
