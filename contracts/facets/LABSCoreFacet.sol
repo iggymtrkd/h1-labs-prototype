@@ -2,7 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
-import { LabVault } from "../vaults/LabVault.sol";
+import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
 /// @title LABSCoreFacet
 /// @notice Core functionality for lab creation and LABS token staking
@@ -63,26 +63,23 @@ contract LABSCoreFacet {
     hs.labs[labId].owner = msg.sender;
     hs.labs[labId].domain = domain;
     hs.labs[labId].active = true;
-    LibH1Storage.h1Storage().domainTaken[domainKey] = true;
+    hs.domainTaken[domainKey] = true;
 
     // Auto-deploy LabVault (ERC-4626-style shares as H1 token)
-    uint64 cooldown = hs.defaultCooldown;
-    uint16 exitCap = hs.defaultExitCapBps;
-    
-    address vault = address(new LabVault(
+    address vault = LibLabVaultFactory.deployVault(
       hs.labsToken,
       name,
       symbol,
       name,
-      cooldown,
-      exitCap,
+      hs.defaultCooldown,
+      hs.defaultExitCapBps,
       msg.sender
-    ));
+    );
     hs.labIdToVault[labId] = vault;
     hs.labs[labId].h1Token = vault;
 
     emit LabCreated(labId, msg.sender, name, symbol, domain, vault);
-    emit VaultDeployed(labId, vault, cooldown, exitCap);
+    emit VaultDeployed(labId, vault, hs.defaultCooldown, hs.defaultExitCapBps);
   }
   
   function isDomainAvailable(string calldata domain) external view returns (bool) {
