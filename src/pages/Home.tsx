@@ -2,12 +2,20 @@ import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target } from "lucide-react";
 import { motion } from "framer-motion";
+import { toast } from "@/components/ui/use-toast";
 
 interface HomeProps {
   onConnect: () => void;
 }
 
 export default function Home({ onConnect }: HomeProps) {
+  const simulateDeltaGain = async () => {
+    // Simple simulation: pretend to compute delta and show a toast
+    toast({
+      title: "Δ‑Gain Recorded",
+      description: "Provenance + attribution saved. Buybacks will route to the originating Lab on bundle sale.",
+    });
+  };
   return (
     <div className="min-h-screen pt-16">
       {/* Hero Section */}
@@ -29,8 +37,8 @@ export default function Home({ onConnect }: HomeProps) {
             </h1>
             
             <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              A dual-intelligence onchain protocol that enables global contributors to produce compliant, 
-              high-quality AI training data through blockchain verification and human validation.
+              The H1 SDK embeds two intelligence systems in every app—an Agent and a credentialed Human—
+              producing compliant, high‑quality data for regulated and semi‑regulated markets. Healthcare first.
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
@@ -112,6 +120,36 @@ export default function Home({ onConnect }: HomeProps) {
         </div>
       </section>
 
+      {/* Dual-Intelligence SDK Callout */}
+      <section className="py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-5xl mx-auto bg-card border border-primary/30 rounded-2xl p-8 text-center"
+          >
+            <h2 className="text-3xl font-bold mb-4 glow-green">Dual‑Intelligence SDK</h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              Plug the H1 SDK into your app and choose a base model from partner providers—or bring your own.
+              The Agent executes while a credentialed Human reviews and signs off. The supervised improvement
+              (Δ‑Gain) is recorded with provenance and attribution for compliant resale.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/whitepaper">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                  Learn How It Works
+                </Button>
+              </Link>
+              <Button className="bg-gradient-primary border-0 hover:opacity-90" onClick={simulateDeltaGain}>
+                Try the Demo
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </motion.div>
+        </div>
+      </section>
+
       {/* Features Section */}
       <section className="py-20 bg-muted/20">
         <div className="container mx-auto px-4">
@@ -140,7 +178,8 @@ export default function Home({ onConnect }: HomeProps) {
               <Users className="h-12 w-12 text-secondary mb-4" />
               <h3 className="text-xl font-bold mb-3">Human-in-the-Loop</h3>
               <p className="text-muted-foreground">
-                Expert validation ensures the highest quality training data
+                Two intelligence systems—Agent + Human—work together. The agent executes; a credentialed human
+                supervises and signs off for compliance.
               </p>
             </motion.div>
 

@@ -87,7 +87,8 @@ export default function About() {
           <h1 className="text-5xl font-bold mb-6 glow-green">Our Mission</h1>
           <p className="text-2xl text-muted-foreground max-w-3xl mx-auto leading-relaxed">
             To advance artificial intelligence through <span className="text-primary font-semibold">provable, 
-            blockchain-verified training</span> that combines the precision of AI with the wisdom of human expertise.
+            blockchain-verified training</span> via a Dual‑Intelligence SDK that pairs an agent with credentialed human 
+            oversight—human‑first by design and built for regulated and semi‑regulated markets. We’re starting with healthcare.
           </p>
         </motion.div>
 
@@ -99,6 +100,12 @@ export default function About() {
               <p className="text-lg text-muted-foreground leading-relaxed mb-4">
                 H1 Labs is building the infrastructure for the next generation of AI—one that is 
                 <span className="text-primary font-semibold"> transparent, auditable, and rooted in human intelligence</span>.
+              </p>
+              <p className="text-lg text-muted-foreground leading-relaxed mb-4">
+                Through the Dual‑Intelligence SDK (Agent + Human), apps ship with co‑workflows, provenance, and compliance
+                gates—producing data enterprises can legally use across regulated and semi‑regulated markets. Apps generate
+                Δ‑Gain (supervised improvement vs a declared base model) with attribution so bundle sales route buybacks back
+                to the originating Labs.
               </p>
               <p className="text-lg text-muted-foreground leading-relaxed">
                 By creating a decentralized marketplace where datasets are enriched, validated, and purchased 

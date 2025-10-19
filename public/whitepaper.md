@@ -28,6 +28,7 @@ H1 Labs solves these issues by introducing **provable data enrichment** — ever
 2. **Decentralized Validation:** Credentialed experts validate and enrich datasets.
 3. **Economic Alignment:** Revenue from dataset usage flows back to those who create, enrich, or validate data.
 4. **Compliance-First Architecture:** All apps and Labs adhere to data protection and attribution standards.
+5. **Dual‑Intelligence Workflows:** Each SDK app runs an agent supervised by a credentialed human to produce compliant, auditable outputs suitable for regulated and semi‑regulated markets (healthcare first).
 
 ---
 
@@ -72,7 +73,22 @@ The H1 SDK enables developers to integrate provenance and validation features in
 - **Revenue Distribution:** APIs for dataset sales, splitting income between Lab owners, token pools, and validators.
 - **Compliance Modules:** Ready-to-use modules for HIPAA, GDPR, and AI Act.
 
+### 7.1 Dual‑Intelligence SDK (Agent + Human)
+- **Co‑workflows by Default:** Assignment, agent execution, human review, and sign‑off with immutable audit logs.
+- **Gated Actions:** High‑risk or regulated steps require credentialed human approval before finalization.
+- **Outcome Guarantees:** Outputs are accompanied by provenance and compliance artifacts suitable for regulated and semi‑regulated markets.
+- **Deploy Anywhere:** Works with on‑device or hosted agents; supervision remains verifiable onchain.
+
+### 7.2 Delta‑Gain Asset, Attribution, and Buybacks
+- **Base Model Declaration:** Each session declares model + version (partner or BYO).
+- **Δ‑Gain Asset:** SDK computes the supervised diff vs base; stores hash, metadata, and signatures.
+- **Attribution:** Contributors, validators, and hosting Lab IDs are linked onchain.
+- **Bundling & Sales:** H1 aggregates Δ‑Gain into licensed bundles with full provenance and sells them to AI buyers.
+- **Buybacks:** Sales route buybacks per `RevenueFacet` to the originating Labs/treasury; Lab‑directed buybacks create buy pressure for that Lab’s H1 token.
+
 The SDK will support **siloed/white-labeled apps**, allowing developers to use blockchain infrastructure invisibly — essential for onboarding non-crypto audiences.
+
+We target regulated and semi‑regulated industries — beginning with healthcare — such as finance (AML/KYC), legal (privacy/privilege), defense (ITAR/EAR), robotics/industrial (safety standards), and media/creative (C2PA).
 
 ---
 
@@ -175,6 +191,40 @@ The **H1 SDK** bridges app developers with H1’s onchain infrastructure. It int
 ┌────────────┴───────────────┐
 │        Blockchain (Base)   │
 └────────────────────────────┘
+```
+
+#### Dual‑Intelligence Dataflow (Mermaid)
+```mermaid
+flowchart LR
+  subgraph App["Your app (via H1 SDK)"]
+    SDK[H1 SDK]
+    AGENT[Agent]
+    HUMAN[Credentialed Human]
+  end
+
+  subgraph Models["Base model options"]
+    P1[(Partner LLM A)]
+    P2[(Partner LLM B)]
+    BYO[(Bring Your Own Model)]
+  end
+
+  SDK --> AGENT
+  SDK --> HUMAN
+  AGENT -->|inference| P1
+  AGENT -->|inference| P2
+  AGENT -->|inference| BYO
+  AGENT --> OUT[Model output]
+  HUMAN -->|review + sign‑off| OUT
+  OUT -->|compute Δ (vs base)| DELTA[Delta‑Gain (new knowledge)]
+
+  DELTA --> PROV[Onchain provenance + attribution]
+  PROV --> BUNDLE[H1 Dataset Bundle]
+  BUNDLE --> SALE[Sale / Licensing]
+
+  SALE --> SPLITS{RevenueFacet policy}
+  SPLITS -->|Lab share + buyback budget| LAB[Lab Vault (H1)]
+  SPLITS --> TREAS[Treasury / Protocol]
+  LAB -->|buybacks create buy pressure| HOLDERS[H1 token holders of that Lab]
 ```
 
 ---

@@ -134,6 +134,40 @@ Each lab deploys its own isolated instances:
 
 ---
 
+## Dual‑Intelligence SDK, Δ‑Gain, and Attribution (Architecture)
+
+### Overview
+- **Dual‑Intelligence:** Every SDK integration pairs an agent with a credentialed human. The agent executes; the human reviews and signs off. The output plus supervision metadata yields a verifiable artifact appropriate for regulated and semi‑regulated markets (healthcare first).
+- **Base Model Declaration:** Each session declares the base model and version (partner provider or BYO). This enables Δ‑Gain computation.
+- **Δ‑Gain Asset:** The supervised improvement vs the declared base model. Stored as content hash + metadata + signatures.
+- **Attribution Ledger:** Contributors, validators, and the hosting Lab are attached onchain, enabling correct revenue routing on bundle sales.
+
+### Contract Touchpoints
+- `ProvenanceFacet` (planned): record dataset/event hashes, model IDs, signatures.
+- `CredentialFacet` (planned): verify validator credentials for gated actions.
+- `RevenueFacet` (exists): programmable splits and buyback budget accounting.
+- `TreasuryFacet` (exists): executes buybacks/custody as policy evolves.
+
+### Flow (Mermaid)
+```mermaid
+flowchart LR
+  A[App via H1 SDK] --> B{Base Model Declared}
+  B -->|Partner/BYO| C[Agent Execution]
+  C --> D[Credentialed Human Review]
+  D --> E[Δ‑Gain Computed]
+  E --> F[Provenance + Attribution]
+  F --> G[H1 Dataset Bundle]
+  G --> H[Sale / Licensing]
+  H --> I{RevenueFacet}
+  I --> J[Lab Vault Buyback Budget]
+  I --> K[Treasury / Protocol]
+  J --> L[Buybacks → H1 holders of that Lab]
+```
+
+Regulatory targets: healthcare, then finance (AML/KYC), legal (privacy/privilege), defense (ITAR/EAR), robotics/industrial (safety), and media/creative (C2PA).
+
+---
+
 ## Contract Count Summary
 
 ### Active Contracts: **22 total**

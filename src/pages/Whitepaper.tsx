@@ -5,24 +5,32 @@ import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen, ChevronRight, Menu } from "lucide-react";
 import ReactMarkdown from "react-markdown";
+import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
   const [sections, setSections] = useState<{ title: string; id: string; level: number }[]>([]);
   const [activeSection, setActiveSection] = useState("");
+  const [docType, setDocType] = useState<"whitepaper" | "litepaper">("whitepaper");
 
   useEffect(() => {
-    // Load whitepaper content
-    fetch("/whitepaper.md")
+    const path = docType === "whitepaper" ? "/whitepaper.md" : "/litepaper.md";
+    fetch(path)
       .then((res) => res.text())
       .then((text) => {
-        const appendixIndex = text.search(/^\s*##\s+Appendix:/m);
-        const mainText = appendixIndex !== -1 ? text.slice(0, appendixIndex).trimEnd() : text;
-        setContent(mainText);
+        const processedText = docType === "whitepaper"
+          ? (() => {
+              const appendixIndex = text.search(/^\s*##\s+Appendix:/m);
+              return appendixIndex !== -1 ? text.slice(0, appendixIndex).trimEnd() : text;
+            })()
+          : text;
 
-        // Extract headings for navigation (excluding appendices)
+        setContent(processedText);
+        setActiveSection("");
+
+        // Extract headings for navigation
         const headingRegex = /^(#{1,3})\s+(.+)$/gm;
-        const matches = [...mainText.matchAll(headingRegex)];
+        const matches = [...processedText.matchAll(headingRegex)];
         const tocSections = matches.map((match) => ({
           level: match[1].length,
           title: match[2].replace(/\*/g, ""),
@@ -34,8 +42,8 @@ export default function Whitepaper() {
         }));
         setSections(tocSections);
       })
-      .catch((err) => console.error("Error loading whitepaper:", err));
-  }, []);
+      .catch((err) => console.error(`Error loading ${docType}:`, err));
+  }, [docType]);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -81,26 +89,35 @@ export default function Whitepaper() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl md:text-4xl font-bold glow-green flex items-center gap-3">
               <BookOpen className="h-8 w-8 md:h-10 md:w-10" />
-              <span className="break-words">H1 Labs Whitepaper</span>
+              <span className="break-words">{docType === "whitepaper" ? "H1 Labs Whitepaper" : "H1 Labs Litepaper"}</span>
             </h1>
-            
-            {/* Mobile TOC Toggle */}
-            <Sheet>
-              <SheetTrigger asChild>
-                <Button variant="outline" size="icon" className="lg:hidden">
-                  <Menu className="h-5 w-5" />
-                </Button>
-              </SheetTrigger>
-              <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                <h2 className="text-lg font-bold mb-4">Contents</h2>
-                <ScrollArea className="h-[calc(100vh-100px)] pr-4">
-                  <TableOfContents />
-                </ScrollArea>
-              </SheetContent>
-            </Sheet>
+
+            <div className="flex items-center gap-2">
+              <ToggleGroup type="single" value={docType} onValueChange={(v) => v && setDocType(v as "whitepaper" | "litepaper") } aria-label="Select document">
+                <ToggleGroupItem value="whitepaper" aria-label="Whitepaper">Whitepaper</ToggleGroupItem>
+                <ToggleGroupItem value="litepaper" aria-label="Litepaper">Litepaper</ToggleGroupItem>
+              </ToggleGroup>
+
+              {/* Mobile TOC Toggle */}
+              <Sheet>
+                <SheetTrigger asChild>
+                  <Button variant="outline" size="icon" className="lg:hidden">
+                    <Menu className="h-5 w-5" />
+                  </Button>
+                </SheetTrigger>
+                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                  <h2 className="text-lg font-bold mb-4">Contents</h2>
+                  <ScrollArea className="h-[calc(100vh-100px)] pr-4">
+                    <TableOfContents />
+                  </ScrollArea>
+                </SheetContent>
+              </Sheet>
+            </div>
           </div>
           <p className="text-lg md:text-xl text-muted-foreground break-words">
-            The Human-First Protocol for Advancing AI through Provable Blockchain Training
+            {docType === "whitepaper"
+              ? "The Human-First Protocol for Advancing AI through Provable Blockchain Training"
+              : "A concise overview of H1 Labs — advancing AI with provable, human‑validated data"}
           </p>
         </div>
 
