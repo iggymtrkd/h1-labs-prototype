@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText } from "lucide-react";
+import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -240,8 +240,8 @@ export default function Home({ onConnect }: HomeProps) {
                 className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
                 onClick={onConnect}
               >
-                Connect Wallet
-                <ArrowRight className="ml-2 h-5 w-5" />
+                <Wallet className="mr-2 h-5 w-5" />
+                Sign In
               </Button>
               <Link to="/whitepaper">
                 <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8">
