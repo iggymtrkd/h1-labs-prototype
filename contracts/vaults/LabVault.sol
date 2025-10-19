@@ -75,6 +75,11 @@ contract LabVault is ERC20Base {
 
   bool private _paused;
 
+  // Testing variables (TESTNET ONLY)
+  bool public testMode;
+  uint8 public overrideLevel;
+  uint256 public testTimeOffset;
+
   modifier onlyAdmin() {
     if (msg.sender != admin) revert Unauthorized();
     _;
@@ -103,7 +108,7 @@ contract LabVault is ERC20Base {
     labDisplayName = labDisplayName_;
     cooldownSeconds = cooldownSeconds_;
     epochExitCapBps = epochExitCapBps_;
-    epochStart = uint64(block.timestamp);
+    epochStart = uint64(block.timestamp); // Use real time for init
     admin = admin_;
   }
 
@@ -129,6 +134,12 @@ contract LabVault is ERC20Base {
   }
 
   function getLevel() public view returns (uint8 level) {
+    // If in test mode and override level is set, return it
+    if (testMode && overrideLevel > 0) {
+      return overrideLevel;
+    }
+    
+    // Normal level calculation
     uint256 a = totalAssets;
     if (a >= LEVEL3) return 3;
     if (a >= LEVEL2) return 2;
@@ -171,7 +182,7 @@ contract LabVault is ERC20Base {
     _checkAndAccrueExitCap(assets);
     _burn(msg.sender, shares);
     pendingExitAssets += assets;
-    uint64 unlockTime = uint64(block.timestamp) + cooldownSeconds;
+    uint64 unlockTime = uint64(_currentTime()) + cooldownSeconds;
     requestId = ++nextRequestId;
     redeemRequests[requestId] = RedeemRequest({ owner: msg.sender, assets: assets, unlockTime: unlockTime, claimed: false });
     emit RedeemRequested(requestId, msg.sender, shares, assets, unlockTime);
@@ -192,7 +203,7 @@ contract LabVault is ERC20Base {
   function claimRedeem(uint256 requestId) external nonReentrant {
     RedeemRequest storage r = redeemRequests[requestId];
     require(!r.claimed, "claimed");
-    require(block.timestamp >= r.unlockTime, "cooldown");
+    require(_currentTime() >= r.unlockTime, "cooldown");
     pendingExitAssets -= r.assets;
     r.claimed = true;
     totalAssets -= r.assets;
@@ -255,8 +266,8 @@ contract LabVault is ERC20Base {
   }
 
   function _rollEpochIfNeeded() internal {
-    if (block.timestamp >= epochStart + 86400) {
-      epochStart = uint64(block.timestamp);
+    if (_currentTime() >= epochStart + 86400) {
+      epochStart = uint64(_currentTime());
       epochExitedAssets = 0;
       emit EpochRolled(epochStart);
     }
@@ -266,6 +277,52 @@ contract LabVault is ERC20Base {
     uint256 cap = (totalAssets * epochExitCapBps) / 10_000;
     require(epochExitedAssets + assets <= cap, "epoch cap");
     epochExitedAssets += assets;
+  }
+
+  // ============================================
+  // TESTING FUNCTIONS (TESTNET ONLY)
+  // ============================================
+  
+  /// @notice Enable/disable test mode
+  /// @dev Only admin can call. Test mode allows level override
+  function setTestMode(bool enabled) external onlyAdmin {
+    testMode = enabled;
+  }
+  
+  /// @notice Set override level (only works in test mode)
+  /// @dev Allows testing app slots without full TVL
+  function setOverrideLevel(uint8 level) external onlyAdmin {
+    require(level <= 3, "invalid level");
+    overrideLevel = level;
+  }
+  
+  /// @notice Set time offset for testing
+  /// @dev Allows fast-forwarding time to test cooldowns
+  function setTestTimeOffset(uint256 offset) external onlyAdmin {
+    require(offset <= 365 days, "offset too large");
+    testTimeOffset = offset;
+  }
+  
+  /// @notice Reset epoch (allows more exits immediately)
+  /// @dev Useful for testing exit caps
+  function resetEpoch() external onlyAdmin {
+    epochStart = uint64(_currentTime());
+    epochExitedAssets = 0;
+    emit EpochRolled(epochStart);
+  }
+  
+  /// @notice Force complete a redemption request (bypass cooldown)
+  /// @dev TESTNET ONLY - Allows immediate claim for testing
+  function forceCompleteRedemption(uint256 requestId) external onlyAdmin {
+    RedeemRequest storage r = redeemRequests[requestId];
+    require(!r.claimed, "already claimed");
+    r.unlockTime = uint64(_currentTime());
+  }
+  
+  /// @notice Get current time with offset applied
+  /// @dev Used internally for all time checks
+  function _currentTime() internal view returns (uint256) {
+    return block.timestamp + testTimeOffset;
   }
 }
 
