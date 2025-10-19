@@ -57,9 +57,9 @@ export default function Whitepaper() {
   const TableOfContents = () => (
     <nav className="space-y-1">
       <Link to="/about">
-        <Button variant="outline" className="w-full mb-4 justify-start">
-          <Target className="mr-2 h-4 w-4" />
-          Our Mission
+        <Button variant="outline" className="w-full mb-4 justify-start bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 hover:from-primary/30 hover:to-secondary/30">
+          <Target className="mr-2 h-4 w-4 text-primary" />
+          TLDR
         </Button>
       </Link>
       {sections.map((section, index) => (
