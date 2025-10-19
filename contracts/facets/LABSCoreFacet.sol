@@ -2,10 +2,10 @@
 pragma solidity ^0.8.20;
 
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
-import { LibDiamond } from "../diamond-standard/libraries/LibDiamond.sol";
+import { LabVault } from "../vaults/LabVault.sol";
 
 contract LABSCoreFacet {
-  event LabCreated(uint256 indexed labId, address indexed owner, string name, string domain, address h1Token);
+  event LabCreated(uint256 indexed labId, address indexed owner, string name, string symbol, string domain, address h1Token);
   event Staked(address indexed staker, uint256 amount);
 
   // NOTE: Token and factory integrations are left as stubs for the prototype stage
@@ -15,18 +15,30 @@ contract LABSCoreFacet {
     emit Staked(msg.sender, amount);
   }
 
-  function createLab(string calldata name, string calldata domain) external returns (uint256 labId) {
+  function createLab(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId) {
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     labId = hs.nextLabId++;
     hs.labs[labId].owner = msg.sender;
     hs.labs[labId].domain = domain;
     hs.labs[labId].active = true;
 
-    // Prototype stub: deploy H1 token via factory and set address
-    address h1Token = address(0);
-    hs.labs[labId].h1Token = h1Token;
+    // Auto-deploy LabVault (ERC-4626-style shares as H1 token)
+    // For now, use lab name as token name and a default symbol "H1" (frontend can add custom ticker input later)
+    address vault = address(new LabVault(
+      hs.labsToken,
+      name,
+      symbol,
+      name,
+      hs.defaultCooldown,
+      hs.defaultExitCapBps
+    ));
+    hs.labIdToVault[labId] = vault;
+    hs.labs[labId].h1Token = vault;
 
-    emit LabCreated(labId, msg.sender, name, domain, h1Token);
+    // Optionally deploy a LabPass immediately (owner can mint later)
+    // Left to LabPassFacetDraft to deploy/mint on demand
+
+    emit LabCreated(labId, msg.sender, name, symbol, domain, vault);
   }
 }
 

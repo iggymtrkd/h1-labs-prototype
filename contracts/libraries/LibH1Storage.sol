@@ -17,6 +17,19 @@ library LibH1Storage {
     mapping(uint256 => Lab) labs;
     mapping(address => bool) credentialedValidators;
     uint256 nextLabId;
+    // Global config
+    address labsToken;
+    uint64 defaultCooldown;
+    uint16 defaultExitCapBps;
+    address protocolTreasury;
+    uint16 curveFeeBps;
+    uint16 curvePolBps;
+    // Per-lab vault address (ERC-4626-style)
+    mapping(uint256 => address) labIdToVault;
+    // Per-lab LabPass NFT
+    mapping(uint256 => address) labIdToLabPass;
+    // Per-lab bonding curve sale contract
+    mapping(uint256 => address) labIdToCurve;
   }
 
   function h1Storage() internal pure returns (H1Storage storage hs) {
