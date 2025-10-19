@@ -71,7 +71,7 @@ export default function About() {
   ];
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-8 md:pt-24 pb-12">
       <div className="container mx-auto px-4 max-w-6xl">
         {/* Mission Section */}
         <motion.div

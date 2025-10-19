@@ -5,6 +5,8 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
+import { PlatformSidebar } from "@/components/PlatformSidebar";
+import { MobileBottomNav } from "@/components/MobileBottomNav";
 import Home from "./pages/Home";
 import Dashboard from "./pages/Dashboard";
 import Staking from "./pages/Staking";
@@ -49,24 +51,41 @@ const App = () => {
         <Toaster />
         <Sonner />
         <BrowserRouter>
-          <div className="min-h-screen bg-background">
+          <div className="min-h-screen flex w-full bg-background">
+            {/* Pre-login top navigation */}
             <Navigation
               onConnect={handleConnectWallet}
               isConnected={isConnected}
               address={address}
               labsBalance={labsBalance}
             />
-            <Routes>
-              <Route path="/" element={<Home />} />
-              <Route path="/dashboard" element={<Dashboard />} />
-              <Route path="/staking" element={<Staking />} />
-              <Route path="/apps" element={<AppStore />} />
-              <Route path="/profile" element={<Profile />} />
-              <Route path="/whitepaper" element={<Whitepaper />} />
-              <Route path="/about" element={<About />} />
-              <Route path="/lab/:id" element={<LabDetail />} />
-              <Route path="*" element={<NotFound />} />
-            </Routes>
+
+            {/* Platform sidebar (desktop only, when connected) */}
+            {isConnected && (
+              <PlatformSidebar address={address} labsBalance={labsBalance} />
+            )}
+
+            {/* Main content area */}
+            <main className={`flex-1 ${isConnected ? "mb-20 md:mb-0" : ""}`}>
+              <Routes>
+                <Route path="/" element={<Home onConnect={handleConnectWallet} />} />
+                <Route path="/dashboard" element={<Dashboard />} />
+                <Route path="/staking" element={<Staking labsBalance={labsBalance} />} />
+                <Route path="/apps" element={<AppStore />} />
+                <Route
+                  path="/profile"
+                  element={<Profile address={address} labsBalance={labsBalance} />}
+                />
+                <Route path="/whitepaper" element={<Whitepaper />} />
+                <Route path="/about" element={<About />} />
+                <Route path="/lab/:id" element={<LabDetail />} />
+                <Route path="/settings" element={<NotFound />} />
+                <Route path="*" element={<NotFound />} />
+              </Routes>
+            </main>
+
+            {/* Mobile bottom navigation (when connected) */}
+            {isConnected && <MobileBottomNav />}
           </div>
         </BrowserRouter>
       </TooltipProvider>

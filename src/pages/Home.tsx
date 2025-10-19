@@ -3,7 +3,11 @@ import { Button } from "@/components/ui/button";
 import { ArrowRight, Zap, Shield, Users, TrendingUp } from "lucide-react";
 import { motion } from "framer-motion";
 
-export default function Home() {
+interface HomeProps {
+  onConnect: () => void;
+}
+
+export default function Home({ onConnect }: HomeProps) {
   return (
     <div className="min-h-screen pt-16">
       {/* Hero Section */}
@@ -30,12 +34,14 @@ export default function Home() {
             </p>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
-              <Link to="/dashboard">
-                <Button size="lg" className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8">
-                  Explore Labs
-                  <ArrowRight className="ml-2 h-5 w-5" />
-                </Button>
-              </Link>
+              <Button 
+                size="lg" 
+                className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
+                onClick={onConnect}
+              >
+                Connect Wallet
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
               <Link to="/whitepaper">
                 <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8">
                   Read Whitepaper

@@ -120,13 +120,13 @@ export default function AppStore() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 glow-green">H1 Labs App Store</h1>
+          <h1 className="text-4xl font-bold mb-4 glow-green">H1 Labs dApp Store</h1>
           <p className="text-xl text-muted-foreground max-w-3xl">
-            Discover applications built on the H1 Labs protocol across healthcare, art, robotics, and more
+            Discover dApps built on the H1 Labs protocol across healthcare, art, robotics, and more
           </p>
         </div>
 

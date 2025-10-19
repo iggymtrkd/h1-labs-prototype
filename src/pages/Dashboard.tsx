@@ -101,7 +101,7 @@ export default function Dashboard() {
   });
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12">
       <div className="container mx-auto px-4">
         {/* Header */}
         <div className="mb-8">

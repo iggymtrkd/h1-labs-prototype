@@ -95,7 +95,7 @@ export default function LabDetail() {
   };
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12">
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={300} />}
       
       <div className="container mx-auto px-4 max-w-7xl">

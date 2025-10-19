@@ -117,12 +117,17 @@ const userLabs: Lab[] = [
   },
 ];
 
-export default function Profile() {
-  const userAddress = "0x92A...2c9b";
+interface ProfileProps {
+  address?: string;
+  labsBalance?: string;
+}
+
+export default function Profile({ address: walletAddress, labsBalance: userLabsBalance }: ProfileProps) {
+  const userAddress = walletAddress || "0x92A...2c9b";
   const ensName = "drsilva.h1labs";
   const joinDate = "March 2025";
   const level = 7;
-  const labsBalance = "8,320";
+  const labsBalance = userLabsBalance || "8,320";
   const labsStaked = "6,000";
   const h1TokensTotal = "12,400";
   const portfolioValue = "$1,450";
@@ -133,7 +138,7 @@ export default function Profile() {
   const nextReward = "Lab Alchemist II";
 
   return (
-    <div className="min-h-screen pt-24 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12">
       <div className="container mx-auto px-4 max-w-7xl">
         {/* Profile Header */}
         <Card className="p-8 mb-8 bg-gradient-card border-border">
