@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rocket, Store, Info, BookOpen, User } from "lucide-react";
+import { Home, Rocket, Store, BookOpen, User } from "lucide-react";
 
 export const MobileBottomNav = () => {
   const location = useLocation();
@@ -8,7 +8,6 @@ export const MobileBottomNav = () => {
     { name: "Marketplace", path: "/dashboard", icon: Home },
     { name: "Launchpad", path: "/staking", icon: Rocket },
     { name: "dApp Store", path: "/apps", icon: Store },
-    { name: "About", path: "/about", icon: Info },
     { name: "Whitepaper", path: "/whitepaper", icon: BookOpen },
     { name: "Profile", path: "/profile", icon: User },
   ];
@@ -17,7 +16,7 @@ export const MobileBottomNav = () => {
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border">
-      <div className="grid grid-cols-6 gap-1 px-2 py-2">
+      <div className="grid grid-cols-5 gap-1 px-2 py-2">
         {links.map((link) => {
           const Icon = link.icon;
           return (

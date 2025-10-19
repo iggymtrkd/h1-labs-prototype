@@ -3,7 +3,8 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { BookOpen, ChevronRight, Menu } from "lucide-react";
+import { BookOpen, ChevronRight, Menu, Target } from "lucide-react";
+import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
@@ -55,6 +56,12 @@ export default function Whitepaper() {
 
   const TableOfContents = () => (
     <nav className="space-y-1">
+      <Link to="/about">
+        <Button variant="outline" className="w-full mb-4 justify-start">
+          <Target className="mr-2 h-4 w-4" />
+          Our Mission
+        </Button>
+      </Link>
       {sections.map((section, index) => (
         <button
           key={index}

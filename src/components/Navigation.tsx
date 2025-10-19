@@ -15,9 +15,8 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance }: Nav
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Pre-login navigation (only About and Whitepaper)
+  // Pre-login navigation (only Whitepaper)
   const preLoginLinks = [
-    { name: "About", path: "/about" },
     { name: "Whitepaper", path: "/whitepaper" },
   ];
 
