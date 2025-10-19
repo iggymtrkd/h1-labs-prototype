@@ -78,6 +78,7 @@ const AppContent = () => {
         isConnected={isConnected}
         address={address}
         labsBalance={labsBalance}
+        showOnHomePage={isHomePage}
       />
 
       {/* Platform sidebar (desktop only, when connected and not on home page) */}

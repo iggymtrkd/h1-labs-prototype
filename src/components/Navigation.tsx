@@ -9,23 +9,26 @@ interface NavigationProps {
   isConnected: boolean;
   address?: string;
   labsBalance?: string;
+  showOnHomePage?: boolean;
 }
 
-export const Navigation = ({ onConnect, isConnected, address, labsBalance }: NavigationProps) => {
+export const Navigation = ({ onConnect, isConnected, address, labsBalance, showOnHomePage = false }: NavigationProps) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
-  // Pre-login navigation (only Whitepaper)
-  const preLoginLinks = [
+  // Navigation links
+  const homePageLinks = [
     { name: "Whitepaper", path: "/whitepaper" },
+    { name: "How It Works", path: "/#how-it-works", isHash: true },
+    { name: "Terms", path: "/terms" },
   ];
 
-  const navLinks = isConnected ? [] : preLoginLinks;
+  const navLinks = showOnHomePage ? homePageLinks : (!isConnected ? homePageLinks : []);
 
   const isActive = (path: string) => location.pathname === path;
 
-  // Only show top nav when not connected
-  if (isConnected) return null;
+  // Show top nav when not connected OR when explicitly shown on home page
+  if (isConnected && !showOnHomePage) return null;
 
   return (
     <nav className="fixed top-0 left-0 right-0 z-50 bg-card/80 backdrop-blur-xl border-b border-border">
@@ -39,19 +42,33 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance }: Nav
 
           {/* Desktop Navigation */}
           <div className="hidden md:flex items-center gap-1">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                className={`px-4 py-2 rounded-lg transition-all ${
-                  isActive(link.path)
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              if (link.isHash) {
+                return (
+                  <a
+                    key={link.path}
+                    href={link.path}
+                    className="px-4 py-2 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
+                    onClick={() => setMobileMenuOpen(false)}
+                  >
+                    {link.name}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  className={`px-4 py-2 rounded-lg transition-all ${
+                    isActive(link.path)
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
           </div>
 
           {/* Wallet Connection */}
@@ -74,20 +91,34 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance }: Nav
         {/* Mobile Menu */}
         {mobileMenuOpen && (
           <div className="md:hidden py-4 animate-slide-down">
-            {navLinks.map((link) => (
-              <Link
-                key={link.path}
-                to={link.path}
-                onClick={() => setMobileMenuOpen(false)}
-                className={`block px-4 py-3 rounded-lg transition-all ${
-                  isActive(link.path)
-                    ? "bg-primary text-primary-foreground font-semibold"
-                    : "text-muted-foreground hover:text-foreground hover:bg-muted"
-                }`}
-              >
-                {link.name}
-              </Link>
-            ))}
+            {navLinks.map((link) => {
+              if (link.isHash) {
+                return (
+                  <a
+                    key={link.path}
+                    href={link.path}
+                    onClick={() => setMobileMenuOpen(false)}
+                    className="block px-4 py-3 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
+                  >
+                    {link.name}
+                  </a>
+                );
+              }
+              return (
+                <Link
+                  key={link.path}
+                  to={link.path}
+                  onClick={() => setMobileMenuOpen(false)}
+                  className={`block px-4 py-3 rounded-lg transition-all ${
+                    isActive(link.path)
+                      ? "bg-primary text-primary-foreground font-semibold"
+                      : "text-muted-foreground hover:text-foreground hover:bg-muted"
+                  }`}
+                >
+                  {link.name}
+                </Link>
+              );
+            })}
             <div className="mt-4 px-4">
               <Button onClick={onConnect} className="w-full bg-gradient-primary border-0">
                 <Wallet className="mr-2 h-4 w-4" />
