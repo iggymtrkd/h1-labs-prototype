@@ -44,7 +44,7 @@ export const PlatformSidebar = ({
         {!collapsed && (
           <Link to="/dashboard" className="flex items-center gap-2">
             <img src={logo} alt="H1 Labs" className="h-8 w-auto" />
-            <span className="text-lg font-bold glow-green">H1 Labs</span>
+            <span className="text-lg font-bold glow-green animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>H1 Labs</span>
           </Link>
         )}
         {collapsed && (
@@ -64,7 +64,7 @@ export const PlatformSidebar = ({
 
       {/* Balance Display */}
       {!collapsed && labsBalance && (
-        <div className="mx-4 mb-4 px-4 py-3 bg-gradient-card border border-border rounded-lg flex-shrink-0">
+        <div className="mx-4 mb-4 px-4 py-3 bg-gradient-card border border-border rounded-lg flex-shrink-0 animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
           <p className="text-xs text-muted-foreground mb-1">Your Balance</p>
           <p className="text-lg font-bold text-primary">{labsBalance} $LABS</p>
         </div>
@@ -86,7 +86,7 @@ export const PlatformSidebar = ({
               title={collapsed ? link.name : undefined}
             >
               <Icon className="h-5 w-5 flex-shrink-0" />
-              {!collapsed && <span>{link.name}</span>}
+              {!collapsed && <span className="animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>{link.name}</span>}
             </Link>
           );
         })}
@@ -110,7 +110,7 @@ export const PlatformSidebar = ({
                 title={collapsed ? link.name : undefined}
               >
                 <Icon className="h-5 w-5 flex-shrink-0" />
-                {!collapsed && <span>{link.name}</span>}
+                {!collapsed && <span className="animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>{link.name}</span>}
               </Link>
             );
           })}
@@ -118,7 +118,7 @@ export const PlatformSidebar = ({
 
         {/* User Info at Bottom */}
         {!collapsed && address && (
-          <div className="p-4 border-t border-border">
+          <div className="p-4 border-t border-border animate-fade-in" style={{ animationDelay: '200ms', animationFillMode: 'both' }}>
             <div className="flex items-center gap-2 text-sm text-muted-foreground">
               <div className="w-2 h-2 bg-primary rounded-full animate-pulse" />
               <span className="truncate">{address.slice(0, 6)}...{address.slice(-4)}</span>
