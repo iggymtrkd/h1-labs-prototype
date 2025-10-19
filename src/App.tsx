@@ -28,31 +28,17 @@ const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
-  const { isConnected, address, labsBalance, setConnected } = useBaseAccount();
+  const { isConnected, address, labsBalance, connectWallet } = useBaseAccount();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
 
   const handleConnectWallet = async () => {
-    try {
-      const { createBaseAccountSDK } = await import('@base-org/account');
-      const sdk = createBaseAccountSDK({
-        appName: 'H1 Labs',
-        appLogoUrl: 'https://base.org/logo.png',
-      });
-
-      const provider = sdk.getProvider();
-      await provider.request({ method: 'wallet_connect' });
-      
-      const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
-      
-      if (accounts && accounts.length > 0) {
-        setConnected(accounts[0]);
-        navigate('/dashboard');
-      }
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
-    }
+    await connectWallet();
+    // Small delay to ensure state updates before navigation
+    setTimeout(() => {
+      navigate("/dashboard");
+    }, 100);
   };
 
   return (
