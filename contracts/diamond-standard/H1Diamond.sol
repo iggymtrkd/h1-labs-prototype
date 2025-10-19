@@ -5,7 +5,10 @@ import { LibDiamond } from "./libraries/LibDiamond.sol";
 import { IDiamondCut } from "./interfaces/IDiamondCut.sol";
 
 contract H1Diamond {
+  error InvalidOwner();
+
   constructor(address _contractOwner) {
+    if (_contractOwner == address(0)) revert InvalidOwner();
     LibDiamond.setContractOwner(_contractOwner);
   }
 

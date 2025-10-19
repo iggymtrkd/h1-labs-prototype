@@ -22,13 +22,17 @@ library LibDiamond {
     mapping(address => FacetFunctionSelectors) facetFunctionSelectors;
     address[] facetAddresses;
     address contractOwner;
+    mapping(address => bool) approvedInitializers; // Whitelist for delegatecall
   }
 
   event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
+  event InitializerApproved(address indexed initializer);
+  event InitializerRevoked(address indexed initializer);
 
   error NotContractOwner(address sender, address owner);
   error InitZeroAddress();
   error InitCallFailed(bytes data);
+  error InitializerNotApproved(address initializer);
 
   function diamondStorage() internal pure returns (DiamondStorage storage ds) {
     bytes32 position = DIAMOND_STORAGE_POSITION;
@@ -56,7 +60,8 @@ library LibDiamond {
     address _init,
     bytes memory _calldata
   ) internal {
-    for (uint256 facetIndex = 0; facetIndex < _diamondCut.length; facetIndex++) {
+    uint256 length = _diamondCut.length; // Cache array length for gas optimization
+    for (uint256 facetIndex; facetIndex < length; ) {
       IDiamondCut.FacetCutAction action = _diamondCut[facetIndex].action;
       if (action == IDiamondCut.FacetCutAction.Add) {
         addFunctions(_diamondCut[facetIndex].facetAddress, _diamondCut[facetIndex].functionSelectors);
@@ -65,52 +70,63 @@ library LibDiamond {
       } else if (action == IDiamondCut.FacetCutAction.Remove) {
         removeFunctions(_diamondCut[facetIndex].facetAddress, _diamondCut[facetIndex].functionSelectors);
       }
+      unchecked { ++facetIndex; } // Safe: facetIndex < length
     }
     emit IDiamondCut.DiamondCut(_diamondCut, _init, _calldata);
     initializeDiamondCut(_init, _calldata);
   }
 
   function addFunctions(address _facetAddress, bytes4[] memory _functionSelectors) internal {
-    require(_functionSelectors.length > 0, "LibDiamond: No selectors to add");
+    uint256 length = _functionSelectors.length;
+    require(length > 0, "LibDiamond: No selectors to add");
     DiamondStorage storage ds = diamondStorage();
     uint256 selectorPosition = ds.facetFunctionSelectors[_facetAddress].functionSelectors.length;
     if (selectorPosition == 0) {
       addFacet(ds, _facetAddress);
     }
-    for (uint256 selectorIndex = 0; selectorIndex < _functionSelectors.length; selectorIndex++) {
+    for (uint256 selectorIndex; selectorIndex < length; ) {
       bytes4 selector = _functionSelectors[selectorIndex];
       address oldFacetAddress = ds.selectorToFacetAndPosition[selector].facetAddress;
       require(oldFacetAddress == address(0), "LibDiamond: Selector already exists");
       addFunction(ds, selector, selectorPosition, _facetAddress);
-      selectorPosition++;
+      unchecked { 
+        ++selectorPosition;
+        ++selectorIndex;
+      } // Safe: bounded by array length
     }
   }
 
   function replaceFunctions(address _facetAddress, bytes4[] memory _functionSelectors) internal {
-    require(_functionSelectors.length > 0, "LibDiamond: No selectors to replace");
+    uint256 length = _functionSelectors.length;
+    require(length > 0, "LibDiamond: No selectors to replace");
     DiamondStorage storage ds = diamondStorage();
     uint256 selectorPosition = ds.facetFunctionSelectors[_facetAddress].functionSelectors.length;
     if (selectorPosition == 0) {
       addFacet(ds, _facetAddress);
     }
-    for (uint256 selectorIndex = 0; selectorIndex < _functionSelectors.length; selectorIndex++) {
+    for (uint256 selectorIndex; selectorIndex < length; ) {
       bytes4 selector = _functionSelectors[selectorIndex];
       address oldFacetAddress = ds.selectorToFacetAndPosition[selector].facetAddress;
       require(oldFacetAddress != _facetAddress, "LibDiamond: Replace facet is same");
       removeFunction(ds, oldFacetAddress, selector);
       addFunction(ds, selector, selectorPosition, _facetAddress);
-      selectorPosition++;
+      unchecked { 
+        ++selectorPosition;
+        ++selectorIndex;
+      } // Safe: bounded by array length
     }
   }
 
   function removeFunctions(address _facetAddress, bytes4[] memory _functionSelectors) internal {
     require(_facetAddress == address(0), "LibDiamond: Remove facetAddress must be address(0)");
-    require(_functionSelectors.length > 0, "LibDiamond: No selectors to remove");
+    uint256 length = _functionSelectors.length;
+    require(length > 0, "LibDiamond: No selectors to remove");
     DiamondStorage storage ds = diamondStorage();
-    for (uint256 selectorIndex = 0; selectorIndex < _functionSelectors.length; selectorIndex++) {
+    for (uint256 selectorIndex; selectorIndex < length; ) {
       bytes4 selector = _functionSelectors[selectorIndex];
       address oldFacetAddress = ds.selectorToFacetAndPosition[selector].facetAddress;
       removeFunction(ds, oldFacetAddress, selector);
+      unchecked { ++selectorIndex; } // Safe: bounded by array length
     }
   }
 
@@ -164,11 +180,44 @@ library LibDiamond {
     }
   }
 
+  /// @notice Approves an initializer contract for delegatecall
+  /// @dev Only callable by contract owner
+  /// @param initializer Address of initializer contract to approve
+  function approveInitializer(address initializer) internal {
+    DiamondStorage storage ds = diamondStorage();
+    ds.approvedInitializers[initializer] = true;
+    emit InitializerApproved(initializer);
+  }
+
+  /// @notice Revokes an initializer contract
+  /// @dev Only callable by contract owner
+  /// @param initializer Address of initializer contract to revoke
+  function revokeInitializer(address initializer) internal {
+    DiamondStorage storage ds = diamondStorage();
+    ds.approvedInitializers[initializer] = false;
+    emit InitializerRevoked(initializer);
+  }
+
+  /// @notice Checks if an initializer is approved
+  /// @param initializer Address to check
+  /// @return True if approved, false otherwise
+  function isInitializerApproved(address initializer) internal view returns (bool) {
+    DiamondStorage storage ds = diamondStorage();
+    return ds.approvedInitializers[initializer];
+  }
+
   function initializeDiamondCut(address _init, bytes memory _calldata) internal {
     if (_init == address(0)) {
       if (_calldata.length > 0) revert InitZeroAddress();
       return;
     }
+    
+    // Verify initializer is approved for security
+    DiamondStorage storage ds = diamondStorage();
+    if (!ds.approvedInitializers[_init]) {
+      revert InitializerNotApproved(_init);
+    }
+    
     (bool success, bytes memory error) = _init.delegatecall(_calldata);
     if (!success) revert InitCallFailed(error);
   }

@@ -22,6 +22,9 @@ interface IERC721 is IERC165 {
   function safeTransferFrom(address from, address to, uint256 tokenId, bytes calldata data) external;
 }
 
+/// @title LabPass NFT
+/// @notice ERC-721 NFT representing lab membership with level and app slot metadata
+/// @dev Implements soulbound token functionality with admin-controlled transferability
 contract LabPass is IERC721 {
   string public name = "LabPass";
   string public symbol = "LBP";
@@ -104,6 +107,11 @@ contract LabPass is IERC721 {
     emit TransferabilitySet(t); 
   }
 
+  /// @notice Mints a single LabPass NFT
+  /// @param to The address to mint the token to
+  /// @param tokenId The unique identifier for the token
+  /// @param level The membership level (0-10)
+  /// @param slots The number of app slots (0-10)
   function mint(address to, uint256 tokenId, uint8 level, uint8 slots) external onlyMinter {
     if (to == address(0)) revert InvalidAddress();
     if (_ownerOf[tokenId] != address(0)) revert TokenAlreadyExists();
@@ -111,9 +119,44 @@ contract LabPass is IERC721 {
     if (slots > 10) revert InvalidApproval(); // Max slots 10
     
     _ownerOf[tokenId] = to;
-    _balanceOf[to] += 1;
+    unchecked { _balanceOf[to] += 1; } // Safe: balance won't overflow
     passData[tokenId] = PassData({ level: level, appSlots: slots });
     emit Transfer(address(0), to, tokenId);
+  }
+
+  /// @notice Batch mints multiple LabPass NFTs (gas optimized)
+  /// @param recipients Array of addresses to mint tokens to
+  /// @param tokenIds Array of unique token identifiers
+  /// @param levels Array of membership levels
+  /// @param slots Array of app slots
+  function batchMint(
+    address[] calldata recipients,
+    uint256[] calldata tokenIds,
+    uint8[] calldata levels,
+    uint8[] calldata slots
+  ) external onlyMinter {
+    uint256 length = recipients.length;
+    if (length != tokenIds.length || length != levels.length || length != slots.length) {
+      revert InvalidApproval();
+    }
+    
+    for (uint256 i; i < length; ) {
+      address to = recipients[i];
+      uint256 tokenId = tokenIds[i];
+      uint8 level = levels[i];
+      uint8 slot = slots[i];
+      
+      if (to == address(0)) revert InvalidAddress();
+      if (_ownerOf[tokenId] != address(0)) revert TokenAlreadyExists();
+      if (level > 10 || slot > 10) revert InvalidApproval();
+      
+      _ownerOf[tokenId] = to;
+      unchecked { _balanceOf[to] += 1; } // Safe: balance won't overflow
+      passData[tokenId] = PassData({ level: level, appSlots: slot });
+      emit Transfer(address(0), to, tokenId);
+      
+      unchecked { ++i; }
+    }
   }
 
   function setLevel(uint256 tokenId, uint8 level, uint8 slots) external onlyAdmin { 

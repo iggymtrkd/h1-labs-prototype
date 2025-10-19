@@ -4,41 +4,90 @@ pragma solidity ^0.8.20;
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
 import { LabVault } from "../vaults/LabVault.sol";
 
+/// @title LABSCoreFacet
+/// @notice Core functionality for lab creation and LABS token staking
+/// @dev Diamond facet for H1 Labs platform core operations
 contract LABSCoreFacet {
   event LabCreated(uint256 indexed labId, address indexed owner, string name, string symbol, string domain, address h1Token);
+  event VaultDeployed(uint256 indexed labId, address indexed vault, uint64 cooldownSeconds, uint16 exitCapBps);
   event Staked(address indexed staker, uint256 amount);
 
-  // NOTE: Token and factory integrations are left as stubs for the prototype stage
+  error InvalidString();
+  error InvalidAmount();
+  error DomainAlreadyExists();
+  error LabsTokenNotSet();
+  error TransferFailed();
 
+  // NOTE: storage moved to LibH1Storage to avoid diamond storage collisions
+
+  /// @notice Stakes LABS tokens to earn LabSlot NFT eligibility
+  /// @dev Transfers LABS tokens from user and tracks staked balance
+  /// @param amount Amount of LABS tokens to stake (must be > 0)
   function stakeLABS(uint256 amount) external {
-    // Prototype stub: integrate ERC20 LABS token and mint LabSlot (ERC-721)
+    if (amount == 0) revert InvalidAmount();
+    
+    LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+    if (hs.labsToken == address(0)) revert LabsTokenNotSet();
+    
+    // Transfer LABS tokens from user to this contract
+    (bool success, bytes memory data) = hs.labsToken.call(
+      abi.encodeWithSignature("transferFrom(address,address,uint256)", msg.sender, address(this), amount)
+    );
+    if (!success || (data.length > 0 && !abi.decode(data, (bool)))) {
+      revert TransferFailed();
+    }
+    
+    // Track staked balance
+    unchecked {
+      LibH1Storage.h1Storage().stakedBalances[msg.sender] += amount; // Safe: overflow unlikely with real token amounts
+    }
+    
     emit Staked(msg.sender, amount);
+    
+    // Note: LabSlot NFT minting logic to be added in separate facet/upgrade
   }
 
   function createLab(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId) {
+    // Input validation
+    if (bytes(name).length == 0 || bytes(name).length > 50) revert InvalidString();
+    if (bytes(symbol).length == 0 || bytes(symbol).length > 10) revert InvalidString();
+    if (bytes(domain).length == 0 || bytes(domain).length > 100) revert InvalidString();
+    bytes32 domainKey = keccak256(bytes(domain));
+    if (LibH1Storage.h1Storage().domainTaken[domainKey]) revert DomainAlreadyExists();
+    
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+    
+    if (hs.labsToken == address(0)) revert LabsTokenNotSet();
+    
     labId = hs.nextLabId++;
     hs.labs[labId].owner = msg.sender;
     hs.labs[labId].domain = domain;
     hs.labs[labId].active = true;
+    LibH1Storage.h1Storage().domainTaken[domainKey] = true;
 
     // Auto-deploy LabVault (ERC-4626-style shares as H1 token)
-    // For now, use lab name as token name and a default symbol "H1" (frontend can add custom ticker input later)
+    uint64 cooldown = hs.defaultCooldown;
+    uint16 exitCap = hs.defaultExitCapBps;
+    
     address vault = address(new LabVault(
       hs.labsToken,
       name,
       symbol,
       name,
-      hs.defaultCooldown,
-      hs.defaultExitCapBps
+      cooldown,
+      exitCap,
+      msg.sender
     ));
     hs.labIdToVault[labId] = vault;
     hs.labs[labId].h1Token = vault;
 
-    // Optionally deploy a LabPass immediately (owner can mint later)
-    // Left to LabPassFacetDraft to deploy/mint on demand
-
     emit LabCreated(labId, msg.sender, name, symbol, domain, vault);
+    emit VaultDeployed(labId, vault, cooldown, exitCap);
+  }
+  
+  function isDomainAvailable(string calldata domain) external view returns (bool) {
+    bytes32 domainKey = keccak256(bytes(domain));
+    return !LibH1Storage.h1Storage().domainTaken[domainKey];
   }
 }
 

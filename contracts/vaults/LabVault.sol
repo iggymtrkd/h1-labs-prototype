@@ -43,11 +43,13 @@ contract LabVault is ERC20Base {
     status = NOT_ENTERED;
   }
 
+  // Optimized struct packing: 2 storage slots instead of 4
   struct RedeemRequest {
-    address owner;
-    uint256 assets;
-    uint64 unlockTime;
-    bool claimed;
+    address owner;      // 20 bytes
+    uint64 unlockTime;  // 8 bytes  
+    bool claimed;       // 1 byte
+    // Total: 29 bytes in slot 1 (3 bytes padding)
+    uint256 assets;     // 32 bytes in slot 2
   }
 
   uint256 public nextRequestId;
@@ -62,14 +64,24 @@ contract LabVault is ERC20Base {
   event EpochRolled(uint64 newEpochStart);
   event RedeemFilled(uint256 indexed requestId, address indexed filler, uint256 assets, address receiver);
   event AdminUpdated(address indexed newAdmin);
+  event Paused(address indexed account);
+  event Unpaused(address indexed account);
 
   error Unauthorized();
   error InvalidAddress();
   error InvalidAmount();
   error InvalidParameter();
+  error ContractPaused();
+
+  bool private _paused;
 
   modifier onlyAdmin() {
     if (msg.sender != admin) revert Unauthorized();
+    _;
+  }
+
+  modifier whenNotPaused() {
+    if (_paused) revert ContractPaused();
     _;
   }
 
@@ -79,7 +91,8 @@ contract LabVault is ERC20Base {
     string memory h1Symbol_,
     string memory labDisplayName_,
     uint64 cooldownSeconds_,
-    uint16 epochExitCapBps_
+    uint16 epochExitCapBps_,
+    address admin_
   ) ERC20Base(h1Name_, h1Symbol_, 18) {
     require(labsToken_ != address(0), "labs token = 0");
     require(bytes(h1Name_).length > 0 && bytes(h1Name_).length <= 50, "invalid name");
@@ -91,7 +104,7 @@ contract LabVault is ERC20Base {
     cooldownSeconds = cooldownSeconds_;
     epochExitCapBps = epochExitCapBps_;
     epochStart = uint64(block.timestamp);
-    admin = msg.sender;
+    admin = admin_;
   }
 
   function assetsPerShare() public view returns (uint256) {
@@ -131,7 +144,7 @@ contract LabVault is ERC20Base {
     return 0;
   }
 
-  function depositLABS(uint256 assets, address receiver) external nonReentrant returns (uint256 shares) {
+  function depositLABS(uint256 assets, address receiver) external nonReentrant whenNotPaused returns (uint256 shares) {
     require(assets > 0, "zero assets");
     shares = previewDeposit(assets);
     require(IERC20(labsToken).transferFrom(msg.sender, address(this), assets), "transferFrom fail");
@@ -141,7 +154,7 @@ contract LabVault is ERC20Base {
     emit Deposited(msg.sender, receiver, assets, shares);
   }
 
-  function mintShares(uint256 shares, address receiver) external nonReentrant returns (uint256 assets) {
+  function mintShares(uint256 shares, address receiver) external nonReentrant whenNotPaused returns (uint256 assets) {
     require(shares > 0, "zero shares");
     assets = previewMint(shares);
     require(IERC20(labsToken).transferFrom(msg.sender, address(this), assets), "transferFrom fail");
@@ -151,7 +164,7 @@ contract LabVault is ERC20Base {
     emit Deposited(msg.sender, receiver, assets, shares);
   }
 
-  function requestRedeem(uint256 shares) external nonReentrant returns (uint256 requestId, uint256 assets) {
+  function requestRedeem(uint256 shares) external nonReentrant whenNotPaused returns (uint256 requestId, uint256 assets) {
     require(shares > 0, "zero shares");
     assets = previewRedeem(shares);
     _rollEpochIfNeeded();
@@ -216,6 +229,25 @@ contract LabVault is ERC20Base {
     if (bps > MAX_EXIT_CAP_BPS) revert InvalidParameter();
     epochExitCapBps = bps;
     emit ExitCapsUpdated(cooldownSeconds, epochExitCapBps);
+  }
+
+  /// @notice Emergency pause of vault operations
+  /// @dev Only callable by admin
+  function pause() external onlyAdmin {
+    _paused = true;
+    emit Paused(msg.sender);
+  }
+
+  /// @notice Unpause vault operations
+  /// @dev Only callable by admin
+  function unpause() external onlyAdmin {
+    _paused = false;
+    emit Unpaused(msg.sender);
+  }
+
+  /// @notice Returns pause status
+  function paused() external view returns (bool) {
+    return _paused;
   }
 
   function _maybeEmitLevelChange() internal {

@@ -5,6 +5,7 @@ import { ERC20Base } from "./ERC20Base.sol";
 
 contract LABSToken is ERC20Base {
   address private _owner;
+  event OwnershipTransferred(address indexed previousOwner, address indexed newOwner);
 
   modifier onlyOwner() {
     require(msg.sender == _owner, "Ownable: caller is not the owner");
@@ -17,7 +18,12 @@ contract LABSToken is ERC20Base {
 
   function owner() external view returns (address) { return _owner; }
 
-  function transferOwnership(address newOwner) external onlyOwner { _owner = newOwner; }
+  function transferOwnership(address newOwner) external onlyOwner { 
+    require(newOwner != address(0), "Ownable: new owner is the zero address");
+    address prev = _owner;
+    _owner = newOwner; 
+    emit OwnershipTransferred(prev, newOwner);
+  }
 
   function mint(address to, uint256 amount) external onlyOwner { _mint(to, amount); }
 }
