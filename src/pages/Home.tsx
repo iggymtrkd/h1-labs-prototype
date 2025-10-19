@@ -89,7 +89,7 @@ export default function Home({ onConnect }: HomeProps) {
       <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
           <DialogHeader>
-            <DialogTitle className="text-2xl font-bold glow-green">How It Works</DialogTitle>
+            <DialogTitle className="text-2xl font-bold glow-green">How It Works - H1 Testnet Period</DialogTitle>
             <DialogDescription className="text-base">
               Understanding the H1 Labs ecosystem and user flow
             </DialogDescription>
