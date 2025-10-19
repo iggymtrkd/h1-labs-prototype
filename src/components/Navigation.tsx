@@ -16,10 +16,19 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
+  const handleHowItWorksClick = (e: React.MouseEvent) => {
+    e.preventDefault();
+    const element = document.getElementById('how-it-works');
+    if (element) {
+      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+    setMobileMenuOpen(false);
+  };
+  
   // Navigation links
   const homePageLinks = [
     { name: "Whitepaper", path: "/whitepaper" },
-    { name: "How It Works", path: "/#how-it-works", isHash: true },
+    { name: "How It Works", path: "#how-it-works", isHash: true },
     { name: "Terms", path: "/terms" },
   ];
 
@@ -48,8 +57,8 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
                   <a
                     key={link.path}
                     href={link.path}
-                    className="px-4 py-2 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
-                    onClick={() => setMobileMenuOpen(false)}
+                    onClick={handleHowItWorksClick}
+                    className="px-4 py-2 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                   >
                     {link.name}
                   </a>
@@ -97,8 +106,8 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
                   <a
                     key={link.path}
                     href={link.path}
-                    onClick={() => setMobileMenuOpen(false)}
-                    className="block px-4 py-3 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-muted"
+                    onClick={handleHowItWorksClick}
+                    className="block px-4 py-3 rounded-lg transition-all text-muted-foreground hover:text-foreground hover:bg-muted cursor-pointer"
                   >
                     {link.name}
                   </a>

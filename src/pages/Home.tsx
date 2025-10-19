@@ -63,28 +63,6 @@ export default function Home({ onConnect }: HomeProps) {
 
   return (
     <div className="min-h-screen pt-16">
-      {/* Quick Access Links */}
-      <div className="fixed top-20 right-4 z-40 flex gap-2">
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowHowItWorks(true)}
-          className="border-primary/50 hover:bg-primary/10"
-        >
-          <Info className="h-4 w-4 mr-2" />
-          How it Works
-        </Button>
-        <Button
-          variant="outline"
-          size="sm"
-          onClick={() => setShowDisclaimer(true)}
-          className="border-primary/50 hover:bg-primary/10"
-        >
-          <FileText className="h-4 w-4 mr-2" />
-          Terms
-        </Button>
-      </div>
-
       {/* How It Works Dialog */}
       <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
         <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
@@ -336,7 +314,7 @@ export default function Home({ onConnect }: HomeProps) {
       </section>
 
       {/* Dual-Intelligence SDK Callout */}
-      <section className="py-20">
+      <section id="how-it-works" className="py-20">
         <div className="container mx-auto px-4">
           <motion.div
             initial={{ opacity: 0, y: 20 }}

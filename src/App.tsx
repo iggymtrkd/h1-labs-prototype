@@ -18,6 +18,7 @@ import LabDetail from "./pages/LabDetail";
 import LabChat from "./pages/LabChat";
 import Settings from "./pages/Settings";
 import DeployPool from "./pages/DeployPool";
+import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
 import { toast } from "sonner";
 
@@ -115,6 +116,7 @@ const AppContent = () => {
           <Route path="/lab/:id/chat" element={<LabChat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/deploy-pool" element={<DeployPool />} />
+          <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>
