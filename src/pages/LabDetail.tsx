@@ -20,15 +20,15 @@ import Confetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { toast } from "sonner";
 
-// Mock price data with volatility
+// Mock price data with extreme volatility
 const priceData = [
-  { time: "00:00", price: 0.042 },
-  { time: "04:00", price: 0.038 },
-  { time: "08:00", price: 0.051 },
-  { time: "12:00", price: 0.045 },
-  { time: "16:00", price: 0.062 },
-  { time: "20:00", price: 0.055 },
-  { time: "24:00", price: 0.067 },
+  { time: "00:00", price: 0.025 },
+  { time: "04:00", price: 0.089 },
+  { time: "08:00", price: 0.031 },
+  { time: "12:00", price: 0.105 },
+  { time: "16:00", price: 0.042 },
+  { time: "20:00", price: 0.132 },
+  { time: "24:00", price: 0.058 },
 ];
 
 const volumeData = [
