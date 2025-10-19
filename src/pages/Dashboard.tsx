@@ -25,7 +25,7 @@ const mockLabs: Lab[] = [
     name: "ArtProof",
     symbol: "ART",
     category: "Art",
-    description: "Art authentication and provenance verification datasets",
+    description: "Art authentication and provenance verification datasets with C2PA compliance",
     price: "0.028",
     change24h: -3.2,
     volume24h: "840K",
@@ -77,7 +77,7 @@ const mockLabs: Lab[] = [
     name: "GenomeData",
     symbol: "GENE",
     category: "Healthcare",
-    description: "Genomic sequencing and personalized medicine datasets",
+    description: "Genomic sequencing and personalized medicine datasets with HIPAA compliance",
     price: "0.089",
     change24h: 22.4,
     volume24h: "4.2M",
@@ -85,13 +85,78 @@ const mockLabs: Lab[] = [
     validators: 567,
     datasets: 4123,
   },
+  {
+    id: "7",
+    name: "GameSense",
+    symbol: "GAME",
+    category: "Gaming",
+    description: "NPC dialogue, procedural generation, and game AI training datasets",
+    price: "0.051",
+    change24h: 18.9,
+    volume24h: "1.8M",
+    marketCap: "54M",
+    validators: 278,
+    datasets: 1876,
+  },
+  {
+    id: "8",
+    name: "FinTrack",
+    symbol: "FIN",
+    category: "Finance",
+    description: "AML/KYC compliance and financial fraud detection datasets",
+    price: "0.067",
+    change24h: 7.3,
+    volume24h: "2.3M",
+    marketCap: "78M",
+    validators: 401,
+    datasets: 2534,
+  },
+  {
+    id: "9",
+    name: "StratAI",
+    symbol: "STRAT",
+    category: "Defense",
+    description: "Defense AI datasets compliant with DoD AI Ethics Framework and ITAR",
+    price: "0.094",
+    change24h: 4.2,
+    volume24h: "1.5M",
+    marketCap: "98M",
+    validators: 156,
+    datasets: 892,
+  },
+  {
+    id: "10",
+    name: "EduLab",
+    symbol: "EDU",
+    category: "Education",
+    description: "Educational content and assessment datasets with FERPA compliance",
+    price: "0.039",
+    change24h: 11.7,
+    volume24h: "980K",
+    marketCap: "42M",
+    validators: 234,
+    datasets: 1654,
+  },
+  {
+    id: "11",
+    name: "GreenLens",
+    symbol: "GREEN",
+    category: "Climate",
+    description: "Climate modeling and environmental monitoring datasets for sustainability AI",
+    price: "0.045",
+    change24h: 14.8,
+    volume24h: "1.1M",
+    marketCap: "48M",
+    validators: 198,
+    datasets: 1432,
+  },
 ];
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const categories = ["all", "Healthcare", "Art", "Robotics", "Legal"];
+  const categories = ["all", "Healthcare", "Art", "Gaming", "Robotics", "Legal", "Finance", "Defense", "Education", "Climate"];
 
   const filteredLabs = mockLabs.filter((lab) => {
     const matchesSearch = lab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -115,11 +180,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Total Market Cap</p>
-            <p className="text-2xl font-bold text-primary">$375M</p>
+            <p className="text-2xl font-bold text-primary">$632M</p>
           </div>
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">24h Volume</p>
-            <p className="text-2xl font-bold text-secondary">$12.4M</p>
+            <p className="text-2xl font-bold text-secondary">$18.2M</p>
           </div>
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Active Labs</p>
@@ -127,7 +192,7 @@ export default function Dashboard() {
           </div>
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Total Validators</p>
-            <p className="text-2xl font-bold text-secondary">1,903</p>
+            <p className="text-2xl font-bold text-secondary">3,192</p>
           </div>
         </div>
 
