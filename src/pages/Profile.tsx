@@ -181,7 +181,7 @@ export default function Profile({ address: walletAddress, labsBalance: userLabsB
               </div>
 
               {/* Stats Grid */}
-              <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
                 <div className="bg-muted/50 p-4 rounded-lg">
                   <p className="text-xs text-muted-foreground mb-1">$LABS Balance</p>
                   <p className="text-xl font-bold text-primary">{labsBalance}</p>

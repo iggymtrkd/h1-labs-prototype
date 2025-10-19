@@ -189,7 +189,7 @@ export default function About() {
             <Users className="h-8 w-8 text-primary" />
             What We're Building
           </h2>
-          <div className="grid md:grid-cols-2 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
             {team.map((area, index) => (
               <motion.div
                 key={index}

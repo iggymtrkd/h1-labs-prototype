@@ -112,7 +112,7 @@ export default function Dashboard() {
         </div>
 
         {/* Stats Bar */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Total Market Cap</p>
             <p className="text-2xl font-bold text-primary">$375M</p>
@@ -161,7 +161,7 @@ export default function Dashboard() {
             <Flame className="h-5 w-5 text-primary" />
             <h2 className="text-2xl font-bold">Trending Labs</h2>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredLabs
               .filter((lab) => lab.change24h > 10)
               .slice(0, 3)
@@ -180,7 +180,7 @@ export default function Dashboard() {
               {filteredLabs.length} labs
             </Badge>
           </div>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredLabs.map((lab) => (
               <LabCard key={lab.id} lab={lab} />
             ))}

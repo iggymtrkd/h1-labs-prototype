@@ -124,7 +124,7 @@ export default function LabDetail() {
               </div>
             </div>
 
-            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-muted/30 p-4 rounded-lg">
                 <p className="text-xs text-muted-foreground mb-1">Price</p>
                 <p className="text-2xl font-bold text-primary">${lab.price}</p>
@@ -209,7 +209,8 @@ export default function LabDetail() {
           <TabsContent value="price">
             <Card className="p-6 bg-gradient-card border-border">
               <h3 className="text-xl font-bold mb-4">Price History (24h)</h3>
-              <ResponsiveContainer width="100%" height={300}>
+              <div className="w-full overflow-x-auto">
+                <ResponsiveContainer width="100%" height={300} minWidth={300}>
                 <AreaChart data={priceData}>
                   <defs>
                     <linearGradient id="colorPrice" x1="0" y1="0" x2="0" y2="1">
@@ -236,13 +237,15 @@ export default function LabDetail() {
                   />
                 </AreaChart>
               </ResponsiveContainer>
+              </div>
             </Card>
           </TabsContent>
 
           <TabsContent value="volume">
             <Card className="p-6 bg-gradient-card border-border">
               <h3 className="text-xl font-bold mb-4">Trading Volume (7 days)</h3>
-              <ResponsiveContainer width="100%" height={300}>
+              <div className="w-full overflow-x-auto">
+                <ResponsiveContainer width="100%" height={300} minWidth={300}>
                 <LineChart data={volumeData}>
                   <CartesianGrid strokeDasharray="3 3" stroke="hsl(240 10% 18%)" />
                   <XAxis dataKey="time" stroke="hsl(240 5% 64.9%)" />
@@ -263,6 +266,7 @@ export default function LabDetail() {
                   />
                 </LineChart>
               </ResponsiveContainer>
+              </div>
             </Card>
           </TabsContent>
 

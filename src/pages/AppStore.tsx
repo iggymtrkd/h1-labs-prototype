@@ -131,7 +131,7 @@ export default function AppStore() {
         </div>
 
         {/* Stats */}
-        <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
           <Card className="p-6 bg-gradient-card border-border">
             <div className="flex items-center gap-3 mb-2">
               <div className="p-2 bg-primary/20 rounded-lg">
@@ -176,7 +176,7 @@ export default function AppStore() {
             <Heart className="h-8 w-8 text-primary" />
             Healthcare Applications
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {apps
               .filter((app) => app.category === "Healthcare")
               .map((app) => (
@@ -226,7 +226,7 @@ export default function AppStore() {
             <Palette className="h-8 w-8 text-secondary" />
             Other Domains
           </h2>
-          <div className="grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {apps
               .filter((app) => app.category !== "Healthcare")
               .map((app) => (

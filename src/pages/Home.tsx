@@ -251,14 +251,14 @@ export default function Home({ onConnect }: HomeProps) {
             <p className="text-xl text-muted-foreground">Expanding to Regulated Industries Worldwide</p>
           </motion.div>
 
-          <div className="max-w-4xl mx-auto grid md:grid-cols-2 lg:grid-cols-3 gap-6">
+          <div className="max-w-4xl mx-auto grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
             <motion.div
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="relative p-6 bg-card rounded-xl border-2 border-primary shadow-neon-green"
+              className="relative p-6 pt-8 bg-card rounded-xl border-2 border-primary shadow-neon-green"
             >
-              <div className="absolute -top-3 -left-3 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 1
               </div>
               <Target className="h-10 w-10 text-primary mb-3" />
@@ -272,9 +272,9 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="p-6 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
-              <div className="absolute -top-3 -left-3 bg-secondary text-secondary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 2
               </div>
               <Zap className="h-10 w-10 text-secondary mb-3" />
@@ -288,9 +288,9 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="p-6 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
-              <div className="absolute -top-3 -left-3 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 3
               </div>
               <Shield className="h-10 w-10 text-primary mb-3" />
@@ -304,9 +304,9 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="p-6 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
-              <div className="absolute -top-3 -left-3 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 4
               </div>
               <Users className="h-10 w-10 text-secondary mb-3" />
@@ -320,9 +320,9 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="p-6 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
-              <div className="absolute -top-3 -left-3 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 5
               </div>
               <TrendingUp className="h-10 w-10 text-primary mb-3" />
@@ -336,9 +336,9 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="p-6 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
-              <div className="absolute -top-3 -left-3 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
                 6
               </div>
               <Zap className="h-10 w-10 text-secondary mb-3" />
