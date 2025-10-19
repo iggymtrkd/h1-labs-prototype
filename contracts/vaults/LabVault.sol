@@ -17,10 +17,12 @@ interface IERC20 {
 contract LabVault is ERC20Base {
   address public immutable labsToken;
   string public labDisplayName;
+  address public admin;
 
   uint256 public constant LEVEL1 = 100_000e18;
   uint256 public constant LEVEL2 = 250_000e18;
   uint256 public constant LEVEL3 = 500_000e18;
+  uint16 public constant MAX_EXIT_CAP_BPS = 10_000; // 100%
 
   uint64 public cooldownSeconds;
   uint16 public epochExitCapBps;
@@ -59,6 +61,17 @@ contract LabVault is ERC20Base {
   event ExitCapsUpdated(uint64 cooldownSeconds, uint16 epochExitCapBps);
   event EpochRolled(uint64 newEpochStart);
   event RedeemFilled(uint256 indexed requestId, address indexed filler, uint256 assets, address receiver);
+  event AdminUpdated(address indexed newAdmin);
+
+  error Unauthorized();
+  error InvalidAddress();
+  error InvalidAmount();
+  error InvalidParameter();
+
+  modifier onlyAdmin() {
+    if (msg.sender != admin) revert Unauthorized();
+    _;
+  }
 
   constructor(
     address labsToken_,
@@ -69,11 +82,16 @@ contract LabVault is ERC20Base {
     uint16 epochExitCapBps_
   ) ERC20Base(h1Name_, h1Symbol_, 18) {
     require(labsToken_ != address(0), "labs token = 0");
+    require(bytes(h1Name_).length > 0 && bytes(h1Name_).length <= 50, "invalid name");
+    require(bytes(h1Symbol_).length > 0 && bytes(h1Symbol_).length <= 10, "invalid symbol");
+    require(epochExitCapBps_ <= MAX_EXIT_CAP_BPS, "exit cap > 100%");
+    
     labsToken = labsToken_;
     labDisplayName = labDisplayName_;
     cooldownSeconds = cooldownSeconds_;
     epochExitCapBps = epochExitCapBps_;
     epochStart = uint64(block.timestamp);
+    admin = msg.sender;
   }
 
   function assetsPerShare() public view returns (uint256) {
@@ -182,13 +200,20 @@ contract LabVault is ERC20Base {
     emit RedeemFilled(requestId, msg.sender, assets, receiver);
   }
 
-  function setCooldown(uint64 seconds_) external {
+  function setAdmin(address newAdmin) external onlyAdmin {
+    if (newAdmin == address(0)) revert InvalidAddress();
+    admin = newAdmin;
+    emit AdminUpdated(newAdmin);
+  }
+
+  function setCooldown(uint64 seconds_) external onlyAdmin {
+    if (seconds_ > 30 days) revert InvalidParameter();
     cooldownSeconds = seconds_;
     emit ExitCapsUpdated(cooldownSeconds, epochExitCapBps);
   }
 
-  function setEpochExitCapBps(uint16 bps) external {
-    require(bps <= 10_000, "bps>100%");
+  function setEpochExitCapBps(uint16 bps) external onlyAdmin {
+    if (bps > MAX_EXIT_CAP_BPS) revert InvalidParameter();
     epochExitCapBps = bps;
     emit ExitCapsUpdated(cooldownSeconds, epochExitCapBps);
   }
