@@ -88,11 +88,6 @@ export default function LabDetail() {
     setTimeout(() => setShowConfetti(false), 5000);
   };
 
-  const handleJoinChat = () => {
-    toast.info("Chat feature coming soon!", {
-      description: "Connect with validators and contributors",
-    });
-  };
 
   return (
     <div className="min-h-screen pt-8 md:pt-12 pb-12 overflow-x-hidden">
@@ -161,10 +156,12 @@ export default function LabDetail() {
                 <DollarSign className="mr-2 h-5 w-5" />
                 Buy {lab.symbol}
               </Button>
-              <Button onClick={handleJoinChat} variant="outline" className="w-full h-12 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                <MessageSquare className="mr-2 h-5 w-5" />
-                Join Lab Chat
-              </Button>
+              <Link to={`/lab/${id}/chat`} className="block">
+                <Button variant="outline" className="w-full h-12 border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                  <MessageSquare className="mr-2 h-5 w-5" />
+                  Join Lab Chat
+                </Button>
+              </Link>
               <Link to="/staking" className="block">
                 <Button variant="secondary" className="w-full h-12">
                   Stake & Validate

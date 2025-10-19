@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Whitepaper from "./pages/Whitepaper";
 import About from "./pages/About";
 import LabDetail from "./pages/LabDetail";
+import LabChat from "./pages/LabChat";
 import Settings from "./pages/Settings";
 import DeployPool from "./pages/DeployPool";
 import NotFound from "./pages/NotFound";
@@ -108,6 +109,7 @@ const AppContent = () => {
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/about" element={<About />} />
           <Route path="/lab/:id" element={<LabDetail />} />
+          <Route path="/lab/:id/chat" element={<LabChat />} />
           <Route path="/settings" element={<Settings />} />
           <Route path="/deploy-pool" element={<DeployPool />} />
           <Route path="*" element={<NotFound />} />
