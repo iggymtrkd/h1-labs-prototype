@@ -1,9 +1,10 @@
-import { useState, useEffect } from "react";
+import { useState } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+import { BaseAccountProvider, useBaseAccount } from "@/hooks/useBaseAccount";
 import { Navigation } from "@/components/Navigation";
 import { PlatformSidebar } from "@/components/PlatformSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -20,7 +21,6 @@ import Settings from "./pages/Settings";
 import DeployPool from "./pages/DeployPool";
 import Terms from "./pages/Terms";
 import NotFound from "./pages/NotFound";
-import { toast } from "sonner";
 
 const queryClient = new QueryClient();
 
@@ -28,47 +28,17 @@ const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
-  const [isConnected, setIsConnected] = useState(() => {
-    return localStorage.getItem("wallet_connected") === "true";
-  });
-  const [address, setAddress] = useState<string>(() => {
-    return localStorage.getItem("wallet_address") || undefined;
-  });
-  const [labsBalance, setLabsBalance] = useState(() => {
-    return localStorage.getItem("labs_balance") || "8,320";
-  });
+  const { isConnected, address, labsBalance, connectWallet } = useBaseAccount();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
 
   const handleConnectWallet = async () => {
-    try {
-      // In production, this would use Coinbase SDK for Base wallet connection
-      // For now, we'll simulate the connection
-      const mockAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
-      const balance = "8,320";
-      
-      setAddress(mockAddress);
-      setIsConnected(true);
-      setLabsBalance(balance);
-      
-      // Persist to localStorage
-      localStorage.setItem("wallet_connected", "true");
-      localStorage.setItem("wallet_address", mockAddress);
-      localStorage.setItem("labs_balance", balance);
-      
-      toast.success("Wallet Connected!", {
-        description: `Connected to Base Sepolia testnet`,
-      });
-
-      // Use navigate instead of window.location
+    await connectWallet();
+    // Small delay to ensure state updates before navigation
+    setTimeout(() => {
       navigate("/dashboard");
-    } catch (error) {
-      console.error("Failed to connect wallet:", error);
-      toast.error("Failed to connect wallet", {
-        description: "Please try again",
-      });
-    }
+    }, 100);
   };
 
   return (
@@ -131,11 +101,13 @@ const App = () => {
   return (
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
-        <Toaster />
-        <Sonner />
-        <BrowserRouter>
-          <AppContent />
-        </BrowserRouter>
+        <BaseAccountProvider>
+          <Toaster />
+          <Sonner />
+          <BrowserRouter>
+            <AppContent />
+          </BrowserRouter>
+        </BaseAccountProvider>
       </TooltipProvider>
     </QueryClientProvider>
   );
