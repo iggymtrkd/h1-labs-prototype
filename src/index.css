@@ -9,49 +9,49 @@ All colors MUST be HSL.
 @layer base {
   :root {
     /* H1 Labs Design System - Dark Cyberpunk Theme */
-    --background: 240 10% 3.9%;
-    --foreground: 0 0% 98%;
+    --background: 220 50% 6%; /* #0A0E1A */
+    --foreground: 0 0% 96%; /* #F5F5F5 */
 
     --card: 240 10% 8%;
-    --card-foreground: 0 0% 98%;
+    --card-foreground: 0 0% 96%; /* #F5F5F5 */
 
     --popover: 240 10% 8%;
-    --popover-foreground: 0 0% 98%;
+    --popover-foreground: 0 0% 96%; /* #F5F5F5 */
 
     /* Neon Green Primary */
-    --primary: 80 95% 49%;
-    --primary-foreground: 240 10% 3.9%;
-    --primary-glow: 80 95% 70%;
+    --primary: 120 100% 62%; /* #3FFF5C */
+    --primary-foreground: 220 50% 6%; /* #0A0E1A */
+    --primary-glow: 120 100% 70%; /* #8BFF6B */
 
-    /* Purple Secondary */
-    --secondary: 263 97% 58%;
-    --secondary-foreground: 0 0% 98%;
-    --secondary-light: 263 90% 70%;
+    /* Neon Purple Secondary */
+    --secondary: 270 100% 60%; /* #7B2FF7 */
+    --secondary-foreground: 0 0% 96%; /* #F5F5F5 */
+    --secondary-light: 270 100% 70%;
 
     --muted: 240 10% 15%;
-    --muted-foreground: 240 5% 64.9%;
+    --muted-foreground: 210 20% 80%; /* #C8D1DA */
 
-    --accent: 263 97% 58%;
-    --accent-foreground: 0 0% 98%;
+    --accent: 270 100% 60%; /* #7B2FF7 */
+    --accent-foreground: 0 0% 96%; /* #F5F5F5 */
 
     --destructive: 0 84.2% 60.2%;
     --destructive-foreground: 0 0% 98%;
 
     --border: 240 10% 18%;
     --input: 240 10% 18%;
-    --ring: 80 95% 49%;
+    --ring: 120 100% 62%; /* #3FFF5C */
 
     --radius: 0.75rem;
 
     /* Gradients */
-    --gradient-primary: linear-gradient(135deg, hsl(80 95% 49%), hsl(80 95% 70%));
-    --gradient-secondary: linear-gradient(135deg, hsl(263 97% 58%), hsl(263 90% 70%));
-    --gradient-hero: linear-gradient(135deg, hsl(263 97% 58%), hsl(80 95% 49%));
+    --gradient-primary: linear-gradient(135deg, hsl(270 100% 60%), hsl(200 100% 50%), hsl(120 100% 62%)); /* Purple to Blue to Green */
+    --gradient-secondary: linear-gradient(135deg, hsl(270 100% 60%), hsl(270 100% 70%));
+    --gradient-hero: linear-gradient(135deg, hsl(270 100% 60%), hsl(200 100% 50%), hsl(120 100% 62%)); /* Purple to Blue to Green */
     --gradient-card: linear-gradient(180deg, hsl(240 10% 8%), hsl(240 10% 6%));
 
     /* Shadows */
-    --shadow-neon-green: 0 0 20px hsl(80 95% 49% / 0.3);
-    --shadow-neon-purple: 0 0 20px hsl(263 97% 58% / 0.3);
+    --shadow-neon-green: 0 0 20px hsl(120 100% 62% / 0.3);
+    --shadow-neon-purple: 0 0 20px hsl(270 100% 60% / 0.3);
     --shadow-card: 0 4px 20px hsl(0 0% 0% / 0.4);
 
     /* Animations */
@@ -66,8 +66,8 @@ All colors MUST be HSL.
 
   body {
     @apply bg-background text-foreground font-inter;
-    background-image: radial-gradient(circle at 20% 50%, hsl(263 97% 58% / 0.05) 0%, transparent 50%),
-                      radial-gradient(circle at 80% 80%, hsl(80 95% 49% / 0.05) 0%, transparent 50%);
+    background-image: radial-gradient(circle at 20% 50%, hsl(270 100% 60% / 0.05) 0%, transparent 50%),
+                      radial-gradient(circle at 80% 80%, hsl(120 100% 62% / 0.05) 0%, transparent 50%);
   }
 
   h1, h2, h3, h4, h5, h6 {
@@ -77,16 +77,16 @@ All colors MUST be HSL.
 
 @layer utilities {
   .glow-green {
-    text-shadow: 0 0 10px hsl(80 95% 49% / 0.5);
+    text-shadow: 0 0 10px hsl(120 100% 62% / 0.5);
   }
 
   .glow-purple {
-    text-shadow: 0 0 10px hsl(263 97% 58% / 0.5);
+    text-shadow: 0 0 10px hsl(270 100% 60% / 0.5);
   }
 
   .border-neon {
-    border-color: hsl(80 95% 49%);
-    box-shadow: 0 0 10px hsl(80 95% 49% / 0.3);
+    border-color: hsl(120 100% 62%);
+    box-shadow: 0 0 10px hsl(120 100% 62% / 0.3);
   }
 
   .card-hover {
