@@ -21,32 +21,6 @@ const mockLabs: Lab[] = [
     datasets: 1543,
   },
   {
-    id: "2",
-    name: "ArtProof",
-    symbol: "ART",
-    category: "Art",
-    description: "Art authentication and provenance verification datasets with C2PA compliance",
-    price: "0.028",
-    change24h: -3.2,
-    volume24h: "840K",
-    marketCap: "28M",
-    validators: 156,
-    datasets: 892,
-  },
-  {
-    id: "3",
-    name: "RoboTrace",
-    symbol: "ROBO",
-    category: "Robotics",
-    description: "Computer vision and robotics training datasets for autonomous systems",
-    price: "0.056",
-    change24h: 8.7,
-    volume24h: "2.1M",
-    marketCap: "67M",
-    validators: 312,
-    datasets: 2156,
-  },
-  {
     id: "4",
     name: "MedicalMind",
     symbol: "MEDM",
@@ -60,19 +34,6 @@ const mockLabs: Lab[] = [
     datasets: 3241,
   },
   {
-    id: "5",
-    name: "LegalLogic",
-    symbol: "LEGAL",
-    category: "Legal",
-    description: "Legal document analysis and case law datasets for AI-powered legal research",
-    price: "0.034",
-    change24h: 5.1,
-    volume24h: "670K",
-    marketCap: "31M",
-    validators: 189,
-    datasets: 1234,
-  },
-  {
     id: "6",
     name: "GenomeData",
     symbol: "GENE",
@@ -84,19 +45,6 @@ const mockLabs: Lab[] = [
     marketCap: "112M",
     validators: 567,
     datasets: 4123,
-  },
-  {
-    id: "7",
-    name: "GameSense",
-    symbol: "GAME",
-    category: "Gaming",
-    description: "NPC dialogue, procedural generation, and game AI training datasets",
-    price: "0.051",
-    change24h: 18.9,
-    volume24h: "1.8M",
-    marketCap: "54M",
-    validators: 278,
-    datasets: 1876,
   },
   {
     id: "8",
@@ -125,6 +73,32 @@ const mockLabs: Lab[] = [
     datasets: 892,
   },
   {
+    id: "12",
+    name: "GovData",
+    symbol: "GOV",
+    category: "Government",
+    description: "Public sector AI datasets for policy analysis and citizen services with FedRAMP compliance",
+    price: "0.058",
+    change24h: 9.6,
+    volume24h: "1.7M",
+    marketCap: "62M",
+    validators: 298,
+    datasets: 1876,
+  },
+  {
+    id: "5",
+    name: "LegalLogic",
+    symbol: "LEGAL",
+    category: "Legal",
+    description: "Legal document analysis and case law datasets for AI-powered legal research",
+    price: "0.034",
+    change24h: 5.1,
+    volume24h: "670K",
+    marketCap: "31M",
+    validators: 189,
+    datasets: 1234,
+  },
+  {
     id: "10",
     name: "EduLab",
     symbol: "EDU",
@@ -136,6 +110,19 @@ const mockLabs: Lab[] = [
     marketCap: "42M",
     validators: 234,
     datasets: 1654,
+  },
+  {
+    id: "3",
+    name: "RoboTrace",
+    symbol: "ROBO",
+    category: "Robotics",
+    description: "Computer vision and robotics training datasets for autonomous systems",
+    price: "0.056",
+    change24h: 8.7,
+    volume24h: "2.1M",
+    marketCap: "67M",
+    validators: 312,
+    datasets: 2156,
   },
   {
     id: "11",
@@ -150,13 +137,39 @@ const mockLabs: Lab[] = [
     validators: 198,
     datasets: 1432,
   },
+  {
+    id: "7",
+    name: "GameSense",
+    symbol: "GAME",
+    category: "Gaming",
+    description: "NPC dialogue, procedural generation, and game AI training datasets",
+    price: "0.051",
+    change24h: 18.9,
+    volume24h: "1.8M",
+    marketCap: "54M",
+    validators: 278,
+    datasets: 1876,
+  },
+  {
+    id: "2",
+    name: "ArtProof",
+    symbol: "ART",
+    category: "Art",
+    description: "Art authentication and provenance verification datasets with C2PA compliance",
+    price: "0.028",
+    change24h: -3.2,
+    volume24h: "840K",
+    marketCap: "28M",
+    validators: 156,
+    datasets: 892,
+  },
 ];
 
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
 
-  const categories = ["all", "Healthcare", "Art", "Gaming", "Robotics", "Legal", "Finance", "Defense", "Education", "Climate"];
+  const categories = ["all", "Healthcare", "Finance", "Defense", "Government", "Legal", "Education", "Robotics", "Climate", "Gaming", "Art"];
 
   const filteredLabs = mockLabs.filter((lab) => {
     const matchesSearch = lab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -180,11 +193,11 @@ export default function Dashboard() {
         <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-8">
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Total Market Cap</p>
-            <p className="text-2xl font-bold text-primary">$632M</p>
+            <p className="text-2xl font-bold text-primary">$694M</p>
           </div>
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">24h Volume</p>
-            <p className="text-2xl font-bold text-secondary">$18.2M</p>
+            <p className="text-2xl font-bold text-secondary">$19.9M</p>
           </div>
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Active Labs</p>
@@ -192,7 +205,7 @@ export default function Dashboard() {
           </div>
           <div className="bg-gradient-card p-4 rounded-xl border border-border">
             <p className="text-sm text-muted-foreground mb-1">Total Validators</p>
-            <p className="text-2xl font-bold text-secondary">3,192</p>
+            <p className="text-2xl font-bold text-secondary">3,490</p>
           </div>
         </div>
 
