@@ -37,6 +37,9 @@ const App = () => {
       toast.success("Wallet Connected!", {
         description: `Connected to Base Sepolia testnet`,
       });
+
+      // Redirect to dashboard after connection
+      window.location.href = "/dashboard";
     } catch (error) {
       console.error("Failed to connect wallet:", error);
       toast.error("Failed to connect wallet", {

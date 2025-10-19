@@ -5,7 +5,7 @@ export const MobileBottomNav = () => {
   const location = useLocation();
 
   const links = [
-    { name: "Home", path: "/dashboard", icon: Home },
+    { name: "Marketplace", path: "/dashboard", icon: Home },
     { name: "Create Labs", path: "/staking", icon: Rocket },
     { name: "dApp Store", path: "/apps", icon: Store },
     { name: "About", path: "/about", icon: Info },
