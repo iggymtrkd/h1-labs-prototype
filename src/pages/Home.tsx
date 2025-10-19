@@ -102,8 +102,7 @@ export default function Home({ onConnect }: HomeProps) {
                 Connect Your Wallet
               </h3>
               <p className="text-muted-foreground pl-8">
-                <strong>Why:</strong> Blockchain integration ensures transparent ownership and provenance tracking.<br/>
-                <strong>How:</strong> Connect your Base wallet to access the H1 Labs platform and participate in the data economy.
+                Connect your Base wallet (Base Sepolia testnet) to access the H1 Labs platform and participate in the data economy.
               </p>
             </div>
 
