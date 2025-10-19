@@ -1,5 +1,5 @@
 import { Link } from "react-router-dom";
-import { TrendingUp, TrendingDown, Users, Database, ExternalLink } from "lucide-react";
+import { TrendingUp, TrendingDown, Users, Database, MessageCircle } from "lucide-react";
 import { Card } from "@/components/ui/card";
 import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
@@ -88,9 +88,11 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
           </Button>
         </Link>
         {variant === "market" && (
-          <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-            <ExternalLink className="h-4 w-4" />
-          </Button>
+          <Link to={`/lab/${lab.id}/chat`}>
+            <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+              <MessageCircle className="h-4 w-4" />
+            </Button>
+          </Link>
         )}
       </div>
     </Card>
