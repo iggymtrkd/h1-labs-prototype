@@ -112,7 +112,7 @@ export default function Staking({ labsBalance = "10,000" }: StakingProps) {
       
       <div className="container mx-auto px-4 max-w-6xl overflow-x-hidden">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 glow-green">Create Labs</h1>
+          <h1 className="text-4xl font-bold mb-4 glow-green">Launch a Lab</h1>
           <p className="text-xl text-muted-foreground">
             Stake $LABS to unlock lab ownership and earn rewards
           </p>
