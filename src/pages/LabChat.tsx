@@ -33,34 +33,34 @@ const labChatData = {
     messages: [
       {
         id: 1,
-        user: "L_Speak_Whale",
-        avatar: "LW",
-        message: "Are you there? I'm busy yesterday.",
-        time: "10:50 AM",
-        color: "hsl(80 95% 49%)",
+        user: "Dr_Chen",
+        avatar: "DC",
+        message: "The new cardiac imaging dataset is incredible. Accuracy improved by 15%!",
+        time: "10:32 AM",
+        color: "hsl(263 97% 58%)",
       },
       {
         id: 2,
-        user: "Necro_mancer",
-        avatar: "NM",
-        message: "Hello?",
-        time: "10:50 AM",
+        user: "CardioResearcher",
+        avatar: "CR",
+        message: "Just analyzed the arrhythmia detection models. Results are promising 🫀",
+        time: "10:45 AM",
         color: "hsl(240 10% 18%)",
       },
       {
         id: 3,
-        user: "DataDragon",
-        avatar: "DD",
-        message: "Okay...Do we have a deal?",
-        time: "10:50 AM",
-        color: "hsl(240 10% 18%)",
+        user: "TokenTrader_Pro",
+        avatar: "TT",
+        message: "CARDIO pumping! Up 127% this week. Partnership announcement incoming?",
+        time: "11:02 AM",
+        color: "hsl(80 95% 49%)",
       },
       {
         id: 4,
-        user: "Necro_mancer",
-        avatar: "NM",
-        message: "My announcement title\n\nTempor incididunt ut labore et dolore magna aliqua.\n\nLorem ipsum dolor sit amet, consectetur adipiscing elit, sed do eiusmod tempor incididunt ut labore et dolore magna aliqua.",
-        time: "10:50 AM",
+        user: "Prof_Kim",
+        avatar: "PK",
+        message: "Major Update: Phase 3 Clinical Trial Data Now Available\n\nOur collaboration with Stanford Medical has yielded groundbreaking results. The new ECG analysis dataset includes 50,000 annotated cases with expert validation.\n\nThis represents the largest publicly available cardiac dataset for AI training.",
+        time: "11:15 AM",
         color: "hsl(263 97% 58%)",
         isAnnouncement: true,
       },
@@ -68,8 +68,8 @@ const labChatData = {
         id: 5,
         user: "HealthBot",
         avatar: "HB",
-        message: "Hi there!",
-        time: "1:03:32 AM",
+        message: "Thanks for the update! When does the dataset go live?",
+        time: "11:18 AM",
         color: "hsl(80 95% 49%)",
         align: "right",
       },
@@ -114,7 +114,7 @@ const labChatData = {
         id: 1,
         user: "ArtCollector_99",
         avatar: "AC",
-        message: "Just validated a Picasso dataset. The accuracy is incredible!",
+        message: "Just validated a Monet with the new authentication AI. 99.8% confidence score!",
         time: "9:15 AM",
         color: "hsl(280 75% 58%)",
       },
@@ -122,16 +122,24 @@ const labChatData = {
         id: 2,
         user: "GalleryExpert",
         avatar: "GE",
-        message: "New provenance tracking module is live",
-        time: "9:42 AM",
-        color: "hsl(80 95% 49%)",
-        isAnnouncement: true,
+        message: "ART tokens consolidating nicely. Floor price holding strong at 0.028 ETH 📊",
+        time: "9:28 AM",
+        color: "hsl(240 10% 18%)",
       },
       {
         id: 3,
+        user: "Isabella_Romano",
+        avatar: "IR",
+        message: "Provenance Tracking 2.0 Launch\n\nExcited to announce our partnership with Christie's and Sotheby's. The new blockchain-verified provenance system goes live next week.\n\nThis will revolutionize art authentication.",
+        time: "9:42 AM",
+        color: "hsl(280 75% 58%)",
+        isAnnouncement: true,
+      },
+      {
+        id: 4,
         user: "MuseumCurator",
         avatar: "MC",
-        message: "Looking forward to the Renaissance dataset release!",
+        message: "The Renaissance dataset is exactly what we needed for our exhibition!",
         time: "11:20 AM",
         color: "hsl(240 10% 18%)",
       },
@@ -175,7 +183,7 @@ const labChatData = {
         id: 1,
         user: "RoboDev_42",
         avatar: "RD",
-        message: "New obstacle detection dataset just dropped. Testing now.",
+        message: "Autonomous navigation update: New obstacle detection dataset with 2M labeled images just dropped 🤖",
         time: "2:30 PM",
         color: "hsl(200 85% 58%)",
       },
@@ -183,15 +191,23 @@ const labChatData = {
         id: 2,
         user: "AI_Engineer",
         avatar: "AE",
-        message: "The LIDAR data quality is phenomenal 🚀",
+        message: "The LIDAR point cloud quality is phenomenal. Edge cases finally covered!",
+        time: "2:45 PM",
+        color: "hsl(240 10% 18%)",
+      },
+      {
+        id: 3,
+        user: "TokenWhale_88",
+        avatar: "TW",
+        message: "ROBO just broke resistance at 0.055! Volume up 340% 🚀📈",
         time: "3:15 PM",
         color: "hsl(80 95% 49%)",
       },
       {
-        id: 3,
+        id: 4,
         user: "SafetyFirst",
         avatar: "SF",
-        message: "All datasets passed safety validation ✓",
+        message: "All safety validation tests passed. ISO 26262 compliant ✓",
         time: "4:45 PM",
         color: "hsl(240 10% 18%)",
       },
@@ -236,33 +252,41 @@ const labChatData = {
         id: 1,
         user: "Dr_Wilson",
         avatar: "DW",
-        message: "The new diagnostic reasoning dataset is a game changer for rare diseases.",
+        message: "The new diagnostic reasoning dataset is a game changer for rare diseases. Already seeing 92% accuracy on zebra diagnoses!",
         time: "8:00 AM",
         color: "hsl(150 80% 48%)",
       },
       {
         id: 2,
-        user: "ClinicDirector",
-        avatar: "CD",
-        message: "Partnership announcement with Mayo Clinic coming soon!",
+        user: "MedResearcher",
+        avatar: "MR",
+        message: "MEDM price action looking healthy. Broke through $0.08 resistance 💊📈",
+        time: "9:15 AM",
+        color: "hsl(240 10% 18%)",
+      },
+      {
+        id: 3,
+        user: "Dr_Zhang",
+        avatar: "DZ",
+        message: "Mayo Clinic Partnership Announcement\n\nWe're thrilled to announce our collaboration with Mayo Clinic to develop the world's largest annotated medical imaging dataset.\n\n15,000+ radiology cases with expert annotations. Launch date: March 1st.",
         time: "10:30 AM",
         color: "hsl(150 80% 48%)",
         isAnnouncement: true,
       },
       {
-        id: 3,
-        user: "MedResearcher",
-        avatar: "MR",
-        message: "Can we get more cardiology case studies in the next batch?",
-        time: "2:15 PM",
+        id: 4,
+        user: "ClinicDirector",
+        avatar: "CD",
+        message: "This is huge for medical AI! Can we get early access for our hospital network?",
+        time: "10:45 AM",
         color: "hsl(240 10% 18%)",
       },
       {
-        id: 4,
+        id: 5,
         user: "AI_Medic",
         avatar: "AM",
-        message: "Absolutely! Adding 500 new cases this week.",
-        time: "2:18 PM",
+        message: "Early access applications open next week. Priority for token holders 🏥",
+        time: "10:52 AM",
         color: "hsl(80 95% 49%)",
         align: "right",
       },
@@ -308,23 +332,31 @@ const labChatData = {
         id: 1,
         user: "AttorneySmith",
         avatar: "AS",
-        message: "The contract analysis dataset saved me 20 hours this week.",
+        message: "The contract analysis AI just saved me 20 hours on a M&A deal. This is incredible! ⚖️",
         time: "1:45 PM",
         color: "hsl(30 85% 55%)",
       },
       {
         id: 2,
+        user: "LegalWhale",
+        avatar: "LW",
+        message: "LEGAL tokens up 45% today. Smart contracts integration news driving the pump 📊",
+        time: "2:20 PM",
+        color: "hsl(240 10% 18%)",
+      },
+      {
+        id: 3,
         user: "LegalTech_Pro",
         avatar: "LP",
-        message: "New Supreme Court rulings added to the database 📚",
+        message: "2024 Supreme Court rulings now in the database. 500+ new precedent cases indexed 📚",
         time: "3:00 PM",
         color: "hsl(80 95% 49%)",
       },
       {
-        id: 3,
+        id: 4,
         user: "ParalegalMike",
         avatar: "PM",
-        message: "Anyone working on IP law datasets?",
+        message: "Anyone working on IP law datasets? Need patent case analysis for a client.",
         time: "4:30 PM",
         color: "hsl(240 10% 18%)",
       },
@@ -368,32 +400,40 @@ const labChatData = {
         id: 1,
         user: "Geneticist_PhD",
         avatar: "GP",
-        message: "The new CRISPR dataset integration is brilliant!",
+        message: "The new CRISPR dataset integration is brilliant! Gene editing accuracy prediction at 97.3% 🧬",
         time: "7:30 AM",
         color: "hsl(330 85% 58%)",
       },
       {
         id: 2,
+        user: "CryptoMed_Investor",
+        avatar: "CI",
+        message: "GENE just hit new ATH! Price discovery mode after the NIH partnership leak 🚀",
+        time: "8:15 AM",
+        color: "hsl(240 10% 18%)",
+      },
+      {
+        id: 3,
         user: "BioInformatics",
         avatar: "BI",
-        message: "Major update: 10,000 new genome sequences validated ✨",
+        message: "Genome Database Milestone\n\n10,000 new whole genome sequences now validated and available! Includes rare disease variants and pharmacogenomic data.\n\nThis is the largest publicly available genomic dataset for precision medicine AI.",
         time: "9:00 AM",
         color: "hsl(330 85% 58%)",
         isAnnouncement: true,
       },
       {
-        id: 3,
+        id: 4,
         user: "PrivacyOfficer",
         avatar: "PO",
-        message: "All data meets HIPAA and GDPR compliance standards.",
+        message: "All genomic data meets HIPAA, GDPR, and GINA compliance standards. Privacy-first architecture ✓",
         time: "11:45 AM",
         color: "hsl(240 10% 18%)",
       },
       {
-        id: 4,
+        id: 5,
         user: "LabTech_Emma",
         avatar: "LE",
-        message: "Working on rare disease variant database. ETA next month!",
+        message: "Working on rare disease variant database. 2,500 ultra-rare mutations cataloged. ETA March!",
         time: "2:00 PM",
         color: "hsl(80 95% 49%)",
       },
@@ -502,7 +542,7 @@ export default function LabChat() {
                     id: 101,
                     user: "Holder Alpha",
                     avatar: "HA",
-                    message: "Great to see the token price moving up! 🚀",
+                    message: "Price action looking strong! Up 127% this week. New partnerships definitely driving momentum 🚀",
                     time: "2:15 PM",
                     color: "hsl(263 97% 58%)",
                     isAnnouncement: false,
@@ -511,7 +551,7 @@ export default function LabChat() {
                     id: 102,
                     user: "Holder Beta",
                     avatar: "HB",
-                    message: "Should we discuss the upcoming governance vote?",
+                    message: "Should we discuss the governance vote for the treasury allocation? $2M for new dataset partnerships.",
                     time: "2:18 PM",
                     color: "hsl(80 95% 49%)",
                     isAnnouncement: false,
@@ -520,7 +560,7 @@ export default function LabChat() {
                     id: 103,
                     user: "Holder Gamma",
                     avatar: "HG",
-                    message: "I'm voting yes on the treasury allocation proposal.",
+                    message: "I'm voting yes. The ROI projections are conservative at 3x, but could easily be 10x if adoption accelerates.",
                     time: "2:22 PM",
                     color: "hsl(240 10% 18%)",
                     isAnnouncement: false,
@@ -529,7 +569,7 @@ export default function LabChat() {
                     id: 104,
                     user: "Holder Alpha",
                     avatar: "HA",
-                    message: "Agreed. The ROI projections look solid.",
+                    message: "Agreed. Plus the tokenomics update should reduce sell pressure by 40%.",
                     time: "2:25 PM",
                     color: "hsl(263 97% 58%)",
                     isAnnouncement: false,
@@ -539,46 +579,46 @@ export default function LabChat() {
             ).map((msg) => (
               <div
                 key={msg.id}
-                className={`flex gap-3 ${msg.align === "right" ? "justify-end" : ""}`}
+                className={`flex gap-2 ${msg.align === "right" ? "justify-end" : ""}`}
               >
                 {msg.align !== "right" && (
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarFallback className="text-xs">{msg.avatar}</AvatarFallback>
                   </Avatar>
                 )}
-                <div className={`flex-1 ${msg.align === "right" ? "max-w-md" : ""}`}>
+                <div className={`flex flex-col ${msg.align === "right" ? "items-end max-w-[75%]" : "items-start max-w-[75%]"}`}>
                   {msg.align !== "right" && (
-                    <div className="flex items-baseline gap-2 mb-1">
-                      <span className="font-semibold text-sm" style={{ color: msg.color }}>
+                    <div className="flex items-baseline gap-2 mb-1 px-1">
+                      <span className="font-semibold text-xs" style={{ color: msg.color }}>
                         {msg.user}
                       </span>
-                      <span className="text-xs text-muted-foreground">{msg.time}</span>
+                      <span className="text-[10px] text-muted-foreground">{msg.time}</span>
                     </div>
                   )}
                   <div
                     className={`${
                       msg.isAnnouncement
-                        ? "bg-primary/20 border border-primary/30 p-4 rounded-lg"
+                        ? "bg-primary/10 border border-primary/30 p-4 rounded-2xl w-full"
                         : msg.align === "right"
-                        ? "bg-primary text-primary-foreground px-4 py-2 rounded-lg inline-block"
-                        : ""
+                        ? "bg-primary text-primary-foreground px-4 py-2.5 rounded-[18px] rounded-tr-sm shadow-sm"
+                        : "bg-muted px-4 py-2.5 rounded-[18px] rounded-tl-sm shadow-sm"
                     }`}
                   >
-                    <p className="text-sm whitespace-pre-wrap">{msg.message}</p>
+                    <p className="text-[15px] leading-[1.4] whitespace-pre-wrap">{msg.message}</p>
                     {msg.isAnnouncement && (
-                      <Button variant="link" className="text-primary px-0 mt-2 h-auto">
+                      <Button variant="link" className="text-primary px-0 mt-2 h-auto text-sm">
                         Show more
                       </Button>
                     )}
                   </div>
                   {msg.align === "right" && (
-                    <div className="text-xs text-muted-foreground text-right mt-1">
+                    <div className="text-[10px] text-muted-foreground text-right mt-1 px-1">
                       {msg.time}
                     </div>
                   )}
                 </div>
                 {msg.align === "right" && (
-                  <Avatar className="h-10 w-10">
+                  <Avatar className="h-8 w-8 flex-shrink-0">
                     <AvatarFallback className="text-xs">{msg.avatar}</AvatarFallback>
                   </Avatar>
                 )}
