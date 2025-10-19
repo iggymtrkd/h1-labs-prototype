@@ -1,4 +1,5 @@
 # **H1 Labs: The Human-First Protocol**  
+> Status: Aligned with smart contracts as of 2025-10-19
 ### *Advancing AI through provable blockchain training.*
 
 ---
@@ -77,7 +78,7 @@ AI’s greatest weakness today is centralized control over data and labor. Block
 ### **5. Economic Integrity**
 Onchain token mechanics transform the network into a self-balancing economy:
 - Demand for quality datasets drives token buybacks.
-- Lab creation burns $LABS, increasing scarcity.
+- Lab creation does not burn $LABS in the current implementation.
 - Contributors see transparent, automated payouts.
 This model produces a fair, measurable, and decentralized market for intelligence creation.
 
@@ -620,15 +621,14 @@ H1Diamond.sol
 **Core Contracts:**
 | Contract | Description |
 |-----------|-------------|
-| LABSToken.sol | ERC-20 governance and staking token |
+| LABSToken.sol | ERC-20 governance token |
 | H1Diamond.sol | Proxy routing to facets |
-| LABSCoreFacet.sol | Manages staking, rewards, and Lab creation |
-| LabRegistry.sol | Stores Lab data (owner, domain, tokens) |
-| H1TokenFactory.sol | Deploys ERC-20 H1 tokens for each Lab |
+| LABSCoreFacet.sol | Manages staking and Lab creation (auto-deploys LabVault) |
+| LabVault.sol | Per-lab ERC20 shares; the H1 token auto-deployed at lab creation |
 
 **Core Logic:**
-- `stakeLABS()` locks LABS and mints a LabSlot (ERC-721).
-- `createLab(name, domain)` deploys a new H1 token contract.
+- `stakeLABS(amount)` transfers LABS into the diamond and updates the caller's staked balance (no NFT is minted at stake-time).
+- `createLab(name, symbol, domain)` auto-deploys a LabVault which serves as the lab's H1 token.
 - Each Lab can issue domain datasets off-chain (for UI prototype).
 
 **UI Prototype:**
@@ -650,7 +650,7 @@ H1Diamond.sol
  └─ TreasuryFacet.sol
 ```
 
-**Facets and Roles:**
+**Facets and Roles (planned):**
 | Facet | Role | Example Function |
 |--------|------|------------------|
 | ProvenanceFacet | Record dataset hashes and validator IDs | `logDataset(hash, validator, domain)` |
@@ -659,16 +659,22 @@ H1Diamond.sol
 | ComplianceFacet | Apply HIPAA, GDPR, C2PA rules | `enforceCompliance(labId, domain)` |
 | TreasuryFacet | Manage buyback / staking pool | `autoBuyback(amount)` |
 
-**Revenue Split Logic:**
+**Revenue Split Logic (current implementation uses payable ETH):**
 ```solidity
-function distributeRevenue(uint256 labId, uint256 amount) external {
+function distributeRevenue(uint256 labId) external payable {
+    uint256 amount = msg.value;
     uint256 labOwnerShare = (amount * 50) / 100;
     uint256 h1PoolShare   = (amount * 25) / 100;
-    uint256 h1Buyback     = (amount * 25) / 100;
+    uint256 buybackBudget = amount - labOwnerShare - h1PoolShare;
 
+    // 50% to lab owner (ETH)
     payable(labs[labId].owner).transfer(labOwnerShare);
-    H1Token(labs[labId].token).transferRevenue(h1PoolShare);
-    treasury.buybackLABS(h1Buyback);
+
+    // 25% to protocol treasury (ETH custody for H1 pool)
+    payable(protocolTreasury).transfer(h1PoolShare);
+
+    // 25% retained in contract for future buyback execution (no automatic buyback yet)
+    // buybackBudget remains held until a future function executes buybacks
 }
 ```
 

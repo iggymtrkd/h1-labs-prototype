@@ -1,4 +1,5 @@
 ## H1 Labs Smart Contract Structure
+> Status: Aligned with smart contracts as of 2025-10-19
 
 This document summarizes the complete on-chain scaffolding, explains why each facet exists, outlines every core contract and its functions, and shows how they connect. The diamond-standard (proxy) contracts are covered briefly since they follow EIP-2535 conventions.
 

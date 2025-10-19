@@ -1,4 +1,5 @@
 ## Appendix Collection — H1 Labs Protocol
+> Status: Aligned with smart contracts as of 2025-10-19
 
 This document restores and compiles all appendix materials lost from the main whitepaper, ensuring a complete and continuous record of the **H1 Labs** technical, economic, and creative architecture.
 
@@ -28,18 +29,17 @@ H1Diamond.sol
  └─ LABSCoreFacet.sol
 ```
 
-**Core Contracts:**
+**Core Contracts (current):**
 | Contract | Description |
 |-----------|-------------|
-| LABSToken.sol | ERC-20 governance + staking token |
+| LABSToken.sol | ERC-20 governance token |
 | H1Diamond.sol | Core proxy routing to facets |
-| LABSCoreFacet.sol | Handles staking, rewards, Lab creation |
-| LabRegistry.sol | Tracks created Labs |
-| H1TokenFactory.sol | Deploys H1 tokens for each Lab |
+| LABSCoreFacet.sol | Handles staking and Lab creation (auto-deploys LabVault) |
+| LabVault.sol | Per-lab ERC20 shares; the H1 token auto-deployed at lab creation |
 
 **Logic Flow:**
-- `stakeLABS(amount)` locks LABS and mints LabSlot (ERC-721).
-- `createLab(name, domain)` deploys H1 Token via Factory.
+- `stakeLABS(amount)` transfers LABS into the diamond and updates the caller's staked balance (no NFT minted at stake-time).
+- `createLab(name, symbol, domain)` auto-deploys the LabVault (the lab’s H1 token) with defaults.
 
 **Prototype UI:** Wallet connect, staking dashboard, Lab creation wizard.
 
@@ -67,15 +67,16 @@ H1Diamond.sol
 | ComplianceFacet | Domain-specific rules | `enforceCompliance(labId, domain)` |
 | TreasuryFacet | Buybacks and staking rewards | `autoBuyback(amount)` |
 
-**Example Revenue Distribution:**
+**Example Revenue Distribution (current, payable ETH):**
 ```solidity
-function distributeRevenue(uint256 labId, uint256 amount) external {
+function distributeRevenue(uint256 labId) external payable {
+    uint256 amount = msg.value;
     uint256 labOwner = (amount * 50) / 100;
     uint256 h1Pool   = (amount * 25) / 100;
-    uint256 buyback  = (amount * 25) / 100;
+    uint256 buyback  = amount - labOwner - h1Pool;
     payable(labs[labId].owner).transfer(labOwner);
-    H1Token(labs[labId].token).transferRevenue(h1Pool);
-    treasury.buybackLABS(buyback);
+    payable(protocolTreasury).transfer(h1Pool);
+    // buyback is retained for future execution (no automatic buyback yet)
 }
 ```
 

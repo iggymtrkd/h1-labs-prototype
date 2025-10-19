@@ -1,4 +1,5 @@
 ## Prompt for Lovable — H1 Labs Frontend Prototype & Roadmap
+> Status: Aligned with smart contracts as of 2025-10-19
 
 We are building the **frontend for H1 Labs**, a protocol that advances AI through **provable blockchain training and data enrichment**.
 

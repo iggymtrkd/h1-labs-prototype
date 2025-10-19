@@ -1,4 +1,7 @@
 ## H1 Labs — H1 Lending Vaults (Perpetuals & Stability Architecture)
+> Status: Concept doc; not implemented as of 2025-10-19
+
+> Note: Conceptual design — not implemented in current smart contracts. Facets like H1LendingFacet, CreditFacet, ReputationFacet, StabilityFacet are drafts/planned and not deployed.
 
 ### 🧭 Overview
 Early in the H1 Labs ecosystem, before datasets and applications begin producing consistent revenue, **H1 tokens** face natural volatility due to limited liquidity and uncertainty of utility value. To ensure sustainable price discovery and healthy participation, we introduce the **H1 Lending Vaults** — a mechanism designed to stabilize token liquidity while maintaining **U.S.-compliant, non-yield utility rewards**.

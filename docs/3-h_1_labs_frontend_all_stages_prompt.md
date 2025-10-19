@@ -1,4 +1,5 @@
 ## Prompt for Lovable — H1 Labs Frontend Prototype & Roadmap
+> Status: Aligned with smart contracts as of 2025-10-19
 
 We are building the **frontend for H1 Labs**, a protocol that advances AI through **provable blockchain training and data enrichment**. The frontend must evolve in three stages — **Prototype**, **MVP**, and **Post-MVP** — each reflecting the Diamond-based smart contract architecture already described in the whitepaper.
 
@@ -34,7 +35,7 @@ Style references: Base UI aesthetic, futuristic medical tech theme (neon blue/wh
    - Data from testnet contracts or local JSON.
 
 4. **Staking Interface**
-   - Stake $LABS → mint LabSlot NFT → issue H1 token.
+   - Stake $LABS (no NFT minted at stake-time in current contracts) → Labs can create H1 token via LabVault.
    - Integrates testnet LABS + H1 contracts.
 
 5. **H1 Tokens Marketplace (Mock)**
