@@ -57,14 +57,14 @@ export default function Staking({ labsBalance = "10,000" }: StakingProps) {
   };
 
   return (
-    <div className="min-h-screen pt-8 md:pt-12 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12 overflow-x-hidden">
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={500} />}
       
-      <div className="container mx-auto px-4 max-w-6xl">
+      <div className="container mx-auto px-4 max-w-6xl overflow-x-hidden">
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 glow-green">Stake $LABS</h1>
+          <h1 className="text-4xl font-bold mb-4 glow-green">Create Labs</h1>
           <p className="text-xl text-muted-foreground">
-            Stake your tokens to unlock lab ownership and earn rewards
+            Stake $LABS to unlock lab ownership and earn rewards
           </p>
         </div>
 

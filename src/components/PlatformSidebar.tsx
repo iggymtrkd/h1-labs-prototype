@@ -14,7 +14,7 @@ export const PlatformSidebar = ({ address, labsBalance }: PlatformSidebarProps) 
 
   const mainLinks = [
     { name: "Marketplace", path: "/dashboard", icon: Home },
-    { name: "Create Labs", path: "/staking", icon: Rocket },
+    { name: "Launchpad", path: "/staking", icon: Rocket },
     { name: "dApp Store", path: "/apps", icon: Store },
     { name: "About", path: "/about", icon: Info },
     { name: "Whitepaper", path: "/whitepaper", icon: BookOpen },
@@ -29,7 +29,7 @@ export const PlatformSidebar = ({ address, labsBalance }: PlatformSidebarProps) 
 
   return (
     <aside
-      className={`hidden md:flex flex-col bg-card border-r border-border transition-all duration-300 h-screen ${
+      className={`hidden md:flex flex-col bg-card border-r border-border transition-all duration-300 h-screen fixed left-0 top-0 z-40 ${
         collapsed ? "w-20" : "w-64"
       }`}
     >

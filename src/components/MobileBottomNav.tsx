@@ -6,7 +6,7 @@ export const MobileBottomNav = () => {
 
   const links = [
     { name: "Marketplace", path: "/dashboard", icon: Home },
-    { name: "Create Labs", path: "/staking", icon: Rocket },
+    { name: "Launchpad", path: "/staking", icon: Rocket },
     { name: "dApp Store", path: "/apps", icon: Store },
     { name: "About", path: "/about", icon: Info },
     { name: "Whitepaper", path: "/whitepaper", icon: BookOpen },

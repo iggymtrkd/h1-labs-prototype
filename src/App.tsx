@@ -15,6 +15,7 @@ import Profile from "./pages/Profile";
 import Whitepaper from "./pages/Whitepaper";
 import About from "./pages/About";
 import LabDetail from "./pages/LabDetail";
+import Settings from "./pages/Settings";
 import NotFound from "./pages/NotFound";
 import { toast } from "sonner";
 
@@ -69,7 +70,7 @@ const App = () => {
             )}
 
             {/* Main content area */}
-            <main className={`flex-1 ${isConnected ? "mb-20 md:mb-0" : ""}`}>
+            <main className={`flex-1 ${isConnected ? "mb-20 md:mb-0 md:ml-64" : ""}`}>
               <Routes>
                 <Route path="/" element={<Home onConnect={handleConnectWallet} />} />
                 <Route path="/dashboard" element={<Dashboard />} />
@@ -82,7 +83,7 @@ const App = () => {
                 <Route path="/whitepaper" element={<Whitepaper />} />
                 <Route path="/about" element={<About />} />
                 <Route path="/lab/:id" element={<LabDetail />} />
-                <Route path="/settings" element={<NotFound />} />
+                <Route path="/settings" element={<Settings />} />
                 <Route path="*" element={<NotFound />} />
               </Routes>
             </main>

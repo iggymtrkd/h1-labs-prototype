@@ -138,8 +138,15 @@ export default function Profile({ address: walletAddress, labsBalance: userLabsB
   const nextReward = "Lab Alchemist II";
 
   return (
-    <div className="min-h-screen pt-8 md:pt-12 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12 overflow-x-hidden">
       <div className="container mx-auto px-4 max-w-7xl">
+        {/* Edit Profile Button */}
+        <div className="flex justify-end mb-4">
+          <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+            Edit Profile
+          </Button>
+        </div>
+
         {/* Profile Header */}
         <Card className="p-8 mb-8 bg-gradient-card border-border">
           <div className="flex flex-col lg:flex-row gap-6">

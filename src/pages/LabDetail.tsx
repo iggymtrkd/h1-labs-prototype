@@ -95,10 +95,10 @@ export default function LabDetail() {
   };
 
   return (
-    <div className="min-h-screen pt-8 md:pt-12 pb-12">
+    <div className="min-h-screen pt-8 md:pt-12 pb-12 overflow-x-hidden">
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={300} />}
       
-      <div className="container mx-auto px-4 max-w-7xl">
+      <div className="container mx-auto px-4 max-w-7xl overflow-x-hidden">
         {/* Back Button */}
         <Link to="/dashboard">
           <Button variant="ghost" className="mb-6">
