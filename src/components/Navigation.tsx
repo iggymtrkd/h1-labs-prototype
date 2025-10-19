@@ -83,7 +83,7 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
           {/* Wallet Connection */}
           <div className="hidden md:flex items-center gap-4">
             <Button onClick={onConnect} className="bg-gradient-primary border-0 hover:opacity-90">
-              <Wallet className="mr-2 h-4 w-4" />
+              <Wallet className="mr-2 h-5 w-5" />
               Sign In
             </Button>
           </div>
@@ -130,7 +130,7 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
             })}
             <div className="mt-4 px-4">
               <Button onClick={onConnect} className="w-full bg-gradient-primary border-0">
-                <Wallet className="mr-2 h-4 w-4" />
+                <Wallet className="mr-2 h-5 w-5" />
                 Sign In
               </Button>
             </div>

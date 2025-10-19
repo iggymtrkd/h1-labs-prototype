@@ -240,7 +240,7 @@ export default function Home({ onConnect }: HomeProps) {
                 className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
                 onClick={onConnect}
               >
-                <Wallet className="mr-2 h-5 w-5" />
+                <Wallet className="mr-2 h-6 w-6" />
                 Sign In
               </Button>
               <Link to="/whitepaper">
