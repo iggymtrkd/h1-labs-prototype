@@ -3,7 +3,7 @@ import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
-import { BrowserRouter, Routes, Route, useNavigate } from "react-router-dom";
+import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { Navigation } from "@/components/Navigation";
 import { PlatformSidebar } from "@/components/PlatformSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -25,6 +25,8 @@ const queryClient = new QueryClient();
 
 const AppContent = () => {
   const navigate = useNavigate();
+  const location = useLocation();
+  const isHomePage = location.pathname === "/";
   const [isConnected, setIsConnected] = useState(() => {
     return localStorage.getItem("wallet_connected") === "true";
   });
@@ -78,9 +80,9 @@ const AppContent = () => {
         labsBalance={labsBalance}
       />
 
-      {/* Platform sidebar (desktop only, when connected) */}
-      {isConnected && (
-        <PlatformSidebar 
+      {/* Platform sidebar (desktop only, when connected and not on home page) */}
+      {isConnected && !isHomePage && (
+        <PlatformSidebar
           address={address} 
           labsBalance={labsBalance}
           collapsed={sidebarCollapsed}
@@ -93,7 +95,7 @@ const AppContent = () => {
 
       {/* Main content area */}
       <main className={`flex-1 transition-all duration-300 ${
-        isConnected 
+        isConnected && !isHomePage
           ? `mb-20 md:mb-0 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}` 
           : ""
       }`}>
@@ -116,8 +118,8 @@ const AppContent = () => {
         </Routes>
       </main>
 
-      {/* Mobile bottom navigation (when connected) */}
-      {isConnected && <MobileBottomNav />}
+      {/* Mobile bottom navigation (when connected and not on home page) */}
+      {isConnected && !isHomePage && <MobileBottomNav />}
     </div>
   );
 };
