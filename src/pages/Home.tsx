@@ -1,14 +1,58 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target } from "lucide-react";
+import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText } from "lucide-react";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
+import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from "@/components/ui/dialog";
+import { Checkbox } from "@/components/ui/checkbox";
+import { useState, useEffect } from "react";
 
 interface HomeProps {
   onConnect: () => void;
 }
 
 export default function Home({ onConnect }: HomeProps) {
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const [showDisclaimer, setShowDisclaimer] = useState(false);
+  const [dontShowHowItWorks, setDontShowHowItWorks] = useState(false);
+  const [dontShowDisclaimer, setDontShowDisclaimer] = useState(false);
+
+  useEffect(() => {
+    // Check localStorage on mount
+    const hideHowItWorks = localStorage.getItem("hideHowItWorks") === "true";
+    const hideDisclaimer = localStorage.getItem("hideDisclaimer") === "true";
+    
+    if (!hideHowItWorks) {
+      setShowHowItWorks(true);
+    }
+    if (!hideDisclaimer) {
+      setTimeout(() => setShowDisclaimer(true), 500);
+    }
+  }, []);
+
+  const handleHowItWorksClose = () => {
+    if (dontShowHowItWorks) {
+      localStorage.setItem("hideHowItWorks", "true");
+    }
+    setShowHowItWorks(false);
+    setDontShowHowItWorks(false);
+  };
+
+  const handleDisclaimerClose = () => {
+    if (dontShowDisclaimer) {
+      localStorage.setItem("hideDisclaimer", "true");
+    }
+    setShowDisclaimer(false);
+    setDontShowDisclaimer(false);
+  };
+
   const simulateDeltaGain = async () => {
     // Simple simulation: pretend to compute delta and show a toast
     toast({
@@ -16,8 +60,180 @@ export default function Home({ onConnect }: HomeProps) {
       description: "Provenance + attribution saved. Buybacks will route to the originating Lab on bundle sale.",
     });
   };
+
   return (
     <div className="min-h-screen pt-16">
+      {/* Quick Access Links */}
+      <div className="fixed top-20 right-4 z-40 flex gap-2">
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowHowItWorks(true)}
+          className="border-primary/50 hover:bg-primary/10"
+        >
+          <Info className="h-4 w-4 mr-2" />
+          How it Works
+        </Button>
+        <Button
+          variant="outline"
+          size="sm"
+          onClick={() => setShowDisclaimer(true)}
+          className="border-primary/50 hover:bg-primary/10"
+        >
+          <FileText className="h-4 w-4 mr-2" />
+          Terms
+        </Button>
+      </div>
+
+      {/* How It Works Dialog */}
+      <Dialog open={showHowItWorks} onOpenChange={setShowHowItWorks}>
+        <DialogContent className="max-w-2xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold glow-green">How It Works</DialogTitle>
+            <DialogDescription className="text-base">
+              Understanding the H1 Labs ecosystem and user flow
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="space-y-6 py-4">
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">1</span>
+                Connect Your Wallet
+              </h3>
+              <p className="text-muted-foreground pl-8">
+                <strong>Why:</strong> Blockchain integration ensures transparent ownership and provenance tracking.<br/>
+                <strong>How:</strong> Connect your Base wallet to access the H1 Labs platform and participate in the data economy.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">2</span>
+                Acquire $LABS Tokens
+              </h3>
+              <p className="text-muted-foreground pl-8">
+                <strong>Why:</strong> $LABS is the governance token that unlocks platform participation.<br/>
+                <strong>How:</strong> Purchase $LABS tokens to stake and create or join Data Labs.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
+                Stake & Create a Lab
+              </h3>
+              <p className="text-muted-foreground pl-8">
+                <strong>Why:</strong> Labs are collaborative spaces for dataset creation with proven provenance.<br/>
+                <strong>How:</strong> Stake $LABS to create your own Data Lab and issue domain-specific H1 tokens.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">4</span>
+                Validate & Earn
+              </h3>
+              <p className="text-muted-foreground pl-8">
+                <strong>Why:</strong> Human validation ensures AI training data quality and compliance.<br/>
+                <strong>How:</strong> Credentialed validators review data submissions and earn rewards for quality verification.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">5</span>
+                Trade & Profit
+              </h3>
+              <p className="text-muted-foreground pl-8">
+                <strong>Why:</strong> Value flows back to data creators through the bonding curve mechanism.<br/>
+                <strong>How:</strong> H1 tokens can be traded, with revenue sharing across Lab participants.
+              </p>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-col gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="dont-show-how-it-works" 
+                checked={dontShowHowItWorks}
+                onCheckedChange={(checked) => setDontShowHowItWorks(checked as boolean)}
+              />
+              <label
+                htmlFor="dont-show-how-it-works"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Don't show this again
+              </label>
+            </div>
+            <Button onClick={handleHowItWorksClose} className="w-full bg-gradient-primary">
+              Got it!
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Disclaimer Dialog */}
+      <Dialog open={showDisclaimer} onOpenChange={setShowDisclaimer}>
+        <DialogContent className="max-w-lg">
+          <DialogHeader>
+            <DialogTitle className="text-2xl font-bold glow-purple">Important Notice</DialogTitle>
+            <DialogDescription className="text-base">
+              Prototype & Testnet Information
+            </DialogDescription>
+          </DialogHeader>
+          
+          <div className="py-4 space-y-4">
+            <div className="bg-primary/10 border border-primary/30 rounded-lg p-4">
+              <p className="text-sm leading-relaxed">
+                By proceeding, you acknowledge that <strong>H1 Labs is in prototype stage and operating on testnet</strong>. 
+              </p>
+            </div>
+            
+            <p className="text-sm text-muted-foreground leading-relaxed">
+              This prototype is designed to explain our vision in practical terms and may or may not represent 
+              the final product. All transactions are using testnet tokens with no real monetary value.
+            </p>
+
+            <div className="bg-muted/50 rounded-lg p-4">
+              <ul className="text-sm text-muted-foreground space-y-2">
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Testnet environment - no real funds at risk</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Features subject to change during development</span>
+                </li>
+                <li className="flex gap-2">
+                  <span className="text-primary">•</span>
+                  <span>Not financial or medical advice</span>
+                </li>
+              </ul>
+            </div>
+          </div>
+
+          <DialogFooter className="flex-col sm:flex-col gap-4">
+            <div className="flex items-center space-x-2">
+              <Checkbox 
+                id="dont-show-disclaimer" 
+                checked={dontShowDisclaimer}
+                onCheckedChange={(checked) => setDontShowDisclaimer(checked as boolean)}
+              />
+              <label
+                htmlFor="dont-show-disclaimer"
+                className="text-sm text-muted-foreground cursor-pointer"
+              >
+                Don't show this again
+              </label>
+            </div>
+            <Button onClick={handleDisclaimerClose} className="w-full bg-gradient-primary">
+              I Understand
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
       {/* Hero Section */}
       <section className="relative overflow-hidden">
         <div className="absolute inset-0 bg-gradient-hero opacity-10" />
