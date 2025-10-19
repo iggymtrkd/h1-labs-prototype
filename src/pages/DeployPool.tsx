@@ -4,6 +4,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { Loader2, CheckCircle2, AlertCircle, ExternalLink } from "lucide-react";
 import { toast } from "@/hooks/use-toast";
+import { supabase } from "@/integrations/supabase/client";
 
 export default function DeployPool() {
   const [isDeploying, setIsDeploying] = useState(false);
@@ -18,20 +19,10 @@ export default function DeployPool() {
     try {
       console.log("Calling deploy-uniswap-pool function...");
       
-      const response = await fetch(
-        `${import.meta.env.VITE_SUPABASE_URL}/functions/v1/deploy-uniswap-pool`,
-        {
-          method: "POST",
-          headers: {
-            "Content-Type": "application/json",
-          },
-        }
-      );
+      const { data, error: invokeError } = await supabase.functions.invoke('deploy-uniswap-pool');
 
-      const data = await response.json();
-
-      if (!response.ok) {
-        throw new Error(data.error || "Deployment failed");
+      if (invokeError) {
+        throw new Error(invokeError.message || "Deployment failed");
       }
 
       console.log("Deployment successful:", data);
