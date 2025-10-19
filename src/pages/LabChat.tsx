@@ -25,9 +25,9 @@ const labChatData = {
     price: "300,000",
     color: "hsl(263 97% 58%)",
     apps: [
-      { name: "Wearable Maker", icon: "W" },
-      { name: "Ghost Feet", icon: "G" },
-      { name: "MiniChef", icon: "M" },
+      { name: "HeartMonitor", icon: "H" },
+      { name: "ECG Analyzer", icon: "E" },
+      { name: "CardioScan", icon: "C" },
     ],
     channels: ["Block", "Rumors", "News", "Rules"],
     messages: [
@@ -607,9 +607,9 @@ export default function LabChat() {
       </div>
 
       {/* Right Sidebar */}
-      <div className="w-80 border-l border-border bg-card/50 overflow-y-auto">
-        <ScrollArea className="h-full">
-          <div className="p-6 space-y-6">
+      <div className="w-80 border-l border-border bg-card/50 flex flex-col">
+        <ScrollArea className="flex-1">
+          <div className="p-6 space-y-6 pb-24">
             {/* Lab Profile */}
             <div className="text-center space-y-3">
               <div className="mx-auto w-32 h-32 rounded-3xl flex items-center justify-center text-4xl font-bold" style={{ background: lab.color }}>
@@ -618,23 +618,6 @@ export default function LabChat() {
               <h2 className="text-2xl font-bold">{lab.name}</h2>
               <div className="text-3xl font-bold text-primary">
                 {lab.price} ${lab.symbol}
-              </div>
-            </div>
-
-            {/* Training Apps */}
-            <div>
-              <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">
-                Training apps
-              </h3>
-              <div className="grid grid-cols-3 gap-3">
-                {lab.apps.map((app, i) => (
-                  <div key={i} className="text-center">
-                    <div className="w-full aspect-square rounded-lg bg-gradient-secondary flex items-center justify-center text-2xl font-bold mb-2">
-                      {app.icon}
-                    </div>
-                    <p className="text-xs text-muted-foreground">{app.name}</p>
-                  </div>
-                ))}
               </div>
             </div>
 
@@ -738,6 +721,23 @@ export default function LabChat() {
             </div>
           </div>
         </ScrollArea>
+
+        {/* Training Apps - Fixed at Bottom */}
+        <div className="border-t border-border bg-card p-6">
+          <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">
+            Training apps
+          </h3>
+          <div className="grid grid-cols-3 gap-3">
+            {lab.apps.map((app, i) => (
+              <div key={i} className="text-center">
+                <div className="w-full aspect-square rounded-lg bg-gradient-secondary flex items-center justify-center text-2xl font-bold mb-2">
+                  {app.icon}
+                </div>
+                <p className="text-xs text-muted-foreground">{app.name}</p>
+              </div>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
