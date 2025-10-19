@@ -1,4 +1,5 @@
 import { useParams, Link } from "react-router-dom";
+import { useState } from "react";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -427,6 +428,7 @@ const labChatData = {
 
 export default function LabChat() {
   const { id } = useParams();
+  const [isHoldersOnly, setIsHoldersOnly] = useState(false);
   const lab = labChatData[id as keyof typeof labChatData];
 
   if (!lab) {
@@ -469,8 +471,15 @@ export default function LabChat() {
             </Tabs>
           </div>
           <div className="flex items-center gap-2">
-            <Button variant="ghost" size="icon" className="rounded-full bg-primary">
-              <div className="w-2 h-2 rounded-full bg-background" />
+            <Button 
+              variant="ghost" 
+              size="icon" 
+              onClick={() => setIsHoldersOnly(!isHoldersOnly)}
+              className={`rounded-full transition-colors ${
+                isHoldersOnly ? "bg-primary text-primary-foreground" : "bg-muted"
+              }`}
+            >
+              <Key className="h-4 w-4" />
             </Button>
             <Button variant="ghost" size="icon">
               <span className="text-muted-foreground">•••</span>
@@ -479,9 +488,55 @@ export default function LabChat() {
         </div>
 
         {/* Messages Area */}
-        <ScrollArea className="flex-1 p-4">
+        <ScrollArea className={`flex-1 p-4 ${isHoldersOnly ? "bg-primary/5" : ""}`}>
+          {isHoldersOnly && (
+            <div className="max-w-4xl mb-4 px-4 py-3 bg-primary/20 border border-primary/30 rounded-lg flex items-center gap-2">
+              <Key className="h-4 w-4 text-primary" />
+              <span className="text-sm font-medium text-primary">Holders-Only Chat</span>
+            </div>
+          )}
           <div className="space-y-4 max-w-4xl">
-            {lab.messages.map((msg) => (
+            {(isHoldersOnly 
+              ? [
+                  {
+                    id: 101,
+                    user: "Holder Alpha",
+                    avatar: "HA",
+                    message: "Great to see the token price moving up! 🚀",
+                    time: "2:15 PM",
+                    color: "hsl(263 97% 58%)",
+                    isAnnouncement: false,
+                  },
+                  {
+                    id: 102,
+                    user: "Holder Beta",
+                    avatar: "HB",
+                    message: "Should we discuss the upcoming governance vote?",
+                    time: "2:18 PM",
+                    color: "hsl(80 95% 49%)",
+                    isAnnouncement: false,
+                  },
+                  {
+                    id: 103,
+                    user: "Holder Gamma",
+                    avatar: "HG",
+                    message: "I'm voting yes on the treasury allocation proposal.",
+                    time: "2:22 PM",
+                    color: "hsl(240 10% 18%)",
+                    isAnnouncement: false,
+                  },
+                  {
+                    id: 104,
+                    user: "Holder Alpha",
+                    avatar: "HA",
+                    message: "Agreed. The ROI projections look solid.",
+                    time: "2:25 PM",
+                    color: "hsl(263 97% 58%)",
+                    isAnnouncement: false,
+                  },
+                ]
+              : lab.messages
+            ).map((msg) => (
               <div
                 key={msg.id}
                 className={`flex gap-3 ${msg.align === "right" ? "justify-end" : ""}`}
@@ -533,13 +588,15 @@ export default function LabChat() {
         </ScrollArea>
 
         {/* Message Input */}
-        <div className="p-4 border-t border-border">
-          <div className="flex items-center gap-2 bg-muted/30 rounded-lg px-4 py-2">
+        <div className={`p-4 border-t border-border ${isHoldersOnly ? "bg-primary/5" : ""}`}>
+          <div className={`flex items-center gap-2 rounded-lg px-4 py-2 ${
+            isHoldersOnly ? "bg-primary/10 border border-primary/20" : "bg-muted/30"
+          }`}>
             <Button variant="ghost" size="icon" className="h-8 w-8">
               <Smile className="h-5 w-5 text-muted-foreground" />
             </Button>
             <Input
-              placeholder="Type your message"
+              placeholder={isHoldersOnly ? "Message holders..." : "Type your message"}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Button variant="ghost" size="icon" className="h-8 w-8">
@@ -603,12 +660,6 @@ export default function LabChat() {
                 View Details
               </Button>
             </Link>
-
-            {/* Toggle to Holders Chat */}
-            <Button className="w-full bg-gradient-primary">
-              <Key className="mr-2 h-4 w-4" />
-              Holders Chat
-            </Button>
 
             {/* Owners Section */}
             <div>
