@@ -62,8 +62,8 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
   // Handle external trigger for How It Works dialog
   useEffect(() => {
     if (showHowItWorksDialog) {
+      // Always show when triggered externally, ignore localStorage
       setShowHowItWorks(true);
-      setShowDisclaimer(true);
     }
   }, [showHowItWorksDialog]);
 
@@ -357,7 +357,7 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
                 <Wallet className="mr-2 h-6 w-6" />
                 Sign In
               </Button>
-              <Link to="/whitepaper" className="cursor-pointer">
+              <Link to="/whitepaper?from=home" className="cursor-pointer">
                 <Button size="lg" className="text-lg px-8 w-full cursor-pointer">
                   Read Litepaper
                 </Button>

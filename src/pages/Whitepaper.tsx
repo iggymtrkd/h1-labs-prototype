@@ -3,8 +3,8 @@ import { Card } from "@/components/ui/card";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Button } from "@/components/ui/button";
 import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
-import { BookOpen, ChevronRight, Menu, Target, Sparkles } from "lucide-react";
-import { Link } from "react-router-dom";
+import { BookOpen, ChevronRight, Menu, Target, Sparkles, ArrowLeft } from "lucide-react";
+import { Link, useSearchParams, useNavigate } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
 import CompetitiveComparison from "@/components/litepaper/CompetitiveComparison";
 import ComplianceCards from "@/components/litepaper/ComplianceCards";
@@ -27,6 +27,9 @@ export default function Whitepaper() {
   const [content, setContent] = useState("");
   const [sections, setSections] = useState<{ title: string; id: string; level: number }[]>([]);
   const [activeSection, setActiveSection] = useState("");
+  const [searchParams] = useSearchParams();
+  const navigate = useNavigate();
+  const fromHome = searchParams.get("from") === "home";
 
   useEffect(() => {
     const path = "/litepaper.md";
@@ -107,26 +110,40 @@ export default function Whitepaper() {
       <div className="container mx-auto px-4 max-w-7xl">
         <div className="mb-8">
           <div className="flex items-center justify-between mb-4">
-            <h1 className="text-3xl md:text-4xl font-bold glow-green flex items-center gap-3">
-              <BookOpen className="h-8 w-8 md:h-10 md:w-10" />
-              <span className="break-words">H1 Labs Litepaper</span>
-            </h1>
+            <div className="flex items-center gap-3">
+              {fromHome && (
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => navigate("/")}
+                  className="flex-shrink-0"
+                >
+                  <ArrowLeft className="h-5 w-5" />
+                </Button>
+              )}
+              <h1 className="text-3xl md:text-4xl font-bold glow-green flex items-center gap-3">
+                <BookOpen className="h-8 w-8 md:h-10 md:w-10" />
+                <span className="break-words">H1 Labs Litepaper</span>
+              </h1>
+            </div>
 
             <div className="flex items-center gap-2">
-              {/* Mobile TOC Toggle */}
-              <Sheet>
-                <SheetTrigger asChild>
-                  <Button variant="outline" size="icon" className="lg:hidden">
-                    <Menu className="h-5 w-5" />
-                  </Button>
-                </SheetTrigger>
-                <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                  <h2 className="text-lg font-bold mb-4">Contents</h2>
-                  <ScrollArea className="h-[calc(100vh-100px)] pr-4">
-                    <TableOfContents />
-                  </ScrollArea>
-                </SheetContent>
-              </Sheet>
+              {/* Mobile TOC Toggle - only show if not from home */}
+              {!fromHome && (
+                <Sheet>
+                  <SheetTrigger asChild>
+                    <Button variant="outline" size="icon" className="lg:hidden">
+                      <Menu className="h-5 w-5" />
+                    </Button>
+                  </SheetTrigger>
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px]">
+                    <h2 className="text-lg font-bold mb-4">Contents</h2>
+                    <ScrollArea className="h-[calc(100vh-100px)] pr-4">
+                      <TableOfContents />
+                    </ScrollArea>
+                  </SheetContent>
+                </Sheet>
+              )}
             </div>
           </div>
           <p className="text-lg md:text-xl text-muted-foreground break-words">
@@ -134,17 +151,19 @@ export default function Whitepaper() {
           </p>
         </div>
 
-        <div className="grid lg:grid-cols-4 gap-8">
-          {/* Desktop Table of Contents */}
-          <Card className="hidden lg:block lg:col-span-1 p-6 bg-gradient-card border-border h-fit lg:sticky lg:top-24">
-            <h2 className="text-lg font-bold mb-4">Contents</h2>
-            <ScrollArea className="h-[600px] pr-4">
-              <TableOfContents />
-            </ScrollArea>
-          </Card>
+        <div className={fromHome ? "" : "grid lg:grid-cols-4 gap-8"}>
+          {/* Desktop Table of Contents - hide if from home */}
+          {!fromHome && (
+            <Card className="hidden lg:block lg:col-span-1 p-6 bg-gradient-card border-border h-fit lg:sticky lg:top-24">
+              <h2 className="text-lg font-bold mb-4">Contents</h2>
+              <ScrollArea className="h-[600px] pr-4">
+                <TableOfContents />
+              </ScrollArea>
+            </Card>
+          )}
 
           {/* Content */}
-          <Card className="lg:col-span-3 p-4 md:p-8 bg-gradient-card border-border overflow-x-hidden">
+          <Card className={`${fromHome ? "" : "lg:col-span-3"} p-4 md:p-8 bg-gradient-card border-border overflow-x-hidden`}>
             <ScrollArea className="h-[600px] md:h-[800px] pr-2 md:pr-6">
               <article className="prose prose-invert prose-primary max-w-none prose-sm md:prose-base overflow-x-hidden break-words">
                 <ReactMarkdown
