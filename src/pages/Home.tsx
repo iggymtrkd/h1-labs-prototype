@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet, FlaskConical, PenTool, BrainCircuit } from "lucide-react";
+import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet, FlaskConical, PenTool, BrainCircuit, ChevronLeft, ChevronRight } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
@@ -19,11 +19,30 @@ interface HomeProps {
   onConnect: () => void;
 }
 
+const DESCRIPTION_VARIANTS = [
+  {
+    audience: "Developers",
+    text: "The H1 SDK embeds two intelligence systems in every app—an Agent and a credentialed Human—producing compliant, high-quality data for regulated and semi-regulated markets. Healthcare first."
+  },
+  {
+    audience: "Investors & Traders",
+    text: "Labs create H1 tokens earning revenue from verified dataset sales. Dataset sales trigger buybacks, generating sustainable token appreciation without traditional dividends."
+  },
+  {
+    audience: "Scholars",
+    text: "Earn by enriching and validating datasets through our domain-specific apps. Get compensated via grants, revenue splits, and H1 tokens while building reputation."
+  }
+];
+
+const CYCLE_DURATION = 6000; // 6 seconds
+
 export default function Home({ onConnect }: HomeProps) {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [dontShowHowItWorks, setDontShowHowItWorks] = useState(false);
   const [dontShowDisclaimer, setDontShowDisclaimer] = useState(false);
+  const [currentVariant, setCurrentVariant] = useState(0);
+  const [progress, setProgress] = useState(0);
 
   useEffect(() => {
     // Check localStorage on mount
@@ -37,6 +56,39 @@ export default function Home({ onConnect }: HomeProps) {
       setTimeout(() => setShowDisclaimer(true), 500);
     }
   }, []);
+
+  // Rotation and progress timer
+  useEffect(() => {
+    let startTime = Date.now();
+    
+    const progressInterval = setInterval(() => {
+      const elapsed = Date.now() - startTime;
+      const progressPercent = (elapsed % CYCLE_DURATION) / CYCLE_DURATION;
+      setProgress(progressPercent);
+
+      if (progressPercent === 0 || elapsed % CYCLE_DURATION < 50) {
+        setCurrentVariant((prev) => (prev + 1) % DESCRIPTION_VARIANTS.length);
+        startTime = Date.now();
+      }
+    }, 50);
+
+    return () => clearInterval(progressInterval);
+  }, []);
+
+  const handleVariantClick = (index: number) => {
+    setCurrentVariant(index);
+    setProgress(0);
+  };
+
+  const goToPreviousVariant = () => {
+    setCurrentVariant((prev) => (prev - 1 + DESCRIPTION_VARIANTS.length) % DESCRIPTION_VARIANTS.length);
+    setProgress(0);
+  };
+
+  const goToNextVariant = () => {
+    setCurrentVariant((prev) => (prev + 1) % DESCRIPTION_VARIANTS.length);
+    setProgress(0);
+  };
 
   const handleHowItWorksClose = () => {
     if (dontShowHowItWorks) {
@@ -230,41 +282,63 @@ export default function Home({ onConnect }: HomeProps) {
               </span>
             </h1>
             
-            <div className="mb-8 max-w-2xl mx-auto relative">
-              <Carousel className="w-full" opts={{ loop: true }}>
-                <CarouselContent>
-                  <CarouselItem>
-                    <div className="min-h-[120px] flex items-center justify-center px-12">
-                      <p className="text-xl text-muted-foreground">
-                        Launch a DataLab and create H1 tokens earning revenue from verified dataset sales. Dataset sales trigger buybacks, generating sustainable token appreciation without traditional dividends.
-                      </p>
-                    </div>
-                  </CarouselItem>
-                  <CarouselItem>
-                    <div className="min-h-[120px] flex items-center justify-center px-12">
-                      <p className="text-xl text-muted-foreground">
-                        The H1 SDK embeds two intelligence systems in every app—an Agent and a credentialed Human—producing compliant, high-quality data for regulated and semi-regulated markets. Healthcare first.
-                      </p>
-                    </div>
-                  </CarouselItem>
-                  <CarouselItem>
-                    <div className="min-h-[120px] flex items-center justify-center px-12">
-                      <p className="text-xl text-muted-foreground">
-                        Scholars earn by enriching and validating datasets through domain-specific H1 apps. Get compensated via grants, revenue splits, and H1 tokens while building reputation.
-                      </p>
-                    </div>
-                  </CarouselItem>
-                </CarouselContent>
-                <CarouselPrevious className="left-0 h-8 w-8">
-                  <ChevronLeft className="h-4 w-4" />
-                </CarouselPrevious>
-                <CarouselNext className="right-0 h-8 w-8">
-                  <ChevronRight className="h-4 w-4" />
-                </CarouselNext>
-              </Carousel>
+            <div className="relative">
+              <motion.div
+                key={currentVariant}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                exit={{ opacity: 0, y: -5 }}
+                transition={{ duration: 0.5 }}
+                className="mb-6"
+              >
+                <p className="text-xl text-muted-foreground mb-2 max-w-2xl mx-auto">
+                  {DESCRIPTION_VARIANTS[currentVariant].text}
+                </p>
+                <p className="text-xs text-muted-foreground/60">
+                  For: <span className="font-semibold text-primary">{DESCRIPTION_VARIANTS[currentVariant].audience}</span>
+                </p>
+              </motion.div>
+
+              {/* Timer Progress Bar */}
+              <div className="flex items-center justify-center gap-2 mb-6">
+                <div className="flex gap-1">
+                  {DESCRIPTION_VARIANTS.map((_, idx) => (
+                    <button
+                      key={idx}
+                      onClick={() => handleVariantClick(idx)}
+                      className="relative w-8 h-1 bg-muted rounded-full overflow-hidden hover:bg-muted-foreground/50 transition-colors"
+                    >
+                      <motion.div
+                        className="h-full bg-primary"
+                        initial={{ width: idx === currentVariant ? `${progress * 100}%` : '0%' }}
+                        animate={{ width: idx === currentVariant ? `${progress * 100}%` : '0%' }}
+                        transition={{ duration: 0.05, ease: "linear" }}
+                      />
+                    </button>
+                  ))}
+                </div>
+              </div>
+
+              {/* Navigation Arrows */}
+              <div className="flex items-center justify-center gap-4">
+                <button
+                  onClick={goToPreviousVariant}
+                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                  aria-label="Previous variant"
+                >
+                  <ChevronLeft className="h-5 w-5 text-muted-foreground hover:text-primary" />
+                </button>
+                <button
+                  onClick={goToNextVariant}
+                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
+                  aria-label="Next variant"
+                >
+                  <ChevronRight className="h-5 w-5 text-muted-foreground hover:text-primary" />
+                </button>
+              </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
               <Button 
                 size="lg" 
                 className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
@@ -304,7 +378,7 @@ export default function Home({ onConnect }: HomeProps) {
               </motion.div>
 
               <div className="hidden lg:block">
-                <ArrowRight className="h-8 w-8 text-primary animate-glow-pulse" />
+                <ChevronRight className="h-8 w-8 text-primary animate-glow-pulse" />
               </div>
 
               <motion.div
@@ -322,7 +396,7 @@ export default function Home({ onConnect }: HomeProps) {
               </motion.div>
 
               <div className="hidden lg:block">
-                <ArrowRight className="h-8 w-8 text-primary animate-glow-pulse" />
+                <ChevronRight className="h-8 w-8 text-primary animate-glow-pulse" />
               </div>
 
               <motion.div
