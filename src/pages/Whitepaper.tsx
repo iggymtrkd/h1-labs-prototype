@@ -57,6 +57,10 @@ export default function Whitepaper() {
             .replace(/\s+/g, "-"),
         }));
         setSections(tocSections);
+        
+        // Initialize all sections as expanded
+        const allIndices = new Set(tocSections.map((_, i) => i));
+        setExpandedSections(allIndices);
       })
       .catch((err) => console.error("Error loading litepaper:", err));
   }, []);
@@ -69,46 +73,86 @@ export default function Whitepaper() {
     }
   };
 
-  const TableOfContents = () => (
-    <nav className="space-y-1">
-      <Link to="/about">
-        <Button variant="outline" className="w-full mb-4 justify-start bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 hover:from-primary/30 hover:to-secondary/30">
-          <Target className="mr-2 h-4 w-4 text-primary" />
-          TLDR
-        </Button>
-      </Link>
-      <Link to="/upcoming-features">
-        <Button variant="outline" className="w-full mb-4 justify-start bg-gradient-to-r from-accent/20 to-primary/20 border-accent/50 hover:from-accent/30 hover:to-primary/30">
-          <Sparkles className="mr-2 h-4 w-4 text-accent" />
-          Upcoming Features
-        </Button>
-      </Link>
-      {sections.map((section, index) => (
-        <button
-          key={index}
-          onClick={() => scrollToSection(section.id)}
-          className={`w-full text-left px-3 py-2 rounded-lg transition-all text-sm ${
-            section.level === 1
-              ? "font-semibold"
-              : section.level === 2
-              ? "pl-6 text-muted-foreground"
-              : "pl-9 text-muted-foreground text-xs"
-          } ${
-            activeSection === section.id
-              ? "bg-primary/20 text-primary"
-              : "hover:bg-muted"
-          }`}
-        >
-          <div className="flex items-center gap-2">
-            {section.level === 1 && (
-              <ChevronRight className="h-3 w-3 flex-shrink-0" />
-            )}
-            <span className="line-clamp-2 break-words">{section.title}</span>
-          </div>
-        </button>
-      ))}
-    </nav>
-  );
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
+
+  const toggleSection = (index: number) => {
+    const newExpanded = new Set(expandedSections);
+    if (newExpanded.has(index)) {
+      newExpanded.delete(index);
+    } else {
+      newExpanded.add(index);
+    }
+    setExpandedSections(newExpanded);
+  };
+
+  const TableOfContents = () => {
+    // Filter out the first h1 (title) and group sections
+    const filteredSections = sections.slice(1);
+    
+    return (
+      <nav className="space-y-1">
+        <Link to="/about">
+          <Button variant="outline" className="w-full mb-4 justify-start bg-gradient-to-r from-primary/20 to-secondary/20 border-primary/50 hover:from-primary/30 hover:to-secondary/30">
+            <Target className="mr-2 h-4 w-4 text-primary" />
+            TLDR
+          </Button>
+        </Link>
+        <Link to="/upcoming-features">
+          <Button variant="outline" className="w-full mb-4 justify-start bg-gradient-to-r from-accent/20 to-primary/20 border-accent/50 hover:from-accent/30 hover:to-primary/30">
+            <Sparkles className="mr-2 h-4 w-4 text-accent" />
+            Upcoming Features
+          </Button>
+        </Link>
+        {filteredSections.map((section, index) => {
+          const actualIndex = index + 1; // Adjust for filtered array
+          const hasSubsections = filteredSections[index + 1]?.level > section.level;
+          const isExpanded = expandedSections.has(actualIndex) || !expandedSections.size;
+          const isLevel1 = section.level === 1;
+          
+          // Skip rendering if this is a subsection and parent is collapsed
+          if (section.level > 1) {
+            let parentIndex = actualIndex - 1;
+            while (parentIndex >= 0 && filteredSections[parentIndex - 1]?.level >= section.level) {
+              parentIndex--;
+            }
+            if (parentIndex >= 0 && !expandedSections.has(parentIndex) && expandedSections.size > 0) {
+              return null;
+            }
+          }
+
+          return (
+            <button
+              key={actualIndex}
+              onClick={() => {
+                if (isLevel1 && hasSubsections) {
+                  toggleSection(actualIndex);
+                }
+                scrollToSection(section.id);
+              }}
+              className={`w-full text-left px-2 py-2 rounded-lg transition-all text-sm ${
+                section.level === 1
+                  ? "font-semibold"
+                  : section.level === 2
+                  ? "pl-4 text-muted-foreground"
+                  : "pl-6 text-muted-foreground text-xs"
+              } ${
+                activeSection === section.id
+                  ? "bg-primary/20 text-primary"
+                  : "hover:bg-muted"
+              }`}
+            >
+              <div className="flex items-center gap-2">
+                {section.level === 1 && hasSubsections && (
+                  <ChevronRight className={`h-3 w-3 flex-shrink-0 transition-transform ${isExpanded ? "rotate-90" : ""}`} />
+                )}
+                <span className="line-clamp-2 break-words">{section.title}</span>
+              </div>
+            </button>
+          );
+        })}
+      </nav>
+    );
+  };
 
   return (
     <div className="min-h-screen pt-8 md:pt-24 pb-12 overflow-x-hidden">
