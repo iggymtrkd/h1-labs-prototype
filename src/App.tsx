@@ -73,19 +73,40 @@ const AppContent = () => {
       }`}>
         <Routes>
           <Route path="/" element={<Home onConnect={handleConnectWallet} />} />
-          <Route path="/dashboard" element={<Dashboard />} />
-          <Route path="/staking" element={<Staking labsBalance={labsBalance} />} />
-          <Route path="/apps" element={<AppStore />} />
+          <Route 
+            path="/dashboard" 
+            element={isConnected ? <Dashboard /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/staking" 
+            element={isConnected ? <Staking labsBalance={labsBalance} /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/apps" 
+            element={isConnected ? <AppStore /> : <Home onConnect={handleConnectWallet} />} 
+          />
           <Route
             path="/profile"
-            element={<Profile address={address} labsBalance={labsBalance} />}
+            element={isConnected ? <Profile address={address} labsBalance={labsBalance} /> : <Home onConnect={handleConnectWallet} />}
           />
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/about" element={<About />} />
-          <Route path="/lab/:id" element={<LabDetail />} />
-          <Route path="/lab/:id/chat" element={<LabChat />} />
-          <Route path="/settings" element={<Settings />} />
-          <Route path="/deploy-pool" element={<DeployPool />} />
+          <Route 
+            path="/lab/:id" 
+            element={isConnected ? <LabDetail /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/lab/:id/chat" 
+            element={isConnected ? <LabChat /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/settings" 
+            element={isConnected ? <Settings /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/deploy-pool" 
+            element={isConnected ? <DeployPool /> : <Home onConnect={handleConnectWallet} />} 
+          />
           <Route path="/terms" element={<Terms />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
