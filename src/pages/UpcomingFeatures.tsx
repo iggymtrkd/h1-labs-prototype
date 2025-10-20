@@ -7,16 +7,17 @@ import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
 import { Badge } from "@/components/ui/badge";
 import { Checkbox } from "@/components/ui/checkbox";
-import { Brain, Shield, Code, CheckCircle, Upload, FileText, Award, Lock } from "lucide-react";
+import { Brain, Shield, Code, CheckCircle, Upload, FileText, Award, Lock, ChevronDown, ChevronUp } from "lucide-react";
 
 export default function UpcomingFeatures() {
   const [selectedModel, setSelectedModel] = useState("mistral");
   const [appConfig, setAppConfig] = useState({
-    name: "CardioLab",
-    symbol: "CARDIO",
+    name: "NeuralLab",
+    symbol: "NEURAL",
     domain: "healthcare",
-    specialty: "cardiology"
+    specialty: "neurology"
   });
+  const [isDomainExpanded, setIsDomainExpanded] = useState(false);
 
   return (
     <div className="min-h-screen pt-20 pb-12 px-4">
@@ -119,14 +120,17 @@ export default function UpcomingFeatures() {
                       {[
                         { id: "mistral", name: "Mistral 7B", badge: "Recommended", desc: "Fast, optimized for healthcare" },
                         { id: "llama", name: "LLaMA 3", badge: "Most Powerful", desc: "70B params, best reasoning" },
-                        { id: "openai", name: "OpenAI GPT-4", badge: "Most Accurate", desc: "Highest accuracy, multimodal" }
+                        { id: "openai", name: "OpenAI GPT-4", badge: "Most Accurate", desc: "Highest accuracy, multimodal" },
+                        { id: "custom", name: "Plug in your own", badge: "Soon", desc: "Use your custom model", disabled: true }
                       ].map((model) => (
                         <div
                           key={model.id}
-                          className={`border rounded-lg p-3 cursor-pointer transition-all ${
-                            selectedModel === model.id ? "border-primary bg-primary/5" : "hover:border-primary/50"
+                          className={`border rounded-lg p-3 transition-all ${
+                            model.disabled 
+                              ? "opacity-60 cursor-not-allowed" 
+                              : `cursor-pointer ${selectedModel === model.id ? "border-primary bg-primary/5" : "hover:border-primary/50"}`
                           }`}
-                          onClick={() => setSelectedModel(model.id)}
+                          onClick={() => !model.disabled && setSelectedModel(model.id)}
                         >
                           <div className="flex items-start justify-between">
                             <div>
@@ -218,13 +222,18 @@ const app = new H1SDK({
                     </div>
                   </div>
 
-                  <div className="flex gap-3">
-                    <Button variant="outline" className="flex-1">
-                      <FileText className="mr-2 h-4 w-4" />
-                      Copy Code
-                    </Button>
-                    <Button className="flex-1">
-                      Deploy to Testnet
+                  <div className="space-y-3">
+                    <div className="flex gap-3">
+                      <Button variant="outline" className="flex-1">
+                        <FileText className="mr-2 h-4 w-4" />
+                        Copy Code
+                      </Button>
+                      <Button className="flex-1">
+                        Deploy to Testnet
+                      </Button>
+                    </div>
+                    <Button variant="secondary" className="w-full">
+                      Submit for H1 DAO Approval
                     </Button>
                   </div>
                 </CardContent>
@@ -267,7 +276,10 @@ const app = new H1SDK({
               {/* Domain Tabs */}
               <Card>
                 <CardHeader>
-                  <CardTitle>Select Your Domain</CardTitle>
+                  <div className="flex items-center justify-between cursor-pointer" onClick={() => setIsDomainExpanded(!isDomainExpanded)}>
+                    <CardTitle>Select Your Domain</CardTitle>
+                    {isDomainExpanded ? <ChevronUp className="h-5 w-5" /> : <ChevronDown className="h-5 w-5" />}
+                  </div>
                 </CardHeader>
                 <CardContent>
                   <div className="grid gap-3">
@@ -280,29 +292,41 @@ const app = new H1SDK({
                             <div className="text-sm text-muted-foreground">Active - Apply now</div>
                           </div>
                         </div>
-                        <Badge>Available</Badge>
+                        <div className="flex gap-2">
+                          <Badge>Available</Badge>
+                          <Badge variant="outline">Regulated</Badge>
+                        </div>
                       </div>
                     </div>
 
-                    {[
-                      { icon: "🏛️", name: "Legal", date: "Q2 2025" },
-                      { icon: "🛡️", name: "Defense", date: "Q3 2025" },
-                      { icon: "💼", name: "Finance", date: "Q2 2025" },
-                      { icon: "🤖", name: "Robotics", date: "Q3 2025" }
-                    ].map((domain, i) => (
-                      <div key={i} className="border rounded-lg p-4 opacity-60">
-                        <div className="flex items-center justify-between">
-                          <div className="flex items-center gap-3">
-                            <div className="text-2xl">{domain.icon}</div>
-                            <div>
-                              <div className="font-semibold">{domain.name}</div>
-                              <div className="text-sm text-muted-foreground">Coming {domain.date}</div>
+                    {isDomainExpanded && (
+                      <>
+                        {[
+                          { icon: "🏛️", name: "Legal", date: "Q2 2025", regulated: true },
+                          { icon: "🛡️", name: "Defense", date: "Q3 2025", regulated: true },
+                          { icon: "💼", name: "Finance", date: "Q2 2025", regulated: true },
+                          { icon: "🤖", name: "Robotics", date: "Q3 2025", regulated: true },
+                          { icon: "🎮", name: "Gaming", date: "Q3 2025", regulated: false },
+                          { icon: "🎨", name: "Art", date: "Q4 2025", regulated: false }
+                        ].map((domain, i) => (
+                          <div key={i} className="border rounded-lg p-4 opacity-60">
+                            <div className="flex items-center justify-between">
+                              <div className="flex items-center gap-3">
+                                <div className="text-2xl">{domain.icon}</div>
+                                <div>
+                                  <div className="font-semibold">{domain.name}</div>
+                                  <div className="text-sm text-muted-foreground">Coming {domain.date}</div>
+                                </div>
+                              </div>
+                              <div className="flex gap-2">
+                                <Lock className="h-5 w-5 text-muted-foreground" />
+                                <Badge variant="outline">{domain.regulated ? "Regulated" : "Semi-Regulated"}</Badge>
+                              </div>
                             </div>
                           </div>
-                          <Lock className="h-5 w-5 text-muted-foreground" />
-                        </div>
-                      </div>
-                    ))}
+                        ))}
+                      </>
+                    )}
                   </div>
                 </CardContent>
               </Card>
