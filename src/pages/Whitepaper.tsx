@@ -16,6 +16,9 @@ import EconomicFlywheel from "@/components/litepaper/EconomicFlywheel";
 import CredentialFlow from "@/components/litepaper/CredentialFlow";
 import DualIntelligenceFlow from "@/components/litepaper/DualIntelligenceFlow";
 import BondingCurveExample from "@/components/litepaper/BondingCurveExample";
+import UserFlows from "@/components/litepaper/UserFlows";
+import DiamondStandardDesign from "@/components/litepaper/DiamondStandardDesign";
+import H1TokenEconomies from "@/components/litepaper/H1TokenEconomies";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -192,6 +195,28 @@ export default function Whitepaper() {
                         );
                       }
                       
+                      if (text.includes("Diamond Standard Design")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <DiamondStandardDesign />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("H1 Tokens") && text.includes("Per-Lab")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <H1TokenEconomies />
+                          </>
+                        );
+                      }
+                      
                       return (
                         <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
                           {children}
@@ -207,6 +232,28 @@ export default function Whitepaper() {
                         .replace(/\s+/g, "-");
                       
                       // Check for sections that should render custom diagrams
+                      if (text.includes("Competitive Positioning")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <CompetitiveComparison />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("User Flows")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <UserFlows />
+                          </>
+                        );
+                      }
+                      
                       if (text.includes("Architecture")) {
                         return (
                           <>
