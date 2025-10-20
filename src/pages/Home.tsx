@@ -533,8 +533,8 @@ export default function Home({ onConnect }: HomeProps) {
                   <h3 className="text-2xl font-bold">The Problem</h3>
                 </div>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Doctors are overworked, underpaid, and walking away. The healthcare system is failing 
-                  both providers and patients, leading to burnout and declining care quality.
+                  Doctors are overworked and underpaid. Administrative burden and burnout drive talent away. 
+                  Meanwhile, AI companies source training data from low-wage annotation farms—not domain experts.
                 </p>
               </motion.div>
 
@@ -549,8 +549,8 @@ export default function Home({ onConnect }: HomeProps) {
                   <h3 className="text-2xl font-bold">The Solution</h3>
                 </div>
                 <p className="text-lg text-muted-foreground leading-relaxed">
-                  Clinical apps that improve patient outcomes and MD income. Patient Care Apps. 
-                  MD Care Apps. One Ecosystem.
+                  H1 Labs lets clinicians monetize expertise. Validate data, improve care, earn revenue through 
+                  dataset sales. Get paid for knowledge, not time.
                 </p>
               </motion.div>
             </div>
@@ -562,10 +562,10 @@ export default function Home({ onConnect }: HomeProps) {
               className="bg-gradient-card p-8 rounded-xl border border-primary/30 text-center"
             >
               <Brain className="h-16 w-16 text-primary mx-auto mb-4" />
-              <h3 className="text-2xl font-bold mb-3">The Next Generation of Doctors are Founders, not Employees</h3>
+              <h3 className="text-2xl font-bold mb-3">The Next Generation of Doctors are Founders</h3>
               <p className="text-lg text-muted-foreground max-w-3xl mx-auto">
-                We're empowering medical professionals to build and own the AI-powered tools that will 
-                transform healthcare delivery, patient outcomes, and their own financial independence.
+                Own the tools that transform care. Every diagnosis validated, chart enriched, dataset sold—
+                generates passive income through the protocol. Doctors become founders who stake, validate, and earn.
               </p>
             </motion.div>
           </div>
