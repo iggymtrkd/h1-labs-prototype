@@ -458,9 +458,10 @@ export default function Home({ onConnect }: HomeProps) {
               className="p-6 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
               <Shield className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-3">Provable Training</h3>
+              <h3 className="text-xl font-bold mb-3">Verified Human Expertise</h3>
               <p className="text-muted-foreground">
-                Blockchain-verified datasets with full provenance and audit trails
+                Every dataset is validated and enriched by credentialed professionals. 
+                Immutable onchain proof ensures AI companies trust the source.
               </p>
             </motion.div>
 
@@ -471,10 +472,10 @@ export default function Home({ onConnect }: HomeProps) {
               className="p-6 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
               <Users className="h-12 w-12 text-secondary mb-4" />
-              <h3 className="text-xl font-bold mb-3">Human-in-the-Loop</h3>
+              <h3 className="text-xl font-bold mb-3">Dual-Intelligence by Design</h3>
               <p className="text-muted-foreground">
-                Two intelligence systems—Agent + Human—work together. The agent executes; a credentialed human
-                supervises and signs off for compliance.
+                Agents handle speed and scale; credentialed humans add expertise and compliance. 
+                Together they create enriched datasets no AI could produce alone.
               </p>
             </motion.div>
 
@@ -485,9 +486,10 @@ export default function Home({ onConnect }: HomeProps) {
               className="p-6 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
               <TrendingUp className="h-12 w-12 text-primary mb-4" />
-              <h3 className="text-xl font-bold mb-3">Dual-Token Economy</h3>
+              <h3 className="text-xl font-bold mb-3">Aligned Incentives</h3>
               <p className="text-muted-foreground">
-                $LABS for governance and H1 tokens for lab-specific utility
+                $LABS stakes to create Labs; H1 tokens reward validators and track dataset value. 
+                As datasets sell, buybacks create sustainable token appreciation.
               </p>
             </motion.div>
 
@@ -498,9 +500,10 @@ export default function Home({ onConnect }: HomeProps) {
               className="p-6 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
               <Zap className="h-12 w-12 text-secondary mb-4" />
-              <h3 className="text-xl font-bold mb-3">Regulatory Compliant</h3>
+              <h3 className="text-xl font-bold mb-3">Compliance-as-Code</h3>
               <p className="text-muted-foreground">
-                Built for healthcare, robotics, and other regulated industries
+                HIPAA, GDPR, C2PA enforced at the smart contract layer. 
+                No workarounds—compliance is built into the system, not bolted on.
               </p>
             </motion.div>
           </div>
