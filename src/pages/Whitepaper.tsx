@@ -70,6 +70,48 @@ export default function Whitepaper() {
       .catch((err) => console.error("Error loading litepaper:", err));
   }, []);
 
+  // Track scroll position and highlight current section
+  useEffect(() => {
+    const handleScroll = () => {
+      const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
+      if (!scrollArea || sections.length === 0) return;
+
+      const headings = sections
+        .map((section) => document.getElementById(section.id))
+        .filter((el): el is HTMLElement => el !== null);
+
+      // Find the current section based on scroll position
+      let currentSection = "";
+      const scrollTop = scrollArea.scrollTop;
+      const offset = 100; // Offset for triggering highlight
+
+      for (let i = headings.length - 1; i >= 0; i--) {
+        const heading = headings[i];
+        if (heading.offsetTop - offset <= scrollTop) {
+          currentSection = heading.id;
+          break;
+        }
+      }
+
+      if (currentSection && currentSection !== activeSection) {
+        setActiveSection(currentSection);
+      }
+    };
+
+    const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
+    if (scrollArea) {
+      scrollArea.addEventListener('scroll', handleScroll);
+      // Initial check
+      handleScroll();
+    }
+
+    return () => {
+      if (scrollArea) {
+        scrollArea.removeEventListener('scroll', handleScroll);
+      }
+    };
+  }, [sections, activeSection]);
+
   const scrollToSection = (id: string) => {
     setActiveSection(id);
     const element = document.getElementById(id);
