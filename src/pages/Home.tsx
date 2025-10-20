@@ -348,17 +348,17 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
               </div>
             </div>
 
-            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8">
+            <div className="flex flex-col sm:flex-row gap-4 justify-center mt-8 relative z-10">
               <Button 
                 size="lg" 
-                className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8"
+                className="bg-gradient-primary border-0 hover:opacity-90 text-lg px-8 cursor-pointer"
                 onClick={onConnect}
               >
                 <Wallet className="mr-2 h-6 w-6" />
                 Sign In
               </Button>
-              <Link to="/whitepaper">
-                <Button size="lg" className="text-lg px-8">
+              <Link to="/whitepaper" className="cursor-pointer">
+                <Button size="lg" className="text-lg px-8 w-full cursor-pointer">
                   Read Litepaper
                 </Button>
               </Link>
