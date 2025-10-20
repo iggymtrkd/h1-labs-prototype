@@ -9,6 +9,7 @@ import { Navigation } from "@/components/Navigation";
 import { PlatformSidebar } from "@/components/PlatformSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
 import Home from "./pages/Home";
+import Mission from "./pages/Mission";
 import Dashboard from "./pages/Dashboard";
 import Staking from "./pages/Staking";
 import AppStore from "./pages/AppStore";
@@ -91,6 +92,7 @@ const AppContent = () => {
           />
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/about" element={<About />} />
+          <Route path="/mission" element={<Mission />} />
           <Route 
             path="/lab/:id" 
             element={isConnected ? <LabDetail /> : <Home onConnect={handleConnectWallet} />} 
