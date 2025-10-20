@@ -13,9 +13,27 @@ TreasuryFacet at 0x65c38321d60b3e2fdbf30a474ff7063eadc9f509
 
 LABSToken at 0xcbdc032c9525b307d3c2b4b8e099feedbd9024fd
 
+PENDING DEPLOYMENT:
+TestingFacet - NOT YET DEPLOYED (optional but recommended)
 
-OLD
+UNISWAP V3 (Base Sepolia):
+WETH: 0x4200000000000000000000000000000000000006
+Factory: 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24
+Position Manager: 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2
+LABS/WETH Pool: TBD (need to create)
+
+CONFIGURATION NEEDED:
+- setLABSToken() in TreasuryFacet ❌ NOT YET CALLED
+- setDefaultCooldown() ❌ NOT YET SET
+- setDefaultExitCap() ❌ NOT YET SET
+- setProtocolTreasury() ❌ NOT YET SET
+- setCurveFeeBps() ❌ NOT YET SET (optional)
+- setCurvePolBps() ❌ NOT YET SET (optional)
+
+See DEPLOYMENT_NEXT_STEPS.md for detailed instructions.
+
+---
+
+OLD ADDRESSES (IGNORE):
 OLD H1Diamond 0x42b4f2612cdd49cf91b4a9cc1ffe47f21bcb8717
 OLD 0xce811df811e198379ccc98d1cee5527ff602f1b0
-
-0x0000000000000000000000000000000000000000
