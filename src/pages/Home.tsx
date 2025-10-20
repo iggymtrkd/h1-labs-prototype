@@ -145,7 +145,7 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
                 Connect Your Wallet
               </h3>
               <p className="text-muted-foreground pl-8">
-                Connect your Base wallet (Base Sepolia testnet) to access the H1 Labs platform and participate in the data economy.
+                Connect your Base wallet to join the decentralized data economy. H1 operates on Base Sepolia testnet—a cost-effective, secure environment for verified dataset creation.
               </p>
             </div>
 
@@ -155,19 +155,19 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
                 Acquire $LABS Tokens
               </h3>
               <p className="text-muted-foreground pl-8">
-                <strong>Why:</strong> $LABS is the governance token that unlocks platform participation.<br/>
-                <strong>How:</strong> Purchase $LABS tokens to stake and create or join Data Labs.
+                <strong>Why:</strong> $LABS is the platform's utility token—the foundation for staking, participation, and revenue sharing.<br/>
+                <strong>How:</strong> Acquire $LABS to stake your expertise and unlock leadership in your domain (healthcare, robotics, law, etc.).
               </p>
             </div>
 
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
                 <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">3</span>
-                Stake & Create a Lab
+                Create or Join a Lab
               </h3>
               <p className="text-muted-foreground pl-8">
-                <strong>Why:</strong> Labs are collaborative spaces for dataset creation with proven provenance.<br/>
-                <strong>How:</strong> Stake $LABS to create your own Data Lab and issue domain-specific H1 tokens.
+                <strong>Why:</strong> Labs are domain-specific communities bound by shared compliance standards (HIPAA, GDPR, C2PA). Your H1 token represents vault shares in that lab.<br/>
+                <strong>How:</strong> Stake $LABS to launch a Lab, or join an existing one. Deposits mint H1 shares; reach Level thresholds (L1: $10K, L2: $50K, L3: $250K+) to unlock app deployment slots.
               </p>
             </div>
 
@@ -177,19 +177,30 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
                 Validate & Earn
               </h3>
               <p className="text-muted-foreground pl-8">
-                <strong>Why:</strong> Human validation ensures AI training data quality and compliance.<br/>
-                <strong>How:</strong> Credentialed validators review data submissions and earn rewards for quality verification.
+                <strong>Why:</strong> Credentialed humans ensure AI data is compliant and audit-ready. Every dataset carries onchain provenance—who created it, who validated it, which standards were met.<br/>
+                <strong>How:</strong> Contributors submit datasets; credentialed validators (licensed experts in your domain) review and sign off. Both earn rewards; compliance artifacts are recorded onchain.
               </p>
             </div>
 
             <div className="space-y-3">
               <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
                 <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">5</span>
-                Trade & Profit
+                Trade & Monetize
               </h3>
               <p className="text-muted-foreground pl-8">
-                <strong>Why:</strong> Value flows back to data creators through the bonding curve mechanism.<br/>
-                <strong>How:</strong> H1 tokens can be traded, with revenue sharing across Lab participants.
+                <strong>Why:</strong> When enterprises buy verified datasets, value flows transparently to all stakeholders—Lab owner (50%), protocol treasury (25%), buyback budget (25%). <br/>
+                <strong>How:</strong> Labs deploy optional BondingCurves to raise capital. H1 tokens are tradeable; dataset sales trigger buybacks, creating sustainable token appreciation as your Lab's datasets prove valuable.
+              </p>
+            </div>
+
+            <div className="space-y-3">
+              <h3 className="text-lg font-semibold text-primary flex items-center gap-2">
+                <span className="bg-primary text-primary-foreground w-6 h-6 rounded-full flex items-center justify-center text-sm">6</span>
+                Deploy with H1 SDK
+              </h3>
+              <p className="text-muted-foreground pl-8">
+                <strong>Why:</strong> Ship compliant apps without blockchain expertise. Our Dual-Intelligence SDK pairs any AI agent with a credentialed human reviewer to ensure regulated datasets are produced automatically and transparently.<br/>
+                <strong>How:</strong> Use the H1 SDK to integrate dual-intelligence workflows into your apps. The Agent executes; the credentialed Human reviews and signs off. Every interaction creates verifiable, compliance-ready artifacts.
               </p>
             </div>
           </div>
