@@ -20,6 +20,7 @@ import LabChat from "./pages/LabChat";
 import Settings from "./pages/Settings";
 import DeployPool from "./pages/DeployPool";
 import Terms from "./pages/Terms";
+import UpcomingFeatures from "./pages/UpcomingFeatures";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -108,6 +109,7 @@ const AppContent = () => {
             element={isConnected ? <DeployPool /> : <Home onConnect={handleConnectWallet} />} 
           />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

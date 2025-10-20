@@ -501,10 +501,12 @@ export default function Home({ onConnect }: HomeProps) {
                   Learn How It Works
                 </Button>
               </Link>
-              <Button className="bg-gradient-primary border-0 hover:opacity-90" onClick={simulateDeltaGain}>
-                Upcoming Features
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link to="/upcoming-features">
+                <Button className="bg-gradient-primary border-0 hover:opacity-90">
+                  Upcoming Features
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>
