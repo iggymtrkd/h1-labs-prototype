@@ -6,31 +6,16 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen, ChevronRight, Menu, Target, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import mermaid from "mermaid";
 import CompetitiveComparison from "@/components/litepaper/CompetitiveComparison";
 import ComplianceCards from "@/components/litepaper/ComplianceCards";
 import FinancialChart from "@/components/litepaper/FinancialChart";
 import BlockchainBenefits from "@/components/litepaper/BlockchainBenefits";
-
-// Initialize mermaid
-mermaid.initialize({
-  startOnLoad: true,
-  theme: 'dark',
-  themeVariables: {
-    primaryColor: 'hsl(142, 76%, 36%)',
-    primaryTextColor: '#fff',
-    primaryBorderColor: 'hsl(142, 71%, 45%)',
-    lineColor: 'hsl(142, 71%, 45%)',
-    secondaryColor: 'hsl(221, 83%, 53%)',
-    tertiaryColor: 'hsl(262, 83%, 58%)',
-    background: 'hsl(224, 71%, 4%)',
-    mainBkg: 'hsl(224, 71%, 4%)',
-    secondBkg: 'hsl(215, 28%, 17%)',
-    textColor: '#fff',
-    border1: 'hsl(215, 28%, 17%)',
-    border2: 'hsl(142, 71%, 45%)',
-  }
-});
+import LabCreationFlow from "@/components/litepaper/LabCreationFlow";
+import ArchitectureDiagram from "@/components/litepaper/ArchitectureDiagram";
+import EconomicFlywheel from "@/components/litepaper/EconomicFlywheel";
+import CredentialFlow from "@/components/litepaper/CredentialFlow";
+import DualIntelligenceFlow from "@/components/litepaper/DualIntelligenceFlow";
+import BondingCurveExample from "@/components/litepaper/BondingCurveExample";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -61,17 +46,6 @@ export default function Whitepaper() {
       })
       .catch((err) => console.error("Error loading litepaper:", err));
   }, []);
-
-  // Render mermaid diagrams after content loads
-  useEffect(() => {
-    if (content) {
-      setTimeout(() => {
-        mermaid.run({
-          querySelector: '.mermaid',
-        });
-      }, 100);
-    }
-  }, [content]);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -169,17 +143,127 @@ export default function Whitepaper() {
               <article className="prose prose-invert prose-primary max-w-none prose-sm md:prose-base overflow-x-hidden break-words">
                 <ReactMarkdown
                   components={{
-                    // Mermaid diagram renderer
+                    // Custom rendering for special sections and diagrams
+                    h1: ({ node, children, ...props }) => {
+                      const text = children?.toString() || "";
+                      const id = text
+                        .toLowerCase()
+                        .replace(/\*/g, "")
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "-");
+                      return (
+                        <h1
+                          id={id}
+                          className="text-2xl md:text-3xl font-bold mb-4 mt-8 scroll-mt-24 glow-green break-words"
+                          {...props}
+                        >
+                          {children}
+                        </h1>
+                      );
+                    },
+                    h3: ({ node, children, ...props }) => {
+                      const text = children?.toString() || "";
+                      const id = text
+                        .toLowerCase()
+                        .replace(/\*/g, "")
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "-");
+                      
+                      // Check if this is a section that should render a custom diagram
+                      if (text.includes("Lab Lifecycle")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <LabCreationFlow />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Credential Lifecycle")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <CredentialFlow />
+                          </>
+                        );
+                      }
+                      
+                      return (
+                        <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                          {children}
+                        </h3>
+                      );
+                    },
+                    h2: ({ node, children, ...props }) => {
+                      const text = children?.toString() || "";
+                      const id = text
+                        .toLowerCase()
+                        .replace(/\*/g, "")
+                        .replace(/[^\w\s-]/g, "")
+                        .replace(/\s+/g, "-");
+                      
+                      // Check for sections that should render custom diagrams
+                      if (text.includes("Architecture")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <ArchitectureDiagram />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Economic Flywheel")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <EconomicFlywheel />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Bonding Curves")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <BondingCurveExample />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Dual")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <DualIntelligenceFlow />
+                          </>
+                        );
+                      }
+                      
+                      return (
+                        <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                          {children}
+                        </h2>
+                      );
+                    },
+                    // Hide mermaid code blocks
                     code: ({ node, className, children, ...props }: any) => {
                       const match = /language-(\w+)/.exec(className || '');
                       const lang = match ? match[1] : '';
                       
                       if (lang === 'mermaid') {
-                        return (
-                          <div className="mermaid my-8">
-                            {String(children).replace(/\n$/, '')}
-                          </div>
-                        );
+                        return null; // Don't render mermaid code blocks
                       }
                       
                       return (
@@ -188,7 +272,6 @@ export default function Whitepaper() {
                         </code>
                       );
                     },
-                    // Custom rendering for special sections
                     table: ({ node, ...props }) => {
                       // Check if this is one of our special tables to replace with custom components
                       // We'll check the raw content for specific keywords
@@ -230,51 +313,6 @@ export default function Whitepaper() {
                     td: ({ node, ...props }) => (
                       <td className="border border-border px-4 py-2" {...props} />
                     ),
-                    h1: ({ node, ...props }) => {
-                      const text = props.children?.toString() || "";
-                      const id = text
-                        .toLowerCase()
-                        .replace(/\*/g, "")
-                        .replace(/[^\w\s-]/g, "")
-                        .replace(/\s+/g, "-");
-                      return (
-                        <h1
-                          id={id}
-                          className="text-2xl md:text-3xl font-bold mb-4 mt-8 scroll-mt-24 glow-green break-words"
-                          {...props}
-                        />
-                      );
-                    },
-                    h2: ({ node, ...props }) => {
-                      const text = props.children?.toString() || "";
-                      const id = text
-                        .toLowerCase()
-                        .replace(/\*/g, "")
-                        .replace(/[^\w\s-]/g, "")
-                        .replace(/\s+/g, "-");
-                      return (
-                        <h2
-                          id={id}
-                          className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words"
-                          {...props}
-                        />
-                      );
-                    },
-                    h3: ({ node, ...props }) => {
-                      const text = props.children?.toString() || "";
-                      const id = text
-                        .toLowerCase()
-                        .replace(/\*/g, "")
-                        .replace(/[^\w\s-]/g, "")
-                        .replace(/\s+/g, "-");
-                      return (
-                        <h3
-                          id={id}
-                          className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words"
-                          {...props}
-                        />
-                      );
-                    },
                     p: ({ node, ...props }) => (
                       <p className="mb-4 text-muted-foreground leading-relaxed break-words" {...props} />
                     ),
