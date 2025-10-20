@@ -590,7 +590,7 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="relative p-6 pt-12 bg-card rounded-xl border-2 border-primary shadow-neon-green"
+              className="relative p-6 pt-20 bg-card rounded-xl border-2 border-primary shadow-neon-green"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 1
@@ -605,7 +605,7 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-20 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 2
@@ -620,7 +620,7 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+              className="relative p-6 pt-20 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 3
@@ -635,7 +635,7 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-20 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 4
@@ -650,7 +650,7 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+              className="relative p-6 pt-20 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 5
@@ -665,7 +665,7 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-20 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
               <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 6
