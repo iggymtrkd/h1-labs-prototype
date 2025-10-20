@@ -44,6 +44,392 @@ We target regulated and semi‑regulated markets — starting with healthcare �
 
 ---
 
+## 3.5 Investor Playbook — The Simple $LABS → H1 Path
+
+> **For crypto investors**: Here's your path to H1 Labs yields in simple steps.
+
+### **The Basic Flow**
+
+```
+Step 1: Get $LABS          Step 2: Choose a Lab      Step 3: Stake            Step 4: Earn Passively
+    ↓                           ↓                          ↓                          ↓
+Buy on Exchange      →   Browse Domain Labs    →  Deposit $LABS      →  Wait for Datasets
+  or Receive             (Healthcare, Robotics,     Get H1 shares         Revenue flows
+                          Art, Legal, Gaming)        (Vault ownership)      NAV appreciates
+                                                                            Buybacks execute
+```
+
+### **Step 1: Acquire $LABS Token**
+
+**Where to get $LABS:**
+- Purchase on DEX (when listed on mainnet)
+- Mint via LP incentive programs
+- Receive from ecosystem grants (top validators, early adopters)
+
+**Initial Mindset:**
+$LABS is your ticket to the protocol. Fixed supply (no inflation) means it becomes scarcer as adoption grows.
+
+### **Step 2: Pick Your Domain & Lab**
+
+**Browse the Labs Marketplace:**
+
+H1 Labs features independent labs across multiple domains:
+
+| Domain | Lab Examples | Revenue Profile |
+|--------|--------------|-----------------|
+| **Healthcare** | De-ID, Imaging, Quality Review | Highest TAM, regulated, premium pricing |
+| **Robotics** | Motion Data, Safety Validation | Growing, technical, B2B buyers |
+| **Art & Creative** | Game Assets, Provenance | Emerging, community-driven |
+| **Legal & Compliance** | Document Review, AML/KYC | Enterprise, recurring revenue |
+| **Education** | FERPA Datasets, Research | Academic, foundation-funded |
+
+**How to Evaluate:**
+- **Lab Metrics**: TVL, validators, completed datasets, average price per dataset
+- **Growth Trajectory**: Velocity of dataset completion, revenue trend
+- **Team**: Lab creator reputation, validator retention rate
+- **Vision**: What datasets will this lab produce? Is there buyer demand?
+
+**Risk Assessment:**
+- Early labs (< $100K TVL) = higher growth potential, higher execution risk
+- Mature labs ($500K+ TVL) = proven revenue, slower growth
+
+### **Step 3: Stake $LABS to Get H1 Shares**
+
+**Three Ways to Participate:**
+
+**Option A: Direct Vault Deposit (Recommended for Long-Term)**
+```
+You send: 10,000 LABS
+You receive: 10,000 H1 shares (approximately, at current NAV)
+Cost: Deposit fee (0.75% default) = 75 LABS to protocol treasury
+Benefit: Low cost, direct ownership, no premium
+Entry: Instant
+```
+
+**Option B: Bonding Curve (Bootstrap Phase)**
+```
+You send: 10,000 LABS
+Protocol fee: 1.5% = 150 LABS
+POL reserve: 7.5% = 750 LABS
+Net deposited: 8,100 LABS
+You receive: ~8,100 H1 shares
+Cost: ~2% premium vs NAV
+Benefit: Bootstraps liquidity for the lab, early entry bonus
+Entry: Instant, but locked 7 days
+```
+
+**Option C: Secondary Market (After Launch)**
+```
+You send: ETH or other H1 tokens
+You receive: H1 shares at market price
+Cost: Trading fees (~0.3%)
+Benefit: Price discovery, tactical entry/exit
+Entry: Any time, instant trading
+```
+
+**What You Own:**
+
+When you stake $LABS and receive H1 shares, you own:
+- **Fractional ownership** of the lab's treasury
+- **Claim on 50% of dataset revenue** (flows as NAV appreciation)
+- **Passive exposure** to 25% buyback pressure (scarcity gains)
+- **Participation** in that domain's ecosystem
+
+**Example:**
+```
+Lab has $500K staked → 500K H1 shares outstanding
+You deposit $50K → Receive 50K H1 shares
+Your ownership: 50K / 550K = 9.1% of the lab
+Your claim: 9.1% of all future dataset revenue (automatically)
+Your benefit: 9.1% of all buyback gains (automatically)
+```
+
+### **Step 4: Wait for Datasets & Earn Passively**
+
+**Timeline to Earnings:**
+
+| Phase | Duration | What's Happening | Your Position |
+|-------|----------|------------------|----------------|
+| **Setup** | Weeks 1-4 | Lab deploys apps, validators join | Holding H1, waiting |
+| **Ramp-up** | Weeks 5-12 | First datasets completed | Watching for revenue |
+| **Monetization** | Month 3+ | Datasets sell to AI companies | Revenue flows in |
+| **Compounding** | Ongoing | More sales, buybacks reduce supply | Passive gains accelerate |
+
+**How Earnings Happen (Automated):**
+
+1️⃣ **Dataset Sells** (e.g., $100K sale)
+   - $50K → Lab owner + validators
+   - $25K → Protocol treasury (operations)
+   - $25K → Buyback reserve
+
+2️⃣ **Your Share of $50K Lab Revenue** (50% of sale)
+   - 9.1% of $50K = $4,550
+   - Flows into vault as assets
+   - Your H1 shares now back more assets
+   - NAV increases: $1.00 → $1.01+ per share
+
+3️⃣ **Buyback Execution** ($25K spent repurchasing H1)
+   - ~24,000 H1 tokens bought & burned
+   - H1 supply decreases
+   - Your share of remaining supply increases
+   - NAV appreciates further
+
+4️⃣ **Result: Your H1 Value Grows**
+   - Before: 50K shares × $1.00 = $50K value
+   - After: 50K shares × $1.02 = $51K value
+   - Gain: $1K (+2%) from single dataset sale
+   - Happens automatically; no action needed
+
+### **Step 5: Two Paths Forward**
+
+**Path A: Long-Term Hold (Recommended)**
+
+- **Thesis**: Believe in the domain's long-term revenue
+- **Strategy**: Hold H1 and reinvest gains
+- **Timeline**: 2-3+ years
+- **Benefit**: Compounding returns (NAV growth + buybacks compound)
+- **Exit**: When you believe growth has plateaued
+- **Example Return**: $50K → $500K+ over 3 years (if lab scales 10x)
+
+Year 1: Subsidy + early revenue = 50-100% APY  
+Year 2: Revenue-driven = 80-150% APY  
+Year 3+: Compounding = 50-100% APY sustainable  
+
+**Path B: Tactical Trading (Higher Skill)**
+
+- **Thesis**: Identify which labs will outperform
+- **Strategy**: Rotate between high-growth and stable labs
+- **Timeline**: 3-12 months per position
+- **Benefit**: Capture upside before market recognizes
+- **Risk**: May sell too early or miss long-term compounding
+- **Tools**: Monitor leaderboard, validator retention, dataset velocity
+
+Example Rotations:
+```
+Month 1-3: Buy H1-Healthcare ($50K TVL) → +150% gains
+Month 4-6: Rotate to H1-Robotics ($100K TVL) → +200% gains
+Month 7-12: Move to stable H1-Legal ($500K TVL) → +50% gains
+Result: $10K initial → $100K+ through tactical sequencing
+```
+
+### **Key Mindset Shifts for Investors**
+
+| Traditional Crypto | H1 Labs |
+|-------------------|---------|
+| **Value = Demand for token** | **Value = Real dataset sales** |
+| **Yield = Inflation** | **Yield = Revenue from data** |
+| **Risk = Protocol failure** | **Risk = Domain not finding buyers** |
+| **Upside = Hype** | **Upside = Market adoption** |
+| **Timeframe = 1-2 years** | **Timeframe = 3-5 years** |
+| **Passive = Risky** | **Passive = Sustainable** |
+
+### **FAQs for Investors**
+
+**Q: Is my $LABS locked when I stake?**  
+A: No. You can redeem H1 anytime (7-day cooldown + daily exit caps prevent bank runs). But early exit means you miss compounding.
+
+**Q: Can I lose money?**  
+A: Your downside is limited to your deposit. H1 is backed by vault assets (can't go below NAV). But if a lab doesn't generate revenue, your H1 stays at or below entry price.
+
+**Q: Do I need to do anything to earn?**  
+A: No. Just hold H1. Datasets selling, buybacks executing, and NAV appreciating happen automatically.
+
+**Q: What if a lab's datasets don't sell?**  
+A: Your H1 stays at current NAV. No passive yield, but no loss either. You can exit and move to a more successful lab.
+
+**Q: Can I speculate on H1 prices?**  
+A: Yes. Trade H1 on secondary market. But remember: price should track NAV + buyback gains. Wild speculation is prevented by price bounds.
+
+**Q: Is $LABS or H1 more valuable?**  
+A: Different roles. $LABS = platform play (scarcity, governance). H1 = lab-specific play (real yield). H1 likely outperforms in bull markets; $LABS more stable in downturns.
+
+**Q: What's the exit strategy?**  
+A: Redeem H1 for $LABS anytime (subject to cooldown). Convert $LABS back to stablecoins/ETH on DEX. Can take 7-10 days total.
+
+---
+
+## 3.6 Buy H1 Button — What Happens Behind the Scenes
+
+> **For developers**: This section details the complete flow when users click "Buy H1" and the smart contract mechanics involved.
+
+### **Overview: Three Purchase Methods**
+
+When a user buys H1 tokens in a lab, they're actually **depositing $LABS into that lab's vault** and receiving fractional ownership (H1 shares). There are three paths to accomplish this:
+
+### **Method 1: Direct Vault Deposit (Recommended)**
+
+```
+USER ACTION                          SMART CONTRACT LOGIC
+════════════════════════════════════════════════════════════════════════
+
+1. User chooses lab and enters amount:
+   ├─ Lab: H1-Healthcare
+   └─ Amount: 10,000 LABS
+   
+2. User approves LabVault to spend LABS
+   └─ Call: LABSToken.approve(labVaultAddress, 10000)
+   
+3. User initiates deposit transaction
+   └─ Call: LabVault.depositLABS(10000, userAddress)
+   
+4. Smart Contract Execution:
+   ├─ Validate amount > 0 ✓
+   ├─ Check reentrancy guard ✓
+   ├─ Transfer 10,000 LABS from user to vault
+   ├─ Calculate fee: 10,000 × 0.75% = 75 LABS
+   ├─ Calculate net deposit: 10,000 - 75 = 9,925 LABS
+   ├─ Get current NAV from vault
+   │  └─ Example: NAV = $1.00/share (100K assets / 100K shares)
+   ├─ Calculate H1 shares to mint: 9,925 / 1.00 = 9,925 shares
+   ├─ Update totalAssets: 100,000 + 9,925 = 109,925
+   ├─ Mint 9,925 H1 shares to user
+   ├─ Transfer 75 LABS fee to treasury
+   ├─ Emit events:
+   │  ├─ DepositFeeCollected(user, 75)
+   │  └─ Deposited(user, user, 9925, 9925)
+   └─ Check if level changed (e.g., hit L2 threshold)
+
+5. User receives:
+   ├─ 9,925 H1 shares in wallet
+   ├─ Ownership: 9,925 / 109,925 = 9.03% of lab
+   └─ Can redeem after 7-day cooldown with 0.375% fee
+
+COST BREAKDOWN:
+├─ User sends: 10,000 LABS
+├─ Deposit fee: 75 LABS (0.75%)
+├─ User receives: 9,925 H1 shares backed by 9,925 LABS
+└─ Total cost: 0.75% (lowest cost method)
+```
+
+---
+
+### **Method 2: Bonding Curve (Bootstrap Phase)**
+
+```
+USER ACTION                          SMART CONTRACT LOGIC
+════════════════════════════════════════════════════════════════════════
+
+1. User views bonding curve:
+   ├─ Current NAV: $1.00/share
+   ├─ Curve price: NAV × 1.005 = $1.005/share
+   └─ Protocol fee: 1.5%, POL reserve: 7.5%
+   
+2. User sends 10,000 LABS to BondingCurveSale
+   └─ Call: BondingCurveSale.buy(10000, user, minSharesOut=8900)
+   
+3. Smart Contract Execution:
+   ├─ Validate price in bounds ✓
+   ├─ Validate price change < 50% ✓
+   ├─ Transfer 10,000 LABS from user to curve
+   ├─ Calculate allocations:
+   │  ├─ Protocol fee: 10,000 × 1.5% = 150 LABS
+   │  ├─ POL reserve: 10,000 × 7.5% = 750 LABS
+   │  └─ Net to vault: 10,000 - 150 - 750 = 9,100 LABS
+   ├─ Call: vault.depositLABS(9100, user)
+   │  └─ Calculate H1 at current NAV: 9,100 / 1.00 = 9,100 shares
+   ├─ Mint 9,100 H1 to user
+   ├─ Transfer 150 LABS fee to treasury
+   ├─ Transfer 750 LABS to POL reserve
+   ├─ Check slippage: 9,100 > minSharesOut ✓
+   └─ Emit: Purchased(user, 10000, 9100, 150, 750)
+
+4. User receives:
+   ├─ 9,100 H1 shares in wallet
+   ├─ Ownership: 9,100 / 109,100 = 8.34% of lab
+   ├─ Locked in 7-day cooldown (bootstrap phase)
+   └─ After 7 days: can redeem or trade
+
+COST BREAKDOWN:
+├─ User sends: 10,000 LABS
+├─ Protocol fee: 150 LABS (1.5%)
+├─ POL reserve: 750 LABS (7.5%) [for liquidity]
+├─ Curve premium: Built into curve formula
+├─ User receives: 9,100 H1 shares
+└─ Total cost: ~1.5% + time-lock (premium for early access)
+```
+
+---
+
+### **Method 3: Secondary Market (After Bootstrap)**
+
+```
+USER ACTION                          SMART CONTRACT LOGIC
+════════════════════════════════════════════════════════════════════════
+
+1. User browses H1-Healthcare on DEX (Uniswap)
+   ├─ Contract: 0x[LabVaultAddress]
+   ├─ Symbol: H1CARD
+   ├─ Current bid: 1.02 LABS/share
+   └─ Current ask: 1.03 LABS/share
+   
+2. User executes market buy:
+   ├─ Wants: 9,000 H1 shares
+   ├─ Sends: ~9,270 LABS (9,000 × 1.03 + slippage)
+   
+3. Smart Contract Execution (DEX Swap):
+   ├─ Execute swap atomically
+   ├─ Send 9,270 LABS to seller (peer-to-peer)
+   ├─ Send 9,000 H1 shares to buyer
+   ├─ DEX collects fee: ~0.3% (depends on DEX)
+   └─ Emit: Transfer(seller, buyer, 9000)
+
+4. User receives:
+   ├─ 9,000 H1 shares instantly
+   ├─ No vault interaction (shares already minted)
+   ├─ No cooldown (immediate liquidity)
+   └─ Cost: Market price + 0.3% DEX fee
+
+KEY DIFFERENCE FROM METHODS 1 & 2:
+├─ No new deposits to vault
+├─ No new H1 minting
+├─ User receives existing H1 from secondary holder
+└─ Price set by market, not NAV + fees
+
+COST BREAKDOWN:
+├─ User sends: ~9,270 LABS
+├─ DEX trading fee: ~30 LABS (0.3%)
+├─ User receives: 9,000 H1 shares
+├─ Price paid: 1.03 LABS/share (market)
+└─ Total cost: ~0.3% + market premium/discount
+```
+
+---
+
+### **Comparison: Which Method to Use**
+
+| Method | Cost | Speed | Lock-in | Best For |
+|--------|------|-------|---------|----------|
+| **Direct Deposit** | 0.75% | Instant | 7-day | Long-term holders, lowest cost |
+| **Bonding Curve** | ~2% | Instant | 7-day | Early bootstrap, willing to pay premium |
+| **Secondary Market** | ~0.3% | Instant | None | Active traders, maximum liquidity |
+
+---
+
+### **User's Ownership After Purchase**
+
+No matter which method, the end result is the same:
+
+```
+User deposits $LABS → Smart contract locks it in vault
+                     ↓
+                 Mints H1 shares
+                     ↓
+User owns percentage = H1 shares held / Total H1 supply
+
+EXAMPLE:
+├─ User deposits: 9,925 LABS (Method 1)
+├─ Gets: 9,925 H1 shares (at NAV $1.00)
+├─ Lab total: 109,925 H1 shares
+├─ User's %: 9,925 / 109,925 = 9.03%
+│
+└─ User is now entitled to:
+   ├─ 9.03% of all dataset revenue flowing to vault (NAV growth)
+   ├─ 9.03% of buyback scarcity gains (price appreciation)
+   └─ Can redeem anytime to get $LABS back (minus fee + cooldown)
+```
+
+---
+
 ## 4. User Flows (High‑Level)
 
 1) Lab Founder  
@@ -678,6 +1064,262 @@ Notes (current state):
 - **Liquidity**: POL/treasury custody and buyback budget design; exit caps and cooldowns.  
 - **Security**: Standard diamond controls, guards, and progressive audits.
 - **Adoption**: Validator network effects + partnership incentives; credentialing portal lowers barriers.
+
+---
+
+## 17.5 H1 Token Mechanics — Frequently Asked Questions
+
+### **H1 Token Supply & Creation**
+
+**Q: How many H1 tokens are issued when a lab is created?**  
+A: H1 tokens are minted on a 1:1 basis against $LABS deposits at the current Net Asset Value (NAV):
+```
+Scenario 1 (Lab Created):
+├─ Founder deposits: $100,000 LABS
+├─ Vault assets: $100,000
+├─ H1 supply: 100,000 shares (1:1 at NAV $1.00)
+├─ Founder's ownership: 100% (100K / 100K)
+└─ Each share backed by: $1.00 LABS
+
+Scenario 2 (Community Joins):
+├─ New depositor adds: $50,000 LABS
+├─ Vault assets: $150,000
+├─ H1 supply: 150,000 shares
+├─ Original depositor's ownership: 66.7% (100K / 150K)
+├─ New depositor's ownership: 33.3% (50K / 150K)
+└─ Each share now backed by: $1.00 LABS (unchanged NAV)
+```
+
+**Q: Is there a maximum H1 supply per lab?**  
+A: No hard cap. H1 supply is capped only by the total $LABS in existence. In practice, each lab's H1 supply grows with deposits and shrinks with redemptions and buybacks. Supply is always backed by vault assets (never inflated).
+
+**Q: How does the NAV (Net Asset Value) change?**  
+A: NAV = Total Vault Assets / Total H1 Shares Outstanding
+
+NAV increases when:
+- Dataset revenue flows into the vault (50% of sales)
+- Validator rewards accrue to vault
+
+NAV stays same when:
+- New deposits arrive (new shares minted equal to deposit amount)
+- New H1 holders join
+
+NAV increases further when:
+- Buybacks execute (H1 supply decreases, same assets back fewer shares)
+
+### **Buying, Selling, and Trading H1**
+
+**Q: How much does it cost to buy H1 tokens?**  
+A: Three pricing models:
+
+1. **Direct Vault Deposit**: Cost = NAV + deposit fee (0.75% default)
+   ```
+   You send: $10,000 LABS
+   Fee: 75 LABS (0.75%)
+   You receive: ~9,900 H1 shares at $1.00/share NAV
+   Net cost: 0.75% premium
+   ```
+
+2. **Bonding Curve** (bootstrap phase): Cost = NAV × 1.005 + protocol fee
+   ```
+   You send: $10,000 LABS
+   Curve price: NAV × 1.005 = $1.005/share
+   Protocol fee: 1-2% deducted
+   POL reserve: 5-10% reserved
+   You receive: ~8,000-8,500 H1 shares
+   Net cost: ~2% premium (0.5% curve + 1.5% fee)
+   ```
+
+3. **Secondary Market** (after launch): Cost = Market price
+   ```
+   You send: $10,000 in ETH or other tokens
+   Price: Set by market (often trades at NAV ± sentiment)
+   Trading fee: ~0.3% (DEX-dependent)
+   You receive: H1 shares at market price
+   Net cost: Variable (can be discount or premium to NAV)
+   ```
+
+**Q: Can I trade H1 tokens between labs?**  
+A: Yes. Each lab's H1 is a separate ERC-20 token. You can:
+- Sell H1-Healthcare for stablecoins
+- Use stablecoins to buy H1-Robotics
+- Or swap directly H1-Healthcare ↔ H1-Robotics on DEX
+
+This enables portfolio rebalancing and tactical rotation.
+
+**Q: What are the fees when I unstake/redeem H1?**  
+A: Two phases:
+
+1. **Redemption Request**: Costs nothing
+   ```
+   You burn: 50,000 H1 shares
+   Fee: None at request time
+   Status: Locked for 7 days (cooldown)
+   ```
+
+2. **Redemption Claim** (after 7 days): Redemption fee applied
+   ```
+   You receive: (shares × NAV) - redemption fee
+   Redemption fee: 0.375% default (can be adjusted by admin)
+   Example: 50K shares × $1.00 = $50,000
+            Minus fee (0.375%): $187.50
+            You get: $49,812.50
+   Subject to: Daily exit caps (20% of TVL per day)
+   ```
+
+### **Ownership & Governance**
+
+**Q: Can one person own all H1 tokens in a lab?**  
+A: Yes, initially. If you're the sole depositor, you own 100% of that lab's H1. As others join:
+- Your H1 ownership dilutes
+- Your H1 value per share remains unchanged (if NAV stable)
+- Your % ownership decreases, but your absolute value stays same
+
+Example:
+```
+Time 0: You deposit $100K → 100% ownership
+Time 1: Others deposit $100K → You own 50%
+        But your H1 value: still $100K (50% × $200K vault)
+Time 2: Lab generates revenue → Vault grows
+        Your H1 value: $100K × (NAV appreciation + buyback gains)
+```
+
+**Q: Is there a maximum amount of H1 one person can hold?**  
+A: No. A single depositor could theoretically own 100% of a lab's H1 if they're the only staker. Ownership is purely proportional to shares held.
+
+**Q: Does H1 ownership confer governance rights?**  
+A: Currently: No. H1 is purely a claim on revenue and vault assets.  
+Future: If protocol upgrades to governance, H1 holders may receive voting rights proportional to their shares.
+
+### **Revenue & Yield Mechanics**
+
+**Q: How do I earn returns on H1?**  
+A: Passively, through three mechanisms:
+
+1. **NAV Appreciation** (50% of dataset revenue)
+   ```
+   Lab generates $100K dataset sale
+   $50K flows to vault → increases assets
+   Your claim: (your %) × $50K
+   Happens automatically; you hold and gain value
+   ```
+
+2. **Buyback Scarcity** (25% of dataset revenue)
+   ```
+   $25K allocated for H1 buybacks
+   Protocol repurchases H1 at market price
+   Reduces total supply → your % ownership increases
+   NAV multiplies by scarcity effect (no action needed)
+   ```
+
+3. **Compounding** (NAV growth × scarcity)
+   ```
+   Month 1: 1 dataset sale → NAV $1.00 → $1.05 (+5%)
+   Month 2: 1 dataset sale → NAV $1.05 → $1.10 (+4.8%, on higher base)
+   Month 3: Same revenue, higher NAV → +4.8% on new base
+   Over time: Exponential growth (50% + 25% = 75% revenue boost compounds)
+   ```
+
+**Q: What's a realistic APY for H1 holders?**  
+A: Depends on lab and phase:
+
+| Phase | Revenue Condition | Realistic APY | Driver |
+|-------|-------------------|---------------|--------|
+| **Year 1** | Early + subsidies | 50-200% | Subsidies + early revenue |
+| **Year 1-2** | Revenue ramping | 80-150% | Dataset sales + buybacks |
+| **Year 2+** | Sustainable | 50-100% | Real revenue (sustainable long-term) |
+
+These are NOT guaranteed. Labs that fail to generate revenue will have 0% APY.
+
+### **Risk & Downside Protection**
+
+**Q: What's my downside if a lab fails?**  
+A: Your maximum loss is limited to your initial deposit:
+```
+You deposit: $50,000 LABS
+Worst case: Lab never generates revenue
+Your H1 value: Stays at $50,000 (NAV = assets / shares)
+You can redeem: $50,000 LABS back (after cooldown)
+Your loss: Fees only (~0.375% redemption fee = $187.50)
+```
+
+H1 is backed by real assets (your deposited $LABS), so it cannot go below NAV.
+
+**Q: Can H1 go to zero?**  
+A: No. H1 is always backed by vault assets. Minimum value = NAV of remaining assets.
+
+**Q: What happens if protocol gets hacked?**  
+A: Vault assets are protected by:
+- Reentrancy guards (prevents double-spending attacks)
+- Access controls (only admin can withdraw for valid reasons)
+- Audit-standard safety practices
+- Insurance considerations (future, if adopted)
+
+Your $LABS stay in the vault. Worst case: temporary freeze, not permanent loss.
+
+### **Liquidity & Exit**
+
+**Q: Can I exit quickly if I need my money?**  
+A: With delays:
+```
+Time 0: You request redemption
+Time 0-7: Cooldown period (can cancel during this time)
+Time 7+: You claim redemption (subject to daily exit caps)
+Time 10-14: Likely full redemption complete (if within daily cap)
+Total timeline: 7-14 days typically
+```
+
+To exit faster: Sell H1 on secondary market (instant, but at market price, not NAV).
+
+**Q: What are exit caps?**  
+A: Daily redemption limit to prevent bank runs:
+```
+Lab vault TVL: $500,000
+Daily exit cap: 20% of TVL = $100,000/day
+If you want to redeem: $50,000
+Status: Approved (within cap)
+
+If many people redeem: $100,000/day max
+Your redemption: Queued until next day if exceeds cap
+```
+
+Prevents cascading failures; ensures vault stability.
+
+**Q: Can I swap H1 for stablecoins instantly?**  
+A: Yes, on secondary market:
+```
+You hold: 50,000 H1-Healthcare
+You trade: H1 → USDC on Uniswap (instant)
+You get: ~50,000 × current H1 price in USDC
+You send: USDC → ETH or bank (DEX-dependent)
+Total time: 5-15 minutes (no cooldown)
+```
+
+But vault redemption path (cooler but cheaper fees) takes 7+ days.
+
+### **H1 vs $LABS**
+
+**Q: Should I buy $LABS or H1?**  
+A: Different risk/reward:
+
+| Factor | $LABS | H1 |
+|--------|-------|-----|
+| **Yield** | None (no inflation) | Yes (real revenue) |
+| **Risk** | Platform-level | Lab-specific |
+| **Upside** | Demand + scarcity | Revenue compounding |
+| **Best for** | Long-term hold | Active investors |
+| **Downside** | Adoption fails | Lab doesn't execute |
+
+Typical allocation: 30% $LABS (platform hedge) + 70% H1 (yield focus).
+
+**Q: Is H1 leveraged $LABS?**  
+A: No leverage. H1 can outgrow $LABS because:
+- H1 = real revenue yield (sustainable)
+- $LABS = scarcity only (no yield)
+- H1 compounds (NAV + buyback effects)
+- $LABS appreciates slower (demand-driven)
+
+Think: H1 = equity in specific lab; $LABS = platform governance token.
 
 ---
 

@@ -18,15 +18,21 @@ contract LabVault is ERC20Base {
   address public immutable labsToken;
   string public labDisplayName;
   address public admin;
+  address public feeRecipient;
 
   uint256 public constant LEVEL1 = 100_000e18;
   uint256 public constant LEVEL2 = 250_000e18;
   uint256 public constant LEVEL3 = 500_000e18;
   uint16 public constant MAX_EXIT_CAP_BPS = 10_000; // 100%
+  uint16 public constant MAX_FEE_BPS = 100; // 1% max fee
 
   uint64 public cooldownSeconds;
   uint16 public epochExitCapBps;
   uint64 public epochStart;
+  
+  // Fee configuration (basis points)
+  uint16 public depositFeeBps; // 0.5-1% = 50-100 bps
+  uint16 public redemptionFeeBps; // 0.25-0.5% = 25-50 bps
 
   uint256 public totalAssets;
   uint256 public pendingExitAssets;
@@ -56,7 +62,9 @@ contract LabVault is ERC20Base {
   mapping(uint256 => RedeemRequest) public redeemRequests;
 
   event Deposited(address indexed caller, address indexed receiver, uint256 assets, uint256 shares);
+  event DepositFeeCollected(address indexed caller, uint256 feeAmount);
   event RedeemRequested(uint256 indexed requestId, address indexed owner, uint256 sharesBurned, uint256 assets, uint64 unlockTime);
+  event RedemptionFeeCollected(uint256 indexed requestId, address indexed owner, uint256 feeAmount);
   event RedeemClaimed(uint256 indexed requestId, address indexed owner, uint256 assets);
   event RedeemCanceled(uint256 indexed requestId, address indexed owner, uint256 assets, uint256 sharesReMinted);
   event LevelChanged(uint8 newLevel, uint256 totalAssets);
@@ -64,6 +72,8 @@ contract LabVault is ERC20Base {
   event EpochRolled(uint64 newEpochStart);
   event RedeemFilled(uint256 indexed requestId, address indexed filler, uint256 assets, address receiver);
   event AdminUpdated(address indexed newAdmin);
+  event FeeRecipientUpdated(address indexed newRecipient);
+  event FeesUpdated(uint16 depositFeeBps, uint16 redemptionFeeBps);
   event Paused(address indexed account);
   event Unpaused(address indexed account);
 
@@ -110,6 +120,11 @@ contract LabVault is ERC20Base {
     epochExitCapBps = epochExitCapBps_;
     epochStart = uint64(block.timestamp); // Use real time for init
     admin = admin_;
+    feeRecipient = admin_;
+    
+    // Default fees: 0.75% deposit, 0.375% redemption (can be adjusted by admin)
+    depositFeeBps = 75; // 0.75%
+    redemptionFeeBps = 37; // 0.375%
   }
 
   function assetsPerShare() public view returns (uint256) {
@@ -131,6 +146,19 @@ contract LabVault is ERC20Base {
   function previewRedeem(uint256 shares) public view returns (uint256 assets) {
     uint256 rate = assetsPerShare();
     assets = (shares * rate) / 1e18;
+  }
+
+  /// @notice Preview deposit accounting for deposit fee
+  function previewDepositWithFee(uint256 assets) public view returns (uint256 shares, uint256 fee) {
+    fee = (assets * depositFeeBps) / 10_000;
+    uint256 netAssets = assets - fee;
+    shares = previewDeposit(netAssets);
+  }
+
+  /// @notice Preview redemption accounting for redemption fee
+  function previewRedeemWithFee(uint256 shares) public view returns (uint256 assets, uint256 fee) {
+    assets = previewRedeem(shares);
+    fee = (assets * redemptionFeeBps) / 10_000;
   }
 
   function getLevel() public view returns (uint8 level) {
@@ -157,27 +185,55 @@ contract LabVault is ERC20Base {
 
   function depositLABS(uint256 assets, address receiver) external nonReentrant whenNotPaused returns (uint256 shares) {
     require(assets > 0, "zero assets");
-    shares = previewDeposit(assets);
+    
+    // Calculate fee
+    uint256 fee = (assets * depositFeeBps) / 10_000;
+    uint256 netAssets = assets - fee;
+    
+    shares = previewDeposit(netAssets);
     require(IERC20(labsToken).transferFrom(msg.sender, address(this), assets), "transferFrom fail");
-    totalAssets += assets;
+    
+    // Collect fee to recipient
+    if (fee > 0 && feeRecipient != address(0)) {
+      require(IERC20(labsToken).transfer(feeRecipient, fee), "fee transfer fail");
+    }
+    
+    totalAssets += netAssets;
     _mint(receiver, shares);
     _maybeEmitLevelChange();
-    emit Deposited(msg.sender, receiver, assets, shares);
+    emit DepositFeeCollected(msg.sender, fee);
+    emit Deposited(msg.sender, receiver, netAssets, shares);
   }
 
   function mintShares(uint256 shares, address receiver) external nonReentrant whenNotPaused returns (uint256 assets) {
     require(shares > 0, "zero shares");
     assets = previewMint(shares);
-    require(IERC20(labsToken).transferFrom(msg.sender, address(this), assets), "transferFrom fail");
+    
+    // Calculate fee
+    uint256 fee = (assets * depositFeeBps) / 10_000;
+    uint256 totalRequired = assets + fee;
+    
+    require(IERC20(labsToken).transferFrom(msg.sender, address(this), totalRequired), "transferFrom fail");
+    
+    // Collect fee to recipient
+    if (fee > 0 && feeRecipient != address(0)) {
+      require(IERC20(labsToken).transfer(feeRecipient, fee), "fee transfer fail");
+    }
+    
     totalAssets += assets;
     _mint(receiver, shares);
     _maybeEmitLevelChange();
+    emit DepositFeeCollected(msg.sender, fee);
     emit Deposited(msg.sender, receiver, assets, shares);
   }
 
   function requestRedeem(uint256 shares) external nonReentrant whenNotPaused returns (uint256 requestId, uint256 assets) {
     require(shares > 0, "zero shares");
     assets = previewRedeem(shares);
+    
+    // Calculate redemption fee
+    uint256 redemptionFee = (assets * redemptionFeeBps) / 10_000;
+    
     _rollEpochIfNeeded();
     _checkAndAccrueExitCap(assets);
     _burn(msg.sender, shares);
@@ -185,6 +241,7 @@ contract LabVault is ERC20Base {
     uint64 unlockTime = uint64(_currentTime()) + cooldownSeconds;
     requestId = ++nextRequestId;
     redeemRequests[requestId] = RedeemRequest({ owner: msg.sender, assets: assets, unlockTime: unlockTime, claimed: false });
+    emit RedemptionFeeCollected(requestId, msg.sender, redemptionFee);
     emit RedeemRequested(requestId, msg.sender, shares, assets, unlockTime);
   }
 
@@ -207,9 +264,19 @@ contract LabVault is ERC20Base {
     pendingExitAssets -= r.assets;
     r.claimed = true;
     totalAssets -= r.assets;
-    require(IERC20(labsToken).transfer(r.owner, r.assets), "transfer fail");
+    
+    // Calculate and apply fee at claim time
+    uint256 redemptionFee = (r.assets * redemptionFeeBps) / 10_000;
+    uint256 netAssets = r.assets - redemptionFee;
+    
+    // Send fee to recipient
+    if (redemptionFee > 0 && feeRecipient != address(0)) {
+      require(IERC20(labsToken).transfer(feeRecipient, redemptionFee), "fee transfer fail");
+    }
+    
+    require(IERC20(labsToken).transfer(r.owner, netAssets), "transfer fail");
     _maybeEmitLevelChange();
-    emit RedeemClaimed(requestId, r.owner, r.assets);
+    emit RedeemClaimed(requestId, r.owner, netAssets);
   }
 
   function fillRedeem(uint256 requestId, address receiver) external nonReentrant returns (uint256 sharesMinted) {
@@ -228,6 +295,22 @@ contract LabVault is ERC20Base {
     if (newAdmin == address(0)) revert InvalidAddress();
     admin = newAdmin;
     emit AdminUpdated(newAdmin);
+  }
+
+  function setFeeRecipient(address newRecipient) external onlyAdmin {
+    if (newRecipient == address(0)) revert InvalidAddress();
+    feeRecipient = newRecipient;
+    emit FeeRecipientUpdated(newRecipient);
+  }
+
+  /// @notice Set deposit and redemption fees (in basis points)
+  /// @dev Both fees must be <= 100 bps (1%)
+  function setFees(uint16 depositBps, uint16 redemptionBps) external onlyAdmin {
+    require(depositBps <= MAX_FEE_BPS, "deposit fee too high");
+    require(redemptionBps <= MAX_FEE_BPS, "redemption fee too high");
+    depositFeeBps = depositBps;
+    redemptionFeeBps = redemptionBps;
+    emit FeesUpdated(depositBps, redemptionBps);
   }
 
   function setCooldown(uint64 seconds_) external onlyAdmin {
