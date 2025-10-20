@@ -119,6 +119,8 @@ graph LR
 
 **Stage 3: Bootstrap via Bonding Curve (Optional)** — Labs deploy **BondingCurveSale** for capital raise. Price formula: `NAV × 1.005` (0.5% premium).
 
+<!-- Lab level progression chart -->
+
 ---
 
 ## 5. Architecture (Lite)
@@ -267,22 +269,7 @@ H1 is **not a single token.** Each lab deploys its own H1 token (LabVault shares
 - Claim on future dataset sale revenue
 - Participation in that domain's ecosystem
 
-**Example — Healthcare Lab after Year 1:**
-
-```
-Initial: $5M TVL, 1M H1 shares, $5.00/share
-├─ Dataset revenue: $5M annually (50 datasets sold)
-├─ Buyback budget deployed: $1.25M (25% of revenue)
-├─ Lab revenue retained: $2.5M (50%)
-├─ New TVL: ~$8.5M
-├─ New NAV: $8.50/share (+70%)
-└─ If buybacks reduce supply 5%: $8.88/share (+77.6% total)
-
-Result: Early H1 holders gain from:
-✓ Increasing NAV (more datasets sold)
-✓ Supply reduction (buybacks)
-✓ Sustainable token economy (real revenue, not inflation)
-```
+<!-- Token appreciation timeline chart -->
 
 **Why H1 ≠ Traditional Stake-Reward Models:**
 
@@ -422,72 +409,7 @@ sequenceDiagram
 
 ## 9.5 Use Case Scenarios
 
-### **Use Case 1: Healthcare Startup Launches De-Identification Lab**
-
-```
-Month 1: $50K staking → Lab created → Level 1 (1 app slot)
-
-Month 1-2: Bonding curve bootstrap
-├─ 50 angels purchase H1-Healthcare shares
-├─ Raise: $250K total
-├─ Curve price: $1.005 → $2.50
-└─ Reach Level 2
-
-Month 3-6: Revenue acceleration
-├─ 10K patient records de-identified via Scrubber
-├─ Sold to AI company: $100K
-├─ Revenue split: $50K lab owner, $25K treasury, $25K buyback
-├─ 500 validator clinicians earn: $100 each in H1
-└─ H1 price appreciates to $2.75
-
-Year 1 Outcome:
-├─ 50 datasets sold ($5M revenue)
-├─ TVL grows: $5M → $8.5M
-├─ H1-Healthcare: $1.00 → $8.88/share (+788%)
-├─ Early validator earning: $100 → $888
-└─ Scrubber becomes industry standard for HIPAA compliance
-```
-
-### **Use Case 2: Robotics Consortium Validates Safety Data**
-
-```
-Week 1: $100K staking, 1,000 motion videos collected
-
-Week 2-4: Validation with ISO-26262 experts
-├─ SafetyFacet compliance enforcement
-├─ Reach Level 2 ($250K capital)
-└─ ProvenanceFacet records all validators/approvals
-
-Month 2-3: Monetization
-├─ OEM purchases dataset: $50K
-├─ 100 validators earn: $250 each in H1
-├─ Lab owner gains directional equity
-└─ Dataset becomes certified standard
-
-6-Month Outlook:
-├─ 100 robotics companies subscribe
-├─ $500K recurring revenue
-├─ H1 holders gain 400%+ returns
-└─ Protocol treasury funds industry audits
-```
-
-### **Use Case 3: Creative Studio Tokenizes Art Assets**
-
-```
-Week 1-3: 5,000 game assets collected, validated by senior artists
-
-Month 2: License to AI development studio
-├─ License fee: $25K
-├─ Revenue split: $12.5K studio, $6.25K protocol, $6.25K buyback
-├─ 50 artists earn: $125 each in H1-ArtForge
-└─ C2PA provenance ensures legal compliance
-
-Ongoing:
-├─ Every game using dataset generates proper attribution
-├─ Artists earn recurring royalties (transparent splits)
-├─ Studios get legal provenance for AI training
-└─ H1 holders benefit from recurring licensing revenue
-```
+<!-- Use case ROI comparison chart -->
 
 ---
 
@@ -555,20 +477,13 @@ H1 Labs uniquely combines **verified human intelligence, provenance, and complia
 
 ## 14. Roadmap (Condensed)
 
-| Phase | Milestone | Highlights |
-|------|-----------|------------|
-| Prototype | Testnet diamond + UI demo | LABS set, createLab, auto‑vault, deposits/redemptions |
-| MVP | Provenance + Revenue flows | Credential gating, RevenueFacet splits, initial SDK hooks |
-| Post‑MVP | Governance + Credits | DAO/Compliance upgrades, Credit mode, explorer & analytics |
+<!-- Roadmap timeline chart -->
 
 ---
 
 ## 15. Risks & Mitigations (Brief)
 
-- **Regulatory**: Programmable compliance facets; credential gating; audit logs.  
-- **Liquidity**: POL/treasury custody and buyback budget design; exit caps and cooldowns.  
-- **Security**: Standard diamond controls, guards, and progressive audits.
-- **Adoption**: Validator network effects + partnership incentives; credentialing portal lowers barriers.
+<!-- Risk matrix chart -->
 
 ---
 
