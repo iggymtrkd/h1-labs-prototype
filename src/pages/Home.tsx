@@ -1,6 +1,7 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet } from "lucide-react";
+import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
 import {
@@ -229,10 +230,39 @@ export default function Home({ onConnect }: HomeProps) {
               </span>
             </h1>
             
-            <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-              The H1 SDK embeds two intelligence systems in every app—an Agent and a credentialed Human—
-              producing compliant, high‑quality data for regulated and semi‑regulated markets. Healthcare first.
-            </p>
+            <div className="mb-8 max-w-2xl mx-auto relative">
+              <Carousel className="w-full" opts={{ loop: true }}>
+                <CarouselContent>
+                  <CarouselItem>
+                    <div className="min-h-[120px] flex items-center justify-center px-12">
+                      <p className="text-xl text-muted-foreground">
+                        Launch a DataLab and create H1 tokens earning revenue from verified dataset sales. Dataset sales trigger buybacks, generating sustainable token appreciation without traditional dividends.
+                      </p>
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem>
+                    <div className="min-h-[120px] flex items-center justify-center px-12">
+                      <p className="text-xl text-muted-foreground">
+                        The H1 SDK embeds two intelligence systems in every app—an Agent and a credentialed Human—producing compliant, high-quality data for regulated and semi-regulated markets. Healthcare first.
+                      </p>
+                    </div>
+                  </CarouselItem>
+                  <CarouselItem>
+                    <div className="min-h-[120px] flex items-center justify-center px-12">
+                      <p className="text-xl text-muted-foreground">
+                        Scholars earn by enriching and validating datasets through domain-specific H1 apps. Get compensated via grants, revenue splits, and H1 tokens while building reputation.
+                      </p>
+                    </div>
+                  </CarouselItem>
+                </CarouselContent>
+                <CarouselPrevious className="left-0 h-8 w-8">
+                  <ChevronLeft className="h-4 w-4" />
+                </CarouselPrevious>
+                <CarouselNext className="right-0 h-8 w-8">
+                  <ChevronRight className="h-4 w-4" />
+                </CarouselNext>
+              </Carousel>
+            </div>
 
             <div className="flex flex-col sm:flex-row gap-4 justify-center">
               <Button 
