@@ -156,13 +156,19 @@ Time T3 (After Buyback Execution):
 
 ---
 
-## 6. $LABS and H1 — Relationship, Mechanics, and the Economic Flywheel
+## 6. $LABS and H1 — Detailed Mechanics & Economic Flywheel
 
-- **$LABS (singleton ERC‑20):** Platform governance/staking asset. Set via `TreasuryFacet.setLABSToken`.  
-- **H1 (per‑lab ERC‑20 shares):** Each Lab’s `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
-- **Bonding Curve (optional):** `BondingCurveSale` buys H1 at NAV + 0.5% premium, routing fees/POL to treasury and depositing net $LABS to the lab's vault.  
-- **Levels & App Slots:** LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.  
-- **Revenue Split (current implementation):** 50% to lab owner, 25% to protocol treasury (H1 pool custody), 25% retained for future buyback execution.
+> 📚 Tokenomics overview: See Section 5 above. For deeper details, see [`docs/8-h_1_tokenomics_distribution.md`](8-h_1_tokenomics_distribution.md)
+
+This section provides detailed mechanics of how $LABS and H1 interact within the platform's economic flywheel.
+
+### Key Definitions:
+
+- **$LABS (Singleton ERC‑20)**: Platform governance, staking, and lab creation asset. Set via `TreasuryFacet.setLABSToken`.  
+- **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab’s `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
+- **Bonding Curve (Optional)**: `BondingCurveSale` buys H1 at NAV + 0.5% premium, routing fees/POL to treasury and depositing net $LABS to the lab's vault.  
+- **Levels & App Slots**: LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.  
+- **Revenue Split (Current Implementation)**: 50% to lab owner, 25% to protocol treasury (H1 pool custody), 25% retained for future buyback execution.
 
 Economic intent: AI demand for verified datasets drives onchain payments that flow to Labs and treasury, with retained buyback budgets enabling future buy pressure mechanisms without dividend semantics.
 
