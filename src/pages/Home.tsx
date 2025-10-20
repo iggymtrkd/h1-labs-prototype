@@ -415,36 +415,6 @@ export default function Home({ onConnect }: HomeProps) {
         </div>
       </section>
 
-      {/* Dual-Intelligence SDK Callout */}
-      <section id="how-it-works" className="py-20">
-        <div className="container mx-auto px-4">
-          <motion.div
-            initial={{ opacity: 0, y: 20 }}
-            whileInView={{ opacity: 1, y: 0 }}
-            transition={{ duration: 0.6 }}
-            className="max-w-5xl mx-auto bg-card border border-primary/30 rounded-2xl p-8 text-center"
-          >
-            <h2 className="text-3xl font-bold mb-4 glow-green">Dual‑Intelligence SDK</h2>
-            <p className="text-lg text-muted-foreground mb-6">
-              Plug the H1 SDK into your app and choose a base model from partner providers—or bring your own.
-              The Agent executes while a credentialed human reviews and signs off, adding provenance and compliance, much needed in regulated and semi-regulated AI markets. The supervised improvement
-              (Δ‑Gain) is recorded with provenance and attribution for compliant resale.
-            </p>
-            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
-              <Link to="/whitepaper">
-                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
-                  Learn How It Works
-                </Button>
-              </Link>
-              <Button className="bg-gradient-primary border-0 hover:opacity-90" onClick={simulateDeltaGain}>
-                Try the Demo
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
-            </div>
-          </motion.div>
-        </div>
-      </section>
-
       {/* Features Section */}
       <section className="py-20 bg-muted/20">
         <div className="container mx-auto px-4">
@@ -507,6 +477,36 @@ export default function Home({ onConnect }: HomeProps) {
               </p>
             </motion.div>
           </div>
+        </div>
+      </section>
+
+      {/* Dual-Intelligence SDK Callout */}
+      <section id="how-it-works" className="py-20">
+        <div className="container mx-auto px-4">
+          <motion.div
+            initial={{ opacity: 0, y: 20 }}
+            whileInView={{ opacity: 1, y: 0 }}
+            transition={{ duration: 0.6 }}
+            className="max-w-5xl mx-auto bg-card border border-primary/30 rounded-2xl p-8 text-center"
+          >
+            <h2 className="text-3xl font-bold mb-4 glow-green">Dual‑Intelligence SDK</h2>
+            <p className="text-lg text-muted-foreground mb-6">
+              Plug the H1 SDK into your app and choose a base model from partner providers—or bring your own.
+              The Agent executes while a credentialed human reviews and signs off, adding provenance and compliance, much needed in regulated and semi-regulated AI markets. The supervised improvement
+              (Δ‑Gain) is recorded with provenance and attribution for compliant resale.
+            </p>
+            <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
+              <Link to="/whitepaper">
+                <Button variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground">
+                  Learn How It Works
+                </Button>
+              </Link>
+              <Button className="bg-gradient-primary border-0 hover:opacity-90" onClick={simulateDeltaGain}>
+                Try the Demo
+                <ArrowRight className="ml-2 h-5 w-5" />
+              </Button>
+            </div>
+          </motion.div>
         </div>
       </section>
 
@@ -686,7 +686,7 @@ export default function Home({ onConnect }: HomeProps) {
       <section className="py-20">
         <div className="container mx-auto px-4">
           <div className="max-w-3xl mx-auto text-center bg-gradient-card p-12 rounded-2xl border border-primary/30">
-            <h2 className="text-4xl font-bold mb-6">Ready to Join the AI Revolution?</h2>
+            <h2 className="text-4xl font-bold mb-6">Ready to Join the decentralized AI Revolution?</h2>
             <p className="text-xl text-muted-foreground mb-8">
               Connect your wallet and start participating in the future of AI training
             </p>
