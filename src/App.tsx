@@ -33,6 +33,7 @@ const AppContent = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const handleConnectWallet = async () => {
     await connectWallet();
@@ -45,12 +46,18 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* Pre-login top navigation */}
-      <Navigation
+      <Navigation 
         onConnect={handleConnectWallet}
         isConnected={isConnected}
         address={address}
         labsBalance={labsBalance}
         showOnHomePage={isHomePage}
+        onHowItWorksClick={() => {
+          setShowHowItWorks(true);
+          if (!isHomePage) {
+            navigate('/');
+          }
+        }}
       />
 
       {/* Platform sidebar (desktop only, when connected and not on home page) */}
@@ -73,7 +80,7 @@ const AppContent = () => {
           : ""
       }`}>
         <Routes>
-          <Route path="/" element={<Home onConnect={handleConnectWallet} />} />
+          <Route path="/" element={<Home onConnect={handleConnectWallet} showHowItWorksDialog={showHowItWorks} onDialogClose={() => setShowHowItWorks(false)} />} />
           <Route 
             path="/dashboard" 
             element={isConnected ? <Dashboard /> : <Home onConnect={handleConnectWallet} />} 

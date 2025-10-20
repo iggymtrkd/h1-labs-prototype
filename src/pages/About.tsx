@@ -10,37 +10,37 @@ export default function About() {
 
   const timeline = [
     {
-      year: "2023-2025",
+      year: "'23-'25",
       title: "MiniWhales",
       description: "Initial proof-of-concept demonstrating human-validated AI training on blockchain",
       status: "completed",
     },
     {
-      year: "2025 Q3-Q4",
+      year: "Q3-Q4 '25",
       title: "H1 Labs Protocol Testnet",
       description: "Launch of the dual-token economy testnet with $LABS and H1 tokens",
       status: "current",
     },
     {
-      year: "2026-2027",
+      year: "Q1 '26",
       title: "Healthcare Domain Launch",
       description: "Scrubber App, Second Opinion+, and Pre-Chart Pro go live",
       status: "upcoming",
     },
     {
-      year: "2027",
+      year: "Q2 '26",
       title: "SDK Release",
       description: "Developer SDK for building custom H1 Labs applications",
       status: "upcoming",
     },
     {
-      year: "2027-2028",
+      year: "Q3 '26",
       title: "Multi-Domain Expansion",
       description: "Launch of Art, Robotics, and Legal domain applications",
       status: "upcoming",
     },
     {
-      year: "2028+",
+      year: "'27",
       title: "Atlas Network",
       description: "Global decentralized AI training network spanning all major industries",
       status: "future",
@@ -230,12 +230,14 @@ export default function About() {
                       : "border-border"
                   }`}
                 >
-                  <div className="flex items-start gap-4">
+                  <div className="flex items-start gap-6">
                     <div
-                      className={`flex-shrink-0 w-20 text-center ${
+                      className={`flex-shrink-0 min-w-[100px] text-center font-mono ${
                         item.status === "current"
-                          ? "text-primary font-bold text-2xl"
-                          : "text-muted-foreground text-xl"
+                          ? "text-primary font-bold text-xl"
+                          : item.status === "completed"
+                          ? "text-muted-foreground/70 text-lg"
+                          : "text-muted-foreground text-lg"
                       }`}
                     >
                       {item.year}
