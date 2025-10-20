@@ -23,6 +23,7 @@ import DeployPool from "./pages/DeployPool";
 import Terms from "./pages/Terms";
 import UpcomingFeatures from "./pages/UpcomingFeatures";
 import NotFound from "./pages/NotFound";
+import FAQ from "./pages/FAQ";
 
 const queryClient = new QueryClient();
 
@@ -101,6 +102,7 @@ const AppContent = () => {
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/about" element={<About />} />
           <Route path="/mission" element={<Mission />} />
+          <Route path="/faq" element={<FAQ onConnect={handleConnectWallet} />} />
           <Route 
             path="/lab/:id" 
             element={isConnected ? <LabDetail /> : <Home onConnect={handleConnectWallet} />} 

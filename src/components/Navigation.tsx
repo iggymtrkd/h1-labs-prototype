@@ -34,6 +34,7 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
   const homePageLinks = [
     { name: "About", path: "/about" },
     { name: "Litepaper", path: "/whitepaper" },
+    { name: "FAQ", path: "/faq" },
     { name: "How It Works", path: "#how-it-works", isHash: true },
     { name: "Terms", path: "/terms" },
   ];
