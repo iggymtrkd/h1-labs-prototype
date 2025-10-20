@@ -194,7 +194,7 @@ export default function Whitepaper() {
               }}
               className={`w-full text-left py-2 rounded-lg transition-all text-sm ${
                 section.level === 1
-                  ? "font-semibold px-2"
+                  ? "font-semibold pl-0 pr-2"
                   : section.level === 2
                   ? "pl-6 pr-2 text-muted-foreground"
                   : "pl-10 pr-2 text-muted-foreground text-xs"
