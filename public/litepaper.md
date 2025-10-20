@@ -92,21 +92,39 @@ Auditable provenance & compliance artifacts for due diligence
 
 ### **Lab Lifecycle**
 
-Creating a Lab unlocks three stages:
+<lov-mermaid>
+graph LR
+    A[Stake $LABS] --> B[Deploy LabVault]
+    B --> C[Domain Registered]
+    C --> D{TVL Threshold}
+    D -->|$10K-$50K| E[Level 1<br/>1 App Slot]
+    D -->|$50K-$250K| F[Level 2<br/>2 App Slots]
+    D -->|$250K+| G[Level 3<br/>3 App Slots]
+    E --> H[Deposit More $LABS]
+    F --> H
+    H --> D
+    C -.Optional.-> I[Deploy Bonding Curve]
+    I --> J[Raise Capital<br/>NAV × 1.005]
+    J --> K[Fees to Treasury]
+    J --> L[POL to Liquidity]
+    J --> M[Net to Vault]
+    M --> D
+    
+    style A fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000
+    style B fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style C fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style E fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style F fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style G fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style I fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style J fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+</lov-mermaid>
 
-**Stage 1: Initialization**  
-Lab creator stakes $LABS → auto-deploys isolated LabVault (H1 token) → domain registered uniquely.
+**Stage 1: Initialization** — Lab creator stakes $LABS → auto-deploys isolated LabVault (H1 token) → domain registered uniquely.
 
-**Stage 2: Growth via Deposits**  
-$LABS deposits → converted to H1 shares at NAV → unlock progressive **Levels** based on TVL:
-- **L1** ($10K–$50K): 1 app slot
-- **L2** ($50K–$250K): 2 app slots  
-- **L3** ($250K+): 3 app slots
+**Stage 2: Growth via Deposits** — $LABS deposits → converted to H1 shares at NAV → unlock progressive **Levels** based on TVL creating natural scaling incentives.
 
-Each level unlocks additional app deployment rights, creating natural scaling incentives.
-
-**Stage 3: Bootstrap via Bonding Curve (Optional)**  
-Labs deploy **BondingCurveSale** for capital raise. Price formula: `NAV × 1.005` (0.5% premium). Fee structure routes treasury fees to protocol, POL to liquidity reserve, remainder deposited to vault at fair value.
+**Stage 3: Bootstrap via Bonding Curve (Optional)** — Labs deploy **BondingCurveSale** for capital raise. Price formula: `NAV × 1.005` (0.5% premium).
 
 ---
 
@@ -116,70 +134,84 @@ Labs deploy **BondingCurveSale** for capital raise. Price formula: `NAV × 1.005
 
 H1 uses the **Diamond Standard (EIP-2535)** as its core proxy pattern: a single proxy routes to modular **facets** (logic contracts) while maintaining a unified storage layer. This enables upgradeability without state migration and extensibility without redeployment.
 
-```
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                          H1 LABS PLATFORM ARCHITECTURE                       │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                             DIAMOND PROXY LAYER                              │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  H1Diamond.sol (EIP-2535 Proxy)                                        │  │
-│  │  • Fallback routing to facets via function selectors                   │  │
-│  │  • Immutable singleton (1 instance for entire platform)                │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                     │                                         │
-│                                     ├──────┐                                 │
-│                ┌────────────────────┴──┐   └────────────────────┐            │
-│                ▼                       ▼                         ▼            │
-│  ┌──────────────────────┐  ┌─────────────────────┐  ┌────────────────────┐  │
-│  │ Diamond Standard     │  │  Storage Library    │  │  Platform Facets   │  │
-│  │ Management Facets    │  │                     │  │                    │  │
-│  ├──────────────────────┤  ├─────────────────────┤  ├────────────────────┤  │
-│  │ • DiamondCutFacet   │  │ • LibDiamond.sol    │  │ • LABSCoreFacet    │  │
-│  │ • DiamondLoupeFacet │  │ • LibH1Storage.sol  │  │ • VaultFacet       │  │
-│  │ • OwnershipFacet    │  │                     │  │ • BondingCurveFacet│  │
-│  │ • SecurityFacet     │  │ Diamond Storage:    │  │ • LabPassFacet     │  │
-│  └──────────────────────┘  │ - labs mapping      │  │ • RevenueFacet     │  │
-│                             │ - nextLabId         │  │ • TreasuryFacet    │  │
-│                             │ - labsToken addr    │  └────────────────────┘  │
-│                             │ - vault mappings    │                          │
-│                             │ - config params     │                          │
-│                             └─────────────────────┘                          │
-└─────────────────────────────────────────────────────────────────────────────┘
-
-┌─────────────────────────────────────────────────────────────────────────────┐
-│                        PER-LAB DEPLOYED CONTRACTS                            │
-│         (Each Lab gets its own isolated instances of these contracts)        │
-│                                                                               │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  Lab #1 Ecosystem                                                      │  │
-│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
-│  │  │  LabVault.sol (ERC20 + ERC4626-style)                            │  │  │
-│  │  │  • IS THE H1 TOKEN for this lab                                  │  │  │
-│  │  │  • Accepts $LABS deposits → mints H1 shares                      │  │  │
-│  │  │  • Level tracking (L1/L2/L3) based on TVL                        │  │  │
-│  │  └─────────────────────────────────────────────────────────────────┘  │  │
-│  │                              │                                         │  │
-│  │  ┌──────────────────────────┴──────────────────────────────────────┐  │  │
-│  │  │  BondingCurveSale.sol (Bootstrap)                                │  │  │
-│  │  │  • Buy H1 shares with LABS at NAV + 0.5% premium                 │  │  │
-│  │  │  • Protocol fees + POL for liquidity                             │  │  │
-│  │  └──────────────────────────────────────────────────────────────────┘  │  │
-│  │                                                                         │  │
-│  │  ┌──────────────────────────────────────────────────────────────────┐  │  │
-│  │  │  LabPass.sol (ERC721)                                             │  │  │
-│  │  │  • NFT representing lab identity & credential level               │  │  │
-│  │  │  • Soulbound (non-transferable) by default                        │  │  │
-│  │  └──────────────────────────────────────────────────────────────────┘  │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-│                                                                               │
-│  ┌───────────────────────────────────────────────────────────────────────┐  │
-│  │  Lab #2, Lab #3... (N Labs, each isolated)                             │  │
-│  │  • Same structure, independent state & contracts per lab               │  │
-│  └───────────────────────────────────────────────────────────────────────┘  │
-└─────────────────────────────────────────────────────────────────────────────┘
-```
+<lov-mermaid>
+graph TB
+    subgraph Diamond["Diamond Proxy Layer"]
+        H1D[H1Diamond.sol<br/>EIP-2535 Proxy<br/>Singleton]
+    end
+    
+    subgraph Facets["Platform Facets"]
+        direction LR
+        DC[DiamondCutFacet]
+        DL[DiamondLoupeFacet]
+        OF[OwnershipFacet]
+        SF[SecurityFacet]
+        LC[LABSCoreFacet]
+        VF[VaultFacet]
+        BC[BondingCurveFacet]
+        LP[LabPassFacet]
+        RF[RevenueFacet]
+        TF[TreasuryFacet]
+    end
+    
+    subgraph Storage["Diamond Storage"]
+        LDS[LibDiamond.sol]
+        LHS[LibH1Storage.sol<br/>labs mapping<br/>nextLabId<br/>labsToken<br/>vault mappings]
+    end
+    
+    subgraph Lab1["Lab #1 Ecosystem"]
+        LV1[LabVault.sol<br/>H1 Token<br/>ERC20 + ERC4626]
+        BCS1[BondingCurveSale.sol<br/>Bootstrap]
+        LPS1[LabPass.sol<br/>ERC721 Identity]
+    end
+    
+    subgraph Lab2["Lab #2, Lab #3...<br/>N Labs Isolated"]
+        LV2[LabVault.sol]
+        BCS2[BondingCurveSale.sol]
+        LPS2[LabPass.sol]
+    end
+    
+    H1D --> DC
+    H1D --> DL
+    H1D --> OF
+    H1D --> SF
+    H1D --> LC
+    H1D --> VF
+    H1D --> BC
+    H1D --> LP
+    H1D --> RF
+    H1D --> TF
+    
+    H1D --> Storage
+    
+    VF --> LV1
+    BC --> BCS1
+    LP --> LPS1
+    
+    VF --> LV2
+    BC --> BCS2
+    LP --> LPS2
+    
+    style H1D fill:#22c55e,stroke:#16a34a,stroke-width:3px,color:#000
+    style DC fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style DL fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style OF fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style SF fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style LC fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style VF fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style BC fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style LP fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style RF fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style TF fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style LDS fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style LHS fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style LV1 fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style BCS1 fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style LPS1 fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style LV2 fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
+    style BCS2 fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
+    style LPS2 fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
+</lov-mermaid>
 
 **Why Diamond Pattern?**
 - **Upgradeability**: Add new compliance facets (GDPR, HIPAA, C2PA) without redeploying storage
@@ -279,25 +311,36 @@ Auto-adjusting price pegged to vault NAV eliminates ICO-style pricing risks. Buy
 
 **Example — Robotics Lab Launch:**
 
-```
-Day 1: Lab created with $100K deposit
-├─ H1-Robotics NAV: $1.00/share
-├─ Curve price: $1.005/share
-└─ Level 1 unlocked
-
-Day 7: $250K total capital raised via curve
-├─ Treasury receives: $5K fees + $7.5K POL
-├─ LabVault receives: $237.5K (deposited at NAV)
-├─ New TVL: $337.5K
-├─ New NAV: $1.125/share
-└─ Reaches Level 2
-
-Safety Features:
-├─ Price bounds: [0.001, 1,000,000]
-├─ Max 1-tx change: 50% (flash loan protection)
-├─ Reentrancy guards + slippage checks
-└─ Admin pause mechanism for emergencies
-```
+<lov-mermaid>
+graph TD
+    A[Day 1: Lab Created<br/>$100K Deposit] --> B[H1-Robotics<br/>NAV: $1.00/share<br/>Curve: $1.005/share]
+    B --> C[Level 1 Unlocked]
+    C --> D[Day 7: $250K Raised<br/>via Bonding Curve]
+    D --> E[Treasury: $5K fees<br/>+ $7.5K POL]
+    D --> F[LabVault: $237.5K<br/>deposited at NAV]
+    F --> G[New TVL: $337.5K<br/>New NAV: $1.125/share]
+    G --> H[Level 2 Reached]
+    
+    I[🛡️ Safety Features]
+    I --> J[Price Bounds<br/>0.001 - 1M]
+    I --> K[Max 1-tx: 50%<br/>Flash Loan Protection]
+    I --> L[Reentrancy Guards<br/>Slippage Checks]
+    I --> M[Admin Pause<br/>Emergencies]
+    
+    style A fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000
+    style B fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style E fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style F fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style G fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style H fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000
+    style I fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
+    style J fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
+    style K fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
+    style L fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
+    style M fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
+</lov-mermaid>
 
 ---
 
@@ -321,19 +364,22 @@ Blockchain is not ornament — it is the enforcement layer for provenance, compl
 
 H1 verifies professionals before they contribute to sensitive datasets:
 
-```
-Apply (ID + License Upload)
-        ↓
-Verify (KYC-lite, resume check, domain validation)
-        ↓
-Mint Credential NFT (onchain proof of expertise)
-        ↓
-Validate / Enrich Data (only credentialed wallets can gate-access)
-        ↓
-Earn Rewards + Build Reputation (per-dataset payouts tracked)
-        ↓
-Renew / Upgrade Credentials (periodic refresh for compliance)
-```
+<lov-mermaid>
+graph TD
+    A[📋 Apply<br/>ID + License Upload] --> B[🔍 Verify<br/>KYC-lite + Domain Check]
+    B --> C[🎫 Mint Credential NFT<br/>Onchain Proof]
+    C --> D[✅ Validate/Enrich Data<br/>Credentialed Access Only]
+    D --> E[💰 Earn Rewards<br/>Build Reputation]
+    E --> F[🔄 Renew/Upgrade<br/>Periodic Refresh]
+    F --> D
+    
+    style A fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style B fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style C fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000
+    style D fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style E fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style F fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+</lov-mermaid>
 
 **For investors:** Credentialing creates moat — enterprise clients will only trust data validated by verified professionals. This is table-stakes for regulated markets.
 
@@ -371,11 +417,29 @@ Every Lab declares its domain (Healthcare, Legal, Robotics, etc.) at creation. T
 - **Credit Mode**: Fiat‑friendly abstraction that still settles onchain.
 
 ### Dual‑Intelligence Dataflow (Δ‑Gain → Bundles → Buybacks)
-1) App selects a base model (partner or BYO) via SDK adapters.  
-2) Agent executes; credentialed human reviews and signs.  
-3) SDK computes **Δ‑Gain** (supervised improvement vs declared base) and records provenance + attribution.  
-4) H1 aggregates Δ‑Gain into dataset bundles and sells/licenses them.  
-5) Revenue triggers buybacks that route to the originating Labs per policy, creating buy pressure for their H1 tokens.
+
+<lov-mermaid>
+sequenceDiagram
+    participant App as App/SDK
+    participant Agent as AI Agent
+    participant Human as Credentialed Human
+    participant H1 as H1 Protocol
+    participant Buyer as AI Company
+    
+    App->>Agent: Select base model
+    Agent->>Agent: Execute task
+    Agent->>Human: Submit for review
+    Human->>Human: Review & sign
+    Human->>App: Approved + signature
+    App->>H1: Compute Δ-Gain<br/>Record provenance
+    H1->>H1: Aggregate into<br/>dataset bundles
+    Buyer->>H1: Purchase/license data
+    H1->>H1: Trigger revenue split
+    H1->>App: Buyback pressure<br/>to originating Labs
+    
+    Note over Agent,Human: Dual-Intelligence<br/>Collaboration
+    Note over H1,Buyer: Transparent<br/>Economics
+</lov-mermaid>
 
 ---
 
@@ -454,29 +518,24 @@ Ongoing:
 
 The H1 economy is designed as a **closed loop** that continuously strengthens as adoption increases:
 
-```
-Labs created + capital staked
-        │
-        ▼
-Validators enrich/validate datasets
-        │
-        ▼
-AI companies purchase verified data
-        │
-        ▼
-Revenue flows: 50% labs, 25% treasury, 25% buyback
-        │
-        ▼
-Buyback execution → H1 supply decreases
-        │
-        ▼
-H1 token price appreciates (lower supply + increasing NAV)
-        │
-        ▼
-New labs incentivized (higher token value)
-        │
-        └──→ Cycle repeats at larger scale
-```
+<lov-mermaid>
+graph LR
+    A[🏗️ Labs Created<br/>Capital Staked] --> B[👥 Validators<br/>Enrich/Validate]
+    B --> C[🤖 AI Companies<br/>Purchase Data]
+    C --> D[💵 Revenue Split<br/>50% Lab / 25% Treasury<br/>25% Buyback]
+    D --> E[📉 Buyback Execution<br/>H1 Supply Decreases]
+    E --> F[📈 H1 Price Appreciates<br/>Lower Supply + NAV]
+    F --> G[🚀 New Labs Incentivized<br/>Higher Token Value]
+    G --> A
+    
+    style A fill:#22c55e,stroke:#16a34a,stroke-width:3px,color:#000
+    style B fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+    style C fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
+    style D fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
+    style E fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
+    style F fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000
+    style G fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
+</lov-mermaid>
 
 **Financial Model (Y1-Y3):**
 

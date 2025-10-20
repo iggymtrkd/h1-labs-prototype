@@ -6,6 +6,10 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen, ChevronRight, Menu, Target, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import CompetitiveComparison from "@/components/litepaper/CompetitiveComparison";
+import ComplianceCards from "@/components/litepaper/ComplianceCards";
+import FinancialChart from "@/components/litepaper/FinancialChart";
+import BlockchainBenefits from "@/components/litepaper/BlockchainBenefits";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -133,6 +137,48 @@ export default function Whitepaper() {
               <article className="prose prose-invert prose-primary max-w-none prose-sm md:prose-base overflow-x-hidden break-words">
                 <ReactMarkdown
                   components={{
+                    // Custom rendering for special sections
+                    table: ({ node, ...props }) => {
+                      // Check if this is one of our special tables to replace with custom components
+                      // We'll check the raw content for specific keywords
+                      const tableStr = JSON.stringify(node);
+                      
+                      // Competitive Positioning table
+                      if (tableStr.includes("Dimension") || (tableStr.includes("Focus") && tableStr.includes("Compliance"))) {
+                        return <CompetitiveComparison />;
+                      }
+                      
+                      // Compliance Framework table
+                      if (tableStr.includes("Domain") && tableStr.includes("Compliance Standards")) {
+                        return <ComplianceCards />;
+                      }
+                      
+                      // Financial Model table
+                      if (tableStr.includes("Metric") && tableStr.includes("Year") && tableStr.includes("TVL")) {
+                        return <FinancialChart />;
+                      }
+                      
+                      // Blockchain Benefits table
+                      if (tableStr.includes("Challenge") && tableStr.includes("Blockchain Benefit")) {
+                        return <BlockchainBenefits />;
+                      }
+                      
+                      // Default table rendering
+                      return (
+                        <div className="overflow-x-auto my-4">
+                          <table className="min-w-full border-collapse border border-border" {...props} />
+                        </div>
+                      );
+                    },
+                    thead: ({ node, ...props }) => (
+                      <thead className="bg-muted" {...props} />
+                    ),
+                    th: ({ node, ...props }) => (
+                      <th className="border border-border px-4 py-2 text-left font-bold" {...props} />
+                    ),
+                    td: ({ node, ...props }) => (
+                      <td className="border border-border px-4 py-2" {...props} />
+                    ),
                     h1: ({ node, ...props }) => {
                       const text = props.children?.toString() || "";
                       const id = text
