@@ -22,6 +22,11 @@ import H1TokenEconomies from "@/components/litepaper/H1TokenEconomies";
 import BondingCurveGraph from "@/components/litepaper/BondingCurveGraph";
 import LabOwnershipPie from "@/components/litepaper/LabOwnershipPie";
 import BuybackDistributionPie from "@/components/litepaper/BuybackDistributionPie";
+import LabLevelProgression from "@/components/litepaper/LabLevelProgression";
+import TokenAppreciationTimeline from "@/components/litepaper/TokenAppreciationTimeline";
+import UseCaseROIComparison from "@/components/litepaper/UseCaseROIComparison";
+import RoadmapTimeline from "@/components/litepaper/RoadmapTimeline";
+import RiskMatrix from "@/components/litepaper/RiskMatrix";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -236,6 +241,7 @@ export default function Whitepaper() {
                               {children}
                             </h3>
                             <H1TokenEconomies />
+                            <TokenAppreciationTimeline />
                           </>
                         );
                       }
@@ -323,6 +329,39 @@ export default function Whitepaper() {
                         );
                       }
                       
+                      if (text.includes("Use Case Scenarios")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <UseCaseROIComparison />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Roadmap")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <RoadmapTimeline />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Risks") && text.includes("Mitigations")) {
+                        return (
+                          <>
+                            <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
+                              {children}
+                            </h2>
+                            <RiskMatrix />
+                          </>
+                        );
+                      }
+                      
                       return (
                         <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
                           {children}
@@ -385,9 +424,28 @@ export default function Whitepaper() {
                     td: ({ node, ...props }) => (
                       <td className="border border-border px-4 py-2" {...props} />
                     ),
-                    p: ({ node, ...props }) => (
-                      <p className="mb-4 text-muted-foreground leading-relaxed break-words" {...props} />
-                    ),
+                    p: ({ node, children, ...props }) => {
+                      const text = children?.toString() || '';
+                      
+                      // Check for special comment markers
+                      if (text.includes('Lab level progression chart')) {
+                        return <LabLevelProgression />;
+                      }
+                      if (text.includes('Token appreciation timeline chart')) {
+                        return <TokenAppreciationTimeline />;
+                      }
+                      if (text.includes('Use case ROI comparison chart')) {
+                        return <UseCaseROIComparison />;
+                      }
+                      if (text.includes('Roadmap timeline chart')) {
+                        return <RoadmapTimeline />;
+                      }
+                      if (text.includes('Risk matrix chart')) {
+                        return <RiskMatrix />;
+                      }
+                      
+                      return <p className="mb-4 text-muted-foreground leading-relaxed break-words" {...props}>{children}</p>;
+                    },
                     ul: ({ node, ...props }) => (
                       <ul className="list-disc list-inside mb-4 space-y-2 text-muted-foreground break-words" {...props} />
                     ),
