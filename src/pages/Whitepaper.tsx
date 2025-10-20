@@ -72,8 +72,8 @@ export default function Whitepaper() {
 
   // Track scroll position and highlight current section
   useEffect(() => {
-    const handleScroll = () => {
-      const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
+    const handleScroll = (e: Event) => {
+      const scrollArea = e.target as HTMLElement;
       if (!scrollArea || sections.length === 0) return;
 
       const headings = sections
@@ -83,11 +83,16 @@ export default function Whitepaper() {
       // Find the current section based on scroll position
       let currentSection = "";
       const scrollTop = scrollArea.scrollTop;
-      const offset = 100; // Offset for triggering highlight
+      const offset = 150; // Offset for triggering highlight
 
+      // Find headings visible in viewport
       for (let i = headings.length - 1; i >= 0; i--) {
         const heading = headings[i];
-        if (heading.offsetTop - offset <= scrollTop) {
+        const rect = heading.getBoundingClientRect();
+        const scrollAreaRect = scrollArea.getBoundingClientRect();
+        
+        // Check if heading is in or above viewport
+        if (rect.top - scrollAreaRect.top <= offset) {
           currentSection = heading.id;
           break;
         }
@@ -98,19 +103,28 @@ export default function Whitepaper() {
       }
     };
 
-    const scrollArea = document.querySelector('[data-radix-scroll-area-viewport]');
-    if (scrollArea) {
-      scrollArea.addEventListener('scroll', handleScroll);
-      // Initial check
-      handleScroll();
-    }
+    // Wait for content to load
+    const timer = setTimeout(() => {
+      const scrollAreas = document.querySelectorAll('[data-radix-scroll-area-viewport]');
+      // The content scroll area is the second one (first is TOC)
+      const contentScrollArea = scrollAreas[fromHome ? 0 : 1];
+      
+      if (contentScrollArea) {
+        contentScrollArea.addEventListener('scroll', handleScroll);
+        // Initial check
+        handleScroll({ target: contentScrollArea } as any);
+      }
+    }, 500);
 
     return () => {
-      if (scrollArea) {
-        scrollArea.removeEventListener('scroll', handleScroll);
+      const scrollAreas = document.querySelectorAll('[data-radix-scroll-area-viewport]');
+      const contentScrollArea = scrollAreas[fromHome ? 0 : 1];
+      if (contentScrollArea) {
+        contentScrollArea.removeEventListener('scroll', handleScroll);
       }
+      clearTimeout(timer);
     };
-  }, [sections, activeSection]);
+  }, [sections, activeSection, fromHome]);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
