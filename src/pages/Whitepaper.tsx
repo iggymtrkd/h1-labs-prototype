@@ -6,32 +6,23 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen, ChevronRight, Menu, Target } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
-import { ToggleGroup, ToggleGroupItem } from "@/components/ui/toggle-group";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
   const [sections, setSections] = useState<{ title: string; id: string; level: number }[]>([]);
   const [activeSection, setActiveSection] = useState("");
-  const [docType, setDocType] = useState<"whitepaper" | "litepaper">("whitepaper");
 
   useEffect(() => {
-    const path = docType === "whitepaper" ? "/whitepaper.md" : "/litepaper.md";
+    const path = "/litepaper.md";
     fetch(path)
       .then((res) => res.text())
       .then((text) => {
-        const processedText = docType === "whitepaper"
-          ? (() => {
-              const appendixIndex = text.search(/^\s*##\s+Appendix:/m);
-              return appendixIndex !== -1 ? text.slice(0, appendixIndex).trimEnd() : text;
-            })()
-          : text;
-
-        setContent(processedText);
+        setContent(text);
         setActiveSection("");
 
         // Extract headings for navigation
         const headingRegex = /^(#{1,3})\s+(.+)$/gm;
-        const matches = [...processedText.matchAll(headingRegex)];
+        const matches = [...text.matchAll(headingRegex)];
         const tocSections = matches.map((match) => ({
           level: match[1].length,
           title: match[2].replace(/\*/g, ""),
@@ -43,8 +34,8 @@ export default function Whitepaper() {
         }));
         setSections(tocSections);
       })
-      .catch((err) => console.error(`Error loading ${docType}:`, err));
-  }, [docType]);
+      .catch((err) => console.error("Error loading litepaper:", err));
+  }, []);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -96,15 +87,10 @@ export default function Whitepaper() {
           <div className="flex items-center justify-between mb-4">
             <h1 className="text-3xl md:text-4xl font-bold glow-green flex items-center gap-3">
               <BookOpen className="h-8 w-8 md:h-10 md:w-10" />
-              <span className="break-words">{docType === "whitepaper" ? "H1 Labs Whitepaper" : "H1 Labs Litepaper"}</span>
+              <span className="break-words">H1 Labs Litepaper</span>
             </h1>
 
             <div className="flex items-center gap-2">
-              <ToggleGroup type="single" value={docType} onValueChange={(v) => v && setDocType(v as "whitepaper" | "litepaper") } aria-label="Select document">
-                <ToggleGroupItem value="whitepaper" aria-label="Whitepaper">Whitepaper</ToggleGroupItem>
-                <ToggleGroupItem value="litepaper" aria-label="Litepaper">Litepaper</ToggleGroupItem>
-              </ToggleGroup>
-
               {/* Mobile TOC Toggle */}
               <Sheet>
                 <SheetTrigger asChild>
@@ -122,9 +108,7 @@ export default function Whitepaper() {
             </div>
           </div>
           <p className="text-lg md:text-xl text-muted-foreground break-words">
-            {docType === "whitepaper"
-              ? "The Human-First Protocol for Advancing AI through Provable Blockchain Training"
-              : "A concise overview of H1 Labs — advancing AI with provable, human‑validated data"}
+            A concise overview of H1 Labs — advancing AI with provable, human‑validated data
           </p>
         </div>
 

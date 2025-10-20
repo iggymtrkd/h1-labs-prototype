@@ -346,8 +346,8 @@ export default function Home({ onConnect }: HomeProps) {
                 Sign In
               </Button>
               <Link to="/whitepaper">
-                <Button size="lg" variant="outline" className="border-primary text-primary hover:bg-primary hover:text-primary-foreground text-lg px-8">
-                  Read Whitepaper
+                <Button className="gap-2">
+                  Read Litepaper
                 </Button>
               </Link>
             </div>

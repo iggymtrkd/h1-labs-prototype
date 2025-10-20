@@ -27,7 +27,7 @@ export const Navigation = ({ onConnect, isConnected, address, labsBalance, showO
   
   // Navigation links
   const homePageLinks = [
-    { name: "Whitepaper", path: "/whitepaper" },
+    { name: "Litepaper", path: "/whitepaper" },
     { name: "How It Works", path: "#how-it-works", isHash: true },
     { name: "Terms", path: "/terms" },
   ];

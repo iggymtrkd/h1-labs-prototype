@@ -8,7 +8,7 @@ export const MobileBottomNav = () => {
     { name: "Marketplace", path: "/dashboard", icon: Home },
     { name: "Launchpad", path: "/staking", icon: Rocket },
     { name: "dApp Store", path: "/apps", icon: Store },
-    { name: "Whitepaper", path: "/whitepaper", icon: BookOpen },
+    { name: "Litepaper", path: "/whitepaper", icon: BookOpen },
     { name: "Profile", path: "/profile", icon: User },
   ];
 

@@ -35,6 +35,25 @@ We target regulated and semi‑regulated markets — starting with healthcare �
 
 ---
 
+## 2.5 Competitive Positioning — H1 vs The Field
+
+H1 Labs uniquely combines **verified human intelligence, provenance, and compliance**. Unlike peers that focus on compute (Gensyn), model training (Bittensor), or data liquidity (Ocean), H1 targets regulated and semi-regulated markets with enterprise-grade trust.
+
+| Dimension | H1 Labs | Bittensor | Scale AI | Ocean | Gensyn |
+|-----------|---------|------------|----------|--------|---------|
+| **Focus** | Human-validated datasets | Model training | Centralized data | Data liquidity | Compute network |
+| **Compliance** | HIPAA, GDPR, C2PA, EU AI Act | None | Corporate | Optional | None |
+| **Credentialing** | Verified NFTs + KYC | None | Manual | None | None |
+| **Provenance** | Full onchain audit trail | None | Internal | Metadata only | None |
+| **Revenue Model** | Onchain splits + buybacks | Inflationary | Fiat only | Stake-reward | Stake-reward |
+| **Target Market** | Healthcare, Legal, Defense, Finance | General AI | Enterprise labeling | General data | ML infrastructure |
+
+**Why it matters for investors:** H1's compliance-first approach opens regulated markets (healthcare TAM ~$200B+ in data licensing) that competitors cannot access.
+
+**Why it matters for developers:** Programmable compliance means SDKs can launch in regulated sectors without custom legal wrangling.
+
+---
+
 ## 3. What You Can Do on H1
 
 - **Create a Lab**: Stake and launch a domain Lab with its own H1 token (vault shares).  
@@ -71,6 +90,81 @@ Auditable provenance & compliance artifacts for due diligence
 
 ## 5. Architecture (Lite)
 
+### Diamond Standard Design (EIP-2535)
+
+H1 uses the **Diamond Standard (EIP-2535)** as its core proxy pattern: a single proxy routes to modular **facets** (logic contracts) while maintaining a unified storage layer. This enables upgradeability without state migration and extensibility without redeployment.
+
+```
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                          H1 LABS PLATFORM ARCHITECTURE                       │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                             DIAMOND PROXY LAYER                              │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  H1Diamond.sol (EIP-2535 Proxy)                                        │  │
+│  │  • Fallback routing to facets via function selectors                   │  │
+│  │  • Immutable singleton (1 instance for entire platform)                │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                     │                                         │
+│                                     ├──────┐                                 │
+│                ┌────────────────────┴──┐   └────────────────────┐            │
+│                ▼                       ▼                         ▼            │
+│  ┌──────────────────────┐  ┌─────────────────────┐  ┌────────────────────┐  │
+│  │ Diamond Standard     │  │  Storage Library    │  │  Platform Facets   │  │
+│  │ Management Facets    │  │                     │  │                    │  │
+│  ├──────────────────────┤  ├─────────────────────┤  ├────────────────────┤  │
+│  │ • DiamondCutFacet   │  │ • LibDiamond.sol    │  │ • LABSCoreFacet    │  │
+│  │ • DiamondLoupeFacet │  │ • LibH1Storage.sol  │  │ • VaultFacet       │  │
+│  │ • OwnershipFacet    │  │                     │  │ • BondingCurveFacet│  │
+│  │ • SecurityFacet     │  │ Diamond Storage:    │  │ • LabPassFacet     │  │
+│  └──────────────────────┘  │ - labs mapping      │  │ • RevenueFacet     │  │
+│                             │ - nextLabId         │  │ • TreasuryFacet    │  │
+│                             │ - labsToken addr    │  └────────────────────┘  │
+│                             │ - vault mappings    │                          │
+│                             │ - config params     │                          │
+│                             └─────────────────────┘                          │
+└─────────────────────────────────────────────────────────────────────────────┘
+
+┌─────────────────────────────────────────────────────────────────────────────┐
+│                        PER-LAB DEPLOYED CONTRACTS                            │
+│         (Each Lab gets its own isolated instances of these contracts)        │
+│                                                                               │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  Lab #1 Ecosystem                                                      │  │
+│  │  ┌─────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  LabVault.sol (ERC20 + ERC4626-style)                            │  │  │
+│  │  │  • IS THE H1 TOKEN for this lab                                  │  │  │
+│  │  │  • Accepts $LABS deposits → mints H1 shares                      │  │  │
+│  │  │  • Level tracking (L1/L2/L3) based on TVL                        │  │  │
+│  │  └─────────────────────────────────────────────────────────────────┘  │  │
+│  │                              │                                         │  │
+│  │  ┌──────────────────────────┴──────────────────────────────────────┐  │  │
+│  │  │  BondingCurveSale.sol (Bootstrap)                                │  │  │
+│  │  │  • Buy H1 shares with LABS at NAV + 0.5% premium                 │  │  │
+│  │  │  • Protocol fees + POL for liquidity                             │  │  │
+│  │  └──────────────────────────────────────────────────────────────────┘  │  │
+│  │                                                                         │  │
+│  │  ┌──────────────────────────────────────────────────────────────────┐  │  │
+│  │  │  LabPass.sol (ERC721)                                             │  │  │
+│  │  │  • NFT representing lab identity & credential level               │  │  │
+│  │  │  • Soulbound (non-transferable) by default                        │  │  │
+│  │  └──────────────────────────────────────────────────────────────────┘  │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+│                                                                               │
+│  ┌───────────────────────────────────────────────────────────────────────┐  │
+│  │  Lab #2, Lab #3... (N Labs, each isolated)                             │  │
+│  │  • Same structure, independent state & contracts per lab               │  │
+│  └───────────────────────────────────────────────────────────────────────┘  │
+└─────────────────────────────────────────────────────────────────────────────┘
+```
+
+**Why Diamond Pattern?**
+- **Upgradeability**: Add new compliance facets (GDPR, HIPAA, C2PA) without redeploying storage
+- **Modularity**: Clean separation of concerns; each facet handles one domain
+- **Gas Efficiency**: Shared storage; single proxy overhead scales to thousands of labs
+- **Security**: Approved initializer whitelist prevents malicious upgrades
+
 ```
 H1Diamond (EIP‑2535) ── routes to facets
   • DiamondCut / Loupe / Ownership / Security
@@ -89,7 +183,7 @@ Key storage (LibH1Storage): `labs`, `nextLabId`, `labsToken`, cooldown/exit caps
 
 ---
 
-## 6. $LABS and H1 — Relationship and Mechanics
+## 6. $LABS and H1 — Relationship, Mechanics, and the Economic Flywheel
 
 - **$LABS (singleton ERC‑20):** Platform governance/staking asset. Set via `TreasuryFacet.setLABSToken`.  
 - **H1 (per‑lab ERC‑20 shares):** Implemented by each Lab’s `LabVault`. Depositing $LABS mints H1 shares; redemptions return $LABS subject to cooldown and exit caps.  
@@ -98,6 +192,41 @@ Key storage (LibH1Storage): `labs`, `nextLabId`, `labsToken`, cooldown/exit caps
 - **Revenue Split (current implementation):** 50% to lab owner, 25% to protocol treasury (H1 pool custody), 25% retained for future buyback execution.
 
 Economic intent: AI demand for verified datasets drives onchain payments that flow to Labs and treasury, with retained buyback budgets enabling future buy pressure mechanisms without dividend semantics.
+
+---
+
+### Economic Flywheel: How Value Accumulates
+
+The H1 economy is designed as a **closed loop** that continuously strengthens as adoption increases:
+
+```
+Data Creation
+     │
+     ▼
+Validation (Human-in-loop)
+     │
+     ▼
+Onchain Proof (Provenance Facet logs enrichment)
+     │
+     ▼
+Dataset Sale / Access (AI firms purchase verified data)
+     │
+     ▼
+Revenue Split (50% lab owner, 25% treasury custody, 25% buyback budget)
+     │
+     ▼
+Buyback Execution (reverts buyback budget into H1/LABS from liquidity pools)
+     │
+     ▼
+Token Appreciation (lower supply, sustained demand)
+     │
+     ▼
+New Labs Formed (higher token price incentivizes new creators)
+     │
+     └──→ Cycle repeats at larger scale
+```
+
+**Key mechanic for investors:** Revenue-driven buybacks create sustained upward pressure on $LABS and H1 tokens without dividend semantics. Unlike stake-reward models (Bittensor, Ocean), H1's value comes from dataset sales — creating external, real demand.
 
 ---
 
@@ -110,7 +239,67 @@ Economic intent: AI demand for verified datasets drives onchain payments that fl
 
 ---
 
-## 8. Developer SDK (At a Glance)
+## 7.5 Why Blockchain Matters for H1
+
+Blockchain is not ornament — it is the enforcement layer for provenance, compliance, and fair economics. Here's why each matters:
+
+| Challenge | Blockchain Benefit | H1 Implementation | Result |
+|-----------|-------------------|-------------------|---------|
+| **Data Provenance** | Immutable audit trail | ProvenanceFacet logs enrichment, validators, timestamps | Regulators can verify dataset lineage |
+| **Validator Integrity** | Cryptographic proof of contribution | Credentials NFT + onchain XP/Credits | Enterprise clients trust who validated data |
+| **Compliance Enforcement** | Programmable legal constraints | ComplianceFacet binds HIPAA/GDPR/C2PA rules | AI firms know data is legally compliant |
+| **Transparent Economics** | All payments recorded & verifiable | RevenueFacet splits logged per dataset sale | No opacity in revenue distribution |
+| **Security & Trust** | Prevents tampering & fraud | Reentrancy guards, access control, audit logs | Protected against data theft & spoofing |
+
+---
+
+## 8. Credentialing Portal & Compliance-as-Code
+
+### Credential Lifecycle
+
+H1 verifies professionals before they contribute to sensitive datasets:
+
+```
+Apply (ID + License Upload)
+        ↓
+Verify (KYC-lite, resume check, domain validation)
+        ↓
+Mint Credential NFT (onchain proof of expertise)
+        ↓
+Validate / Enrich Data (only credentialed wallets can gate-access)
+        ↓
+Earn Rewards + Build Reputation (per-dataset payouts tracked)
+        ↓
+Renew / Upgrade Credentials (periodic refresh for compliance)
+```
+
+**For investors:** Credentialing creates moat — enterprise clients will only trust data validated by verified professionals. This is table-stakes for regulated markets.
+
+**For developers:** SDK integrates credential checks automatically:
+```javascript
+if (H1SDK.Credential.verify(wallet, 'HIPAA_Clinician')) {
+   allowDataEnrichment(dataset);
+}
+```
+
+### Compliance-as-Code Framework
+
+Every Lab declares its domain (Healthcare, Legal, Robotics, etc.) at creation. The platform automatically enforces:
+
+| Domain | Compliance Standards | Contract Enforcement |
+|--------|----------------------|----------------------|
+| **Healthcare** | HIPAA, GDPR, EU AI Act | De-identification required; audit logs immutable; credentialed clinicians only |
+| **Legal** | Attorney-Client Privilege, Data Residency | Whitelisted lawyer credentials; encrypted case files; regional constraints |
+| **Defense** | ITAR, EAR, CMMC | Identity gating; zero-knowledge access; on-prem mirrors |
+| **Finance** | AML/KYC, Basel III, MiFID II | Onchain identity linking; transaction screening; audit trails |
+
+**For investors:** Programmable compliance opens markets that competitors cannot access (healthcare data licensing alone is $200B+).
+
+**For developers:** Add new compliance domains via governance without code changes.
+
+---
+
+## 9. Developer SDK (At a Glance)
 
 - **Dual‑Intelligence Orchestration (Agent + Human)**: Built‑in co‑workflow primitives (assignment, handoff, review), human sign‑off, and audit trails.  
 - **Identity & Credential**: Integrate credential checks for validators.  
@@ -161,7 +350,7 @@ flowchart LR
 
 ---
 
-## 9. Tokenomics (Lite)
+## 10. Tokenomics (Lite)
 
 ### Roles
 - **$LABS holders**: Stake, govern, seed labs, and participate in platform‑level value.  
@@ -179,7 +368,7 @@ Notes (current state):
 
 ---
 
-## 10. Use Cases (Initial)
+## 11. Use Cases (Initial)
 
 - **Healthcare**: Scrubber (de‑identification), Second Opinion+ (AI‑human consultation), Imaging annotation.  
 - **Creative & Gaming**: Provenance frameworks for art and game assets (C2PA‑aligned), attribution and licensing onchain.  
@@ -187,7 +376,7 @@ Notes (current state):
 
 ---
 
-## 11. Roadmap (Condensed)
+## 12. Roadmap (Condensed)
 
 | Phase | Milestone | Highlights |
 |------|-----------|------------|
@@ -197,7 +386,7 @@ Notes (current state):
 
 ---
 
-## 12. Risks & Mitigations (Brief)
+## 13. Risks & Mitigations (Brief)
 
 - **Regulatory**: Programmable compliance facets; credential gating; audit logs.  
 - **Liquidity**: POL/treasury custody and buyback budget design; exit caps and cooldowns.  
@@ -205,7 +394,7 @@ Notes (current state):
 
 ---
 
-## 13. Closing
+## 14. Closing
 
 H1 Labs unites verifiable human expertise with transparent token economics. By making provenance, credentialing, and compliance the substrate for AI data, we unlock trustworthy, enterprise‑grade datasets — and a sustainable crypto economy that rewards the people who create real intelligence.
 
