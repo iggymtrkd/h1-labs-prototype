@@ -17,6 +17,8 @@ import { useState, useEffect } from "react";
 
 interface HomeProps {
   onConnect: () => void;
+  showHowItWorksDialog?: boolean;
+  onDialogClose?: () => void;
 }
 
 const DESCRIPTION_VARIANTS = [
@@ -36,7 +38,7 @@ const DESCRIPTION_VARIANTS = [
 
 const CYCLE_DURATION = 6000; // 6 seconds
 
-export default function Home({ onConnect }: HomeProps) {
+export default function Home({ onConnect, showHowItWorksDialog = false, onDialogClose }: HomeProps) {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const [showDisclaimer, setShowDisclaimer] = useState(false);
   const [dontShowHowItWorks, setDontShowHowItWorks] = useState(false);
@@ -56,6 +58,14 @@ export default function Home({ onConnect }: HomeProps) {
       setTimeout(() => setShowDisclaimer(true), 500);
     }
   }, []);
+
+  // Handle external trigger for How It Works dialog
+  useEffect(() => {
+    if (showHowItWorksDialog) {
+      setShowHowItWorks(true);
+      setShowDisclaimer(true);
+    }
+  }, [showHowItWorksDialog]);
 
   // Rotation and progress timer
   useEffect(() => {
@@ -96,6 +106,7 @@ export default function Home({ onConnect }: HomeProps) {
     }
     setShowHowItWorks(false);
     setDontShowHowItWorks(false);
+    onDialogClose?.();
   };
 
   const handleDisclaimerClose = () => {
@@ -104,6 +115,7 @@ export default function Home({ onConnect }: HomeProps) {
     }
     setShowDisclaimer(false);
     setDontShowDisclaimer(false);
+    onDialogClose?.();
   };
 
   const simulateDeltaGain = async () => {
@@ -501,10 +513,12 @@ export default function Home({ onConnect }: HomeProps) {
                   Learn How It Works
                 </Button>
               </Link>
-              <Button className="bg-gradient-primary border-0 hover:opacity-90" onClick={simulateDeltaGain}>
-                Upcoming Features
-                <ArrowRight className="ml-2 h-5 w-5" />
-              </Button>
+              <Link to="/upcoming-features">
+                <Button className="bg-gradient-primary border-0 hover:opacity-90">
+                  Upcoming Features
+                  <ArrowRight className="ml-2 h-5 w-5" />
+                </Button>
+              </Link>
             </div>
           </motion.div>
         </div>

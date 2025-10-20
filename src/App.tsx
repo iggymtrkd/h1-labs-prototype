@@ -21,6 +21,7 @@ import LabChat from "./pages/LabChat";
 import Settings from "./pages/Settings";
 import DeployPool from "./pages/DeployPool";
 import Terms from "./pages/Terms";
+import UpcomingFeatures from "./pages/UpcomingFeatures";
 import NotFound from "./pages/NotFound";
 
 const queryClient = new QueryClient();
@@ -33,6 +34,7 @@ const AppContent = () => {
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
+  const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const handleConnectWallet = async () => {
     await connectWallet();
@@ -45,12 +47,18 @@ const AppContent = () => {
   return (
     <div className="min-h-screen flex w-full bg-background">
       {/* Pre-login top navigation */}
-      <Navigation
+      <Navigation 
         onConnect={handleConnectWallet}
         isConnected={isConnected}
         address={address}
         labsBalance={labsBalance}
         showOnHomePage={isHomePage}
+        onHowItWorksClick={() => {
+          setShowHowItWorks(true);
+          if (!isHomePage) {
+            navigate('/');
+          }
+        }}
       />
 
       {/* Platform sidebar (desktop only, when connected and not on home page) */}
@@ -73,7 +81,7 @@ const AppContent = () => {
           : ""
       }`}>
         <Routes>
-          <Route path="/" element={<Home onConnect={handleConnectWallet} />} />
+          <Route path="/" element={<Home onConnect={handleConnectWallet} showHowItWorksDialog={showHowItWorks} onDialogClose={() => setShowHowItWorks(false)} />} />
           <Route 
             path="/dashboard" 
             element={isConnected ? <Dashboard /> : <Home onConnect={handleConnectWallet} />} 
@@ -110,6 +118,7 @@ const AppContent = () => {
             element={isConnected ? <DeployPool /> : <Home onConnect={handleConnectWallet} />} 
           />
           <Route path="/terms" element={<Terms />} />
+          <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="*" element={<NotFound />} />
         </Routes>
       </main>

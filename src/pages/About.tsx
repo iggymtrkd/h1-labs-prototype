@@ -1,42 +1,46 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Rocket, Users, Globe, Code, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Target, Rocket, Users, Globe, Code, Shield, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function About() {
+  const navigate = useNavigate();
+
   const timeline = [
     {
-      year: "2023",
+      year: "'23-'25",
       title: "MiniWhales",
       description: "Initial proof-of-concept demonstrating human-validated AI training on blockchain",
       status: "completed",
     },
     {
-      year: "2024",
-      title: "H1 Labs Protocol",
-      description: "Launch of the dual-token economy with $LABS and H1 tokens",
+      year: "Q3-Q4 '25",
+      title: "H1 Labs Protocol Testnet",
+      description: "Launch of the dual-token economy testnet with $LABS and H1 tokens",
       status: "current",
     },
     {
-      year: "2025 Q1",
+      year: "Q1 '26",
       title: "Healthcare Domain Launch",
       description: "Scrubber App, Second Opinion+, and Pre-Chart Pro go live",
-      status: "current",
-    },
-    {
-      year: "2025 Q2",
-      title: "Multi-Domain Expansion",
-      description: "Launch of Art, Robotics, and Legal domain applications",
       status: "upcoming",
     },
     {
-      year: "2025 Q3",
+      year: "Q2 '26",
       title: "SDK Release",
       description: "Developer SDK for building custom H1 Labs applications",
       status: "upcoming",
     },
     {
-      year: "2026",
+      year: "Q3 '26",
+      title: "Multi-Domain Expansion",
+      description: "Launch of Art, Robotics, and Legal domain applications",
+      status: "upcoming",
+    },
+    {
+      year: "'27",
       title: "Atlas Network",
       description: "Global decentralized AI training network spanning all major industries",
       status: "future",
@@ -73,6 +77,16 @@ export default function About() {
   return (
     <div className="min-h-screen pt-8 md:pt-24 pb-12 overflow-x-hidden">
       <div className="container mx-auto px-4 max-w-6xl overflow-x-hidden">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
         {/* Mission Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -133,91 +147,8 @@ export default function About() {
           </div>
         </Card>
 
-        {/* Timeline */}
-        <div className="mb-16">
-          <div className="flex items-center gap-3 mb-8">
-            <Rocket className="h-8 w-8 text-primary" />
-            <h2 className="text-3xl font-bold">Roadmap</h2>
-          </div>
-          <div className="space-y-6">
-            {timeline.map((item, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                whileInView={{ opacity: 1, x: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card
-                  className={`p-6 bg-gradient-card border-2 transition-all ${
-                    item.status === "current"
-                      ? "border-primary shadow-neon-green"
-                      : item.status === "completed"
-                      ? "border-border opacity-70"
-                      : "border-border"
-                  }`}
-                >
-                  <div className="flex items-start gap-4">
-                    <div
-                      className={`flex-shrink-0 w-20 text-center ${
-                        item.status === "current"
-                          ? "text-primary font-bold text-2xl"
-                          : "text-muted-foreground text-xl"
-                      }`}
-                    >
-                      {item.year}
-                    </div>
-                    <div className="flex-1">
-                      <div className="flex items-center gap-3 mb-2">
-                        <h3 className="text-xl font-bold">{item.title}</h3>
-                        <Badge
-                          className={
-                            item.status === "completed"
-                              ? "bg-primary/20 text-primary"
-                              : item.status === "current"
-                              ? "bg-secondary/20 text-secondary"
-                              : "bg-muted text-muted-foreground"
-                          }
-                        >
-                          {item.status}
-                        </Badge>
-                      </div>
-                      <p className="text-muted-foreground">{item.description}</p>
-                    </div>
-                  </div>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Team Focus Areas */}
-        <div>
-          <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            What We're Building
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {team.map((area, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card className="p-6 bg-gradient-card border-border hover:border-primary transition-all card-hover">
-                  <div className={`p-3 bg-${area.color}/20 rounded-xl w-fit mb-4`}>
-                    <area.icon className={`h-8 w-8 text-${area.color}`} />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{area.role}</h3>
-                  <p className="text-muted-foreground">{area.description}</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
         {/* Core Principles */}
-        <Card className="mt-16 p-8 bg-gradient-hero/10 border-primary/30">
+        <Card className="mb-16 p-8 bg-gradient-hero/10 border-primary/30">
           <h2 className="text-3xl font-bold mb-6 text-center">Core Principles</h2>
           <div className="grid md:grid-cols-3 gap-8">
             <div className="text-center">
@@ -249,6 +180,92 @@ export default function About() {
             </div>
           </div>
         </Card>
+
+        {/* Team Focus Areas */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
+            <Users className="h-8 w-8 text-primary" />
+            What We're Building
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {team.map((area, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="p-6 bg-gradient-card border-border hover:border-primary transition-all card-hover">
+                  <div className={`p-3 bg-${area.color}/20 rounded-xl w-fit mb-4`}>
+                    <area.icon className={`h-8 w-8 text-${area.color}`} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{area.role}</h3>
+                  <p className="text-muted-foreground">{area.description}</p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
+        {/* Timeline */}
+        <div className="mb-16">
+          <div className="flex items-center gap-3 mb-8">
+            <Rocket className="h-8 w-8 text-primary" />
+            <h2 className="text-3xl font-bold">Roadmap</h2>
+          </div>
+          <div className="space-y-6">
+            {timeline.map((item, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, x: -20 }}
+                whileInView={{ opacity: 1, x: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card
+                  className={`p-6 bg-gradient-card border-2 transition-all ${
+                    item.status === "current"
+                      ? "border-primary shadow-neon-green"
+                      : item.status === "completed"
+                      ? "border-border opacity-70"
+                      : "border-border"
+                  }`}
+                >
+                  <div className="flex items-start gap-6">
+                    <div
+                      className={`flex-shrink-0 min-w-[100px] text-center font-mono ${
+                        item.status === "current"
+                          ? "text-primary font-bold text-xl"
+                          : item.status === "completed"
+                          ? "text-muted-foreground/70 text-lg"
+                          : "text-muted-foreground text-lg"
+                      }`}
+                    >
+                      {item.year}
+                    </div>
+                    <div className="flex-1">
+                      <div className="flex items-center gap-3 mb-2">
+                        <h3 className="text-xl font-bold">{item.title}</h3>
+                        <Badge
+                          className={
+                            item.status === "completed"
+                              ? "bg-primary/20 text-primary"
+                              : item.status === "current"
+                              ? "bg-secondary/20 text-secondary"
+                              : "bg-muted text-muted-foreground"
+                          }
+                        >
+                          {item.status}
+                        </Badge>
+                      </div>
+                      <p className="text-muted-foreground">{item.description}</p>
+                    </div>
+                  </div>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
       </div>
     </div>
   );

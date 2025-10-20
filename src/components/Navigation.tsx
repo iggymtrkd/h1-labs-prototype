@@ -10,23 +10,29 @@ interface NavigationProps {
   address?: string;
   labsBalance?: string;
   showOnHomePage?: boolean;
+  onHowItWorksClick?: () => void;
 }
 
-export const Navigation = ({ onConnect, isConnected, address, labsBalance, showOnHomePage = false }: NavigationProps) => {
+export const Navigation = ({ onConnect, isConnected, address, labsBalance, showOnHomePage = false, onHowItWorksClick }: NavigationProps) => {
   const location = useLocation();
   const [mobileMenuOpen, setMobileMenuOpen] = useState(false);
   
   const handleHowItWorksClick = (e: React.MouseEvent) => {
     e.preventDefault();
-    const element = document.getElementById('how-it-works');
-    if (element) {
-      element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+    if (onHowItWorksClick) {
+      onHowItWorksClick();
+    } else {
+      const element = document.getElementById('how-it-works');
+      if (element) {
+        element.scrollIntoView({ behavior: 'smooth', block: 'start' });
+      }
     }
     setMobileMenuOpen(false);
   };
   
   // Navigation links
   const homePageLinks = [
+    { name: "About", path: "/about" },
     { name: "Litepaper", path: "/whitepaper" },
     { name: "How It Works", path: "#how-it-works", isHash: true },
     { name: "Terms", path: "/terms" },
