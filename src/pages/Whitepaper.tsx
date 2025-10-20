@@ -218,9 +218,9 @@ export default function Whitepaper() {
   };
 
   return (
-    <div className="min-h-screen pt-8 md:pt-24 pb-12 overflow-x-hidden">
-      <div className="container mx-auto px-4 max-w-7xl">
-        <div className="mb-8">
+    <div className="h-screen flex flex-col pt-8 md:pt-24 overflow-hidden">
+      <div className="container mx-auto px-4 max-w-7xl flex-shrink-0">
+        <div className="mb-4">
           <div className="flex items-center justify-between mb-4">
             <div className="flex items-center gap-3">
               {fromHome && (
@@ -262,21 +262,23 @@ export default function Whitepaper() {
             A concise overview of H1 Labs — advancing AI with provable, human‑validated data
           </p>
         </div>
+      </div>
 
-        <div className={fromHome ? "" : "grid lg:grid-cols-4 gap-8"}>
+      <div className="container mx-auto px-4 max-w-7xl flex-1 overflow-hidden pb-4">
+        <div className={fromHome ? "h-full" : "grid lg:grid-cols-4 gap-8 h-full"}>
           {/* Desktop Table of Contents - hide if from home */}
           {!fromHome && (
-            <Card className="hidden lg:block lg:col-span-1 p-3 bg-gradient-card border-border h-fit lg:sticky lg:top-24">
-              <h2 className="text-lg font-bold mb-3">Contents</h2>
-              <ScrollArea className="h-[600px] pr-2">
+            <Card className="hidden lg:flex lg:col-span-1 p-3 bg-gradient-card border-border flex-col overflow-hidden">
+              <h2 className="text-lg font-bold mb-3 flex-shrink-0">Contents</h2>
+              <ScrollArea className="flex-1 pr-2">
                 <TableOfContents />
               </ScrollArea>
             </Card>
           )}
 
           {/* Content */}
-          <Card className={`${fromHome ? "" : "lg:col-span-3"} p-4 md:p-8 bg-gradient-card border-border overflow-x-hidden`}>
-            <ScrollArea className="h-[600px] md:h-[800px] pr-2 md:pr-6">
+          <Card className={`${fromHome ? "h-full" : "lg:col-span-3"} p-4 md:p-8 bg-gradient-card border-border overflow-hidden flex flex-col`}>
+            <ScrollArea className="flex-1 pr-2 md:pr-6">
               <article className="prose prose-invert prose-primary max-w-none prose-sm md:prose-base overflow-x-hidden break-words">
                 <ReactMarkdown
                   components={{
