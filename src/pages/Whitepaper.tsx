@@ -19,6 +19,9 @@ import BondingCurveExample from "@/components/litepaper/BondingCurveExample";
 import UserFlows from "@/components/litepaper/UserFlows";
 import DiamondStandardDesign from "@/components/litepaper/DiamondStandardDesign";
 import H1TokenEconomies from "@/components/litepaper/H1TokenEconomies";
+import BondingCurveGraph from "@/components/litepaper/BondingCurveGraph";
+import LabOwnershipPie from "@/components/litepaper/LabOwnershipPie";
+import BuybackDistributionPie from "@/components/litepaper/BuybackDistributionPie";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -173,12 +176,13 @@ export default function Whitepaper() {
                         .replace(/\s+/g, "-");
                       
                       // Check if this is a section that should render a custom diagram
-                      if (text.includes("Lab Lifecycle")) {
+                      if (text.includes("Lab Creation") || text.includes("Lab Lifecycle")) {
                         return (
                           <>
                             <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
                               {children}
                             </h3>
+                            <LabOwnershipPie />
                             <LabCreationFlow />
                           </>
                         );
@@ -271,6 +275,7 @@ export default function Whitepaper() {
                             <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
                               {children}
                             </h2>
+                            <BuybackDistributionPie />
                             <EconomicFlywheel />
                           </>
                         );
@@ -282,6 +287,7 @@ export default function Whitepaper() {
                             <h2 id={id} className="text-xl md:text-2xl font-bold mb-3 mt-6 scroll-mt-24 text-primary break-words" {...props}>
                               {children}
                             </h2>
+                            <BondingCurveGraph />
                             <BondingCurveExample />
                           </>
                         );
