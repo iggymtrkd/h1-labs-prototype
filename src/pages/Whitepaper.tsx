@@ -252,9 +252,9 @@ export default function Whitepaper() {
         <div className={fromHome ? "" : "grid lg:grid-cols-4 gap-8"}>
           {/* Desktop Table of Contents - hide if from home */}
           {!fromHome && (
-            <Card className="hidden lg:block lg:col-span-1 p-6 bg-gradient-card border-border h-fit lg:sticky lg:top-24">
-              <h2 className="text-lg font-bold mb-4">Contents</h2>
-              <ScrollArea className="h-[600px] pr-4">
+            <Card className="hidden lg:block lg:col-span-1 p-3 bg-gradient-card border-border h-fit lg:sticky lg:top-24">
+              <h2 className="text-lg font-bold mb-3">Contents</h2>
+              <ScrollArea className="h-[600px] pr-2">
                 <TableOfContents />
               </ScrollArea>
             </Card>
