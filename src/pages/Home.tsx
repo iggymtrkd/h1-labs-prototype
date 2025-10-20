@@ -590,12 +590,11 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5 }}
-              className="relative p-6 pt-8 bg-card rounded-xl border-2 border-primary shadow-neon-green"
+              className="relative p-6 pt-12 bg-card rounded-xl border-2 border-primary shadow-neon-green"
             >
-              <div className="absolute top-2 left-2 bg-primary text-primary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-primary text-primary-foreground w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 1
               </div>
-              <Target className="h-10 w-10 text-primary mb-3" />
               <h3 className="text-xl font-bold mb-2">Medical & Healthcare</h3>
               <p className="text-muted-foreground text-sm">
                 Clinical apps, diagnostic tools, patient care systems
@@ -606,12 +605,11 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.1 }}
-              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
-              <div className="absolute top-2 left-2 bg-secondary text-secondary-foreground w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-secondary text-secondary-foreground w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 2
               </div>
-              <Zap className="h-10 w-10 text-secondary mb-3" />
               <h3 className="text-xl font-bold mb-2">Robotics & Automation</h3>
               <p className="text-muted-foreground text-sm">
                 Industrial automation, autonomous systems, smart manufacturing
@@ -622,12 +620,11 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.2 }}
-              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
-              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 3
               </div>
-              <Shield className="h-10 w-10 text-primary mb-3" />
               <h3 className="text-xl font-bold mb-2">Financial Services</h3>
               <p className="text-muted-foreground text-sm">
                 Compliance, risk assessment, fraud detection systems
@@ -638,12 +635,11 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.3 }}
-              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
-              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 4
               </div>
-              <Users className="h-10 w-10 text-secondary mb-3" />
               <h3 className="text-xl font-bold mb-2">Legal & Compliance</h3>
               <p className="text-muted-foreground text-sm">
                 Contract analysis, regulatory compliance, case management
@@ -654,12 +650,11 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.4 }}
-              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
+              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-primary transition-all card-hover"
             >
-              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 5
               </div>
-              <TrendingUp className="h-10 w-10 text-primary mb-3" />
               <h3 className="text-xl font-bold mb-2">Education & Training</h3>
               <p className="text-muted-foreground text-sm">
                 Personalized learning, skill assessment, certification systems
@@ -670,12 +665,11 @@ export default function Home({ onConnect }: HomeProps) {
               initial={{ opacity: 0, y: 20 }}
               whileInView={{ opacity: 1, y: 0 }}
               transition={{ duration: 0.5, delay: 0.5 }}
-              className="relative p-6 pt-8 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
+              className="relative p-6 pt-12 bg-card rounded-xl border border-border hover:border-secondary transition-all card-hover"
             >
-              <div className="absolute top-2 left-2 bg-muted-foreground text-background w-8 h-8 rounded-full flex items-center justify-center font-bold">
+              <div className="absolute top-4 left-1/2 -translate-x-1/2 bg-muted-foreground text-background w-12 h-12 rounded-full flex items-center justify-center font-bold text-2xl">
                 6
               </div>
-              <Zap className="h-10 w-10 text-secondary mb-3" />
               <h3 className="text-xl font-bold mb-2">And Beyond...</h3>
               <p className="text-muted-foreground text-sm">
                 Any industry requiring compliant, high-quality AI training data
