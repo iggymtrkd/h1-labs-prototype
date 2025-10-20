@@ -92,7 +92,7 @@ Auditable provenance & compliance artifacts for due diligence
 
 ### **Lab Lifecycle**
 
-<lov-mermaid>
+```mermaid
 graph LR
     A[Stake $LABS] --> B[Deploy LabVault]
     B --> C[Domain Registered]
@@ -118,7 +118,7 @@ graph LR
     style G fill:#8b5cf6,stroke:#7c3aed,stroke-width:2px,color:#fff
     style I fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
     style J fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
-</lov-mermaid>
+```
 
 **Stage 1: Initialization** — Lab creator stakes $LABS → auto-deploys isolated LabVault (H1 token) → domain registered uniquely.
 
@@ -134,7 +134,7 @@ graph LR
 
 H1 uses the **Diamond Standard (EIP-2535)** as its core proxy pattern: a single proxy routes to modular **facets** (logic contracts) while maintaining a unified storage layer. This enables upgradeability without state migration and extensibility without redeployment.
 
-<lov-mermaid>
+```mermaid
 graph TB
     subgraph Diamond["Diamond Proxy Layer"]
         H1D[H1Diamond.sol<br/>EIP-2535 Proxy<br/>Singleton]
@@ -211,7 +211,7 @@ graph TB
     style LV2 fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
     style BCS2 fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
     style LPS2 fill:#64748b,stroke:#475569,stroke-width:2px,color:#fff
-</lov-mermaid>
+```
 
 **Why Diamond Pattern?**
 - **Upgradeability**: Add new compliance facets (GDPR, HIPAA, C2PA) without redeploying storage
@@ -311,7 +311,7 @@ Auto-adjusting price pegged to vault NAV eliminates ICO-style pricing risks. Buy
 
 **Example — Robotics Lab Launch:**
 
-<lov-mermaid>
+```mermaid
 graph TD
     A[Day 1: Lab Created<br/>$100K Deposit] --> B[H1-Robotics<br/>NAV: $1.00/share<br/>Curve: $1.005/share]
     B --> C[Level 1 Unlocked]
@@ -340,7 +340,7 @@ graph TD
     style K fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
     style L fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
     style M fill:#64748b,stroke:#475569,stroke-width:1px,color:#fff
-</lov-mermaid>
+```
 
 ---
 
@@ -364,7 +364,7 @@ Blockchain is not ornament — it is the enforcement layer for provenance, compl
 
 H1 verifies professionals before they contribute to sensitive datasets:
 
-<lov-mermaid>
+```mermaid
 graph TD
     A[📋 Apply<br/>ID + License Upload] --> B[🔍 Verify<br/>KYC-lite + Domain Check]
     B --> C[🎫 Mint Credential NFT<br/>Onchain Proof]
@@ -379,7 +379,7 @@ graph TD
     style D fill:#f59e0b,stroke:#d97706,stroke-width:2px,color:#000
     style E fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
     style F fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
-</lov-mermaid>
+```
 
 **For investors:** Credentialing creates moat — enterprise clients will only trust data validated by verified professionals. This is table-stakes for regulated markets.
 
@@ -418,7 +418,7 @@ Every Lab declares its domain (Healthcare, Legal, Robotics, etc.) at creation. T
 
 ### Dual‑Intelligence Dataflow (Δ‑Gain → Bundles → Buybacks)
 
-<lov-mermaid>
+```mermaid
 sequenceDiagram
     participant App as App/SDK
     participant Agent as AI Agent
@@ -439,7 +439,7 @@ sequenceDiagram
     
     Note over Agent,Human: Dual-Intelligence<br/>Collaboration
     Note over H1,Buyer: Transparent<br/>Economics
-</lov-mermaid>
+```
 
 ---
 
@@ -518,7 +518,7 @@ Ongoing:
 
 The H1 economy is designed as a **closed loop** that continuously strengthens as adoption increases:
 
-<lov-mermaid>
+```mermaid
 graph LR
     A[🏗️ Labs Created<br/>Capital Staked] --> B[👥 Validators<br/>Enrich/Validate]
     B --> C[🤖 AI Companies<br/>Purchase Data]
@@ -535,7 +535,7 @@ graph LR
     style E fill:#ec4899,stroke:#db2777,stroke-width:2px,color:#fff
     style F fill:#22c55e,stroke:#16a34a,stroke-width:2px,color:#000
     style G fill:#3b82f6,stroke:#2563eb,stroke-width:2px,color:#fff
-</lov-mermaid>
+```
 
 **Financial Model (Y1-Y3):**
 

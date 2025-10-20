@@ -6,10 +6,31 @@ import { Sheet, SheetContent, SheetTrigger } from "@/components/ui/sheet";
 import { BookOpen, ChevronRight, Menu, Target, Sparkles } from "lucide-react";
 import { Link } from "react-router-dom";
 import ReactMarkdown from "react-markdown";
+import mermaid from "mermaid";
 import CompetitiveComparison from "@/components/litepaper/CompetitiveComparison";
 import ComplianceCards from "@/components/litepaper/ComplianceCards";
 import FinancialChart from "@/components/litepaper/FinancialChart";
 import BlockchainBenefits from "@/components/litepaper/BlockchainBenefits";
+
+// Initialize mermaid
+mermaid.initialize({
+  startOnLoad: true,
+  theme: 'dark',
+  themeVariables: {
+    primaryColor: 'hsl(142, 76%, 36%)',
+    primaryTextColor: '#fff',
+    primaryBorderColor: 'hsl(142, 71%, 45%)',
+    lineColor: 'hsl(142, 71%, 45%)',
+    secondaryColor: 'hsl(221, 83%, 53%)',
+    tertiaryColor: 'hsl(262, 83%, 58%)',
+    background: 'hsl(224, 71%, 4%)',
+    mainBkg: 'hsl(224, 71%, 4%)',
+    secondBkg: 'hsl(215, 28%, 17%)',
+    textColor: '#fff',
+    border1: 'hsl(215, 28%, 17%)',
+    border2: 'hsl(142, 71%, 45%)',
+  }
+});
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -40,6 +61,17 @@ export default function Whitepaper() {
       })
       .catch((err) => console.error("Error loading litepaper:", err));
   }, []);
+
+  // Render mermaid diagrams after content loads
+  useEffect(() => {
+    if (content) {
+      setTimeout(() => {
+        mermaid.run({
+          querySelector: '.mermaid',
+        });
+      }, 100);
+    }
+  }, [content]);
 
   const scrollToSection = (id: string) => {
     setActiveSection(id);
@@ -137,6 +169,25 @@ export default function Whitepaper() {
               <article className="prose prose-invert prose-primary max-w-none prose-sm md:prose-base overflow-x-hidden break-words">
                 <ReactMarkdown
                   components={{
+                    // Mermaid diagram renderer
+                    code: ({ node, className, children, ...props }: any) => {
+                      const match = /language-(\w+)/.exec(className || '');
+                      const lang = match ? match[1] : '';
+                      
+                      if (lang === 'mermaid') {
+                        return (
+                          <div className="mermaid my-8">
+                            {String(children).replace(/\n$/, '')}
+                          </div>
+                        );
+                      }
+                      
+                      return (
+                        <code className={`bg-muted px-2 py-1 rounded text-primary text-sm break-all ${className || ''}`} {...props}>
+                          {children}
+                        </code>
+                      );
+                    },
                     // Custom rendering for special sections
                     table: ({ node, ...props }) => {
                       // Check if this is one of our special tables to replace with custom components
@@ -235,9 +286,6 @@ export default function Whitepaper() {
                     ),
                     li: ({ node, ...props }) => (
                       <li className="ml-4 break-words" {...props} />
-                    ),
-                    code: ({ node, ...props }) => (
-                      <code className="bg-muted px-2 py-1 rounded text-primary text-sm break-all" {...props} />
                     ),
                     blockquote: ({ node, ...props }) => (
                       <blockquote className="border-l-4 border-primary pl-4 italic my-4 text-muted-foreground break-words" {...props} />
