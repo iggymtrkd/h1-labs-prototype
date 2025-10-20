@@ -282,59 +282,57 @@ export default function Home({ onConnect }: HomeProps) {
               </span>
             </h1>
             
-            <div className="relative">
+            <div className="relative flex items-center justify-center gap-4 mb-8">
+              {/* Left Arrow */}
+              <button
+                onClick={goToPreviousVariant}
+                className="p-2 hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+                aria-label="Previous variant"
+              >
+                <ChevronLeft className="h-5 w-5 text-muted-foreground hover:text-primary" />
+              </button>
+
+              {/* Description */}
               <motion.div
                 key={currentVariant}
                 initial={{ opacity: 0, y: 5 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -5 }}
                 transition={{ duration: 0.5 }}
-                className="mb-6"
+                className="flex-1"
               >
-                <p className="text-xl text-muted-foreground mb-2 max-w-2xl mx-auto">
+                <p className="text-xl text-muted-foreground max-w-2xl mx-auto">
                   {DESCRIPTION_VARIANTS[currentVariant].text}
-                </p>
-                <p className="text-xs text-muted-foreground/60">
-                  For: <span className="font-semibold text-primary">{DESCRIPTION_VARIANTS[currentVariant].audience}</span>
                 </p>
               </motion.div>
 
-              {/* Timer Progress Bar */}
-              <div className="flex items-center justify-center gap-2 mb-6">
-                <div className="flex gap-1">
-                  {DESCRIPTION_VARIANTS.map((_, idx) => (
-                    <button
-                      key={idx}
-                      onClick={() => handleVariantClick(idx)}
-                      className="relative w-8 h-1 bg-muted rounded-full overflow-hidden hover:bg-muted-foreground/50 transition-colors"
-                    >
-                      <motion.div
-                        className="h-full bg-primary"
-                        initial={{ width: idx === currentVariant ? `${progress * 100}%` : '0%' }}
-                        animate={{ width: idx === currentVariant ? `${progress * 100}%` : '0%' }}
-                        transition={{ duration: 0.05, ease: "linear" }}
-                      />
-                    </button>
-                  ))}
-                </div>
-              </div>
+              {/* Right Arrow */}
+              <button
+                onClick={goToNextVariant}
+                className="p-2 hover:bg-primary/10 rounded-lg transition-colors flex-shrink-0"
+                aria-label="Next variant"
+              >
+                <ChevronRight className="h-5 w-5 text-muted-foreground hover:text-primary" />
+              </button>
+            </div>
 
-              {/* Navigation Arrows */}
-              <div className="flex items-center justify-center gap-4">
-                <button
-                  onClick={goToPreviousVariant}
-                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                  aria-label="Previous variant"
-                >
-                  <ChevronLeft className="h-5 w-5 text-muted-foreground hover:text-primary" />
-                </button>
-                <button
-                  onClick={goToNextVariant}
-                  className="p-2 hover:bg-primary/10 rounded-lg transition-colors"
-                  aria-label="Next variant"
-                >
-                  <ChevronRight className="h-5 w-5 text-muted-foreground hover:text-primary" />
-                </button>
+            {/* Timer Progress Bar */}
+            <div className="flex items-center justify-center gap-2 mb-8">
+              <div className="flex gap-1">
+                {DESCRIPTION_VARIANTS.map((_, idx) => (
+                  <button
+                    key={idx}
+                    onClick={() => handleVariantClick(idx)}
+                    className="relative w-8 h-1 bg-muted rounded-full overflow-hidden hover:bg-muted-foreground/50 transition-colors"
+                  >
+                    <motion.div
+                      className="h-full bg-primary"
+                      initial={{ width: idx === currentVariant ? `${progress * 100}%` : '0%' }}
+                      animate={{ width: idx === currentVariant ? `${progress * 100}%` : '0%' }}
+                      transition={{ duration: 0.05, ease: "linear" }}
+                    />
+                  </button>
+                ))}
               </div>
             </div>
 
@@ -391,7 +389,7 @@ export default function Home({ onConnect }: HomeProps) {
                 </div>
                 <h3 className="text-xl font-bold mb-2">Scholars</h3>
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  Credentialed experts validate quality and earn rewards
+                  Credentialed experts validate, enrich data and earn rewards
                 </p>
               </motion.div>
 
@@ -409,7 +407,7 @@ export default function Home({ onConnect }: HomeProps) {
                 </div>
                 <h3 className="text-xl font-bold mb-2">AI Companies</h3>
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  Purchase verified datasets with full onchain provenance
+                  Purchase enriched training datasets with compliance and onchain provenance
                 </p>
               </motion.div>
             </div>
@@ -429,7 +427,7 @@ export default function Home({ onConnect }: HomeProps) {
             <h2 className="text-3xl font-bold mb-4 glow-green">Dual‑Intelligence SDK</h2>
             <p className="text-lg text-muted-foreground mb-6">
               Plug the H1 SDK into your app and choose a base model from partner providers—or bring your own.
-              The Agent executes while a credentialed Human reviews and signs off. The supervised improvement
+              The Agent executes while a credentialed human reviews and signs off, adding provenance and compliance, much needed in regulated and semi-regulated AI markets. The supervised improvement
               (Δ‑Gain) is recorded with provenance and attribution for compliant resale.
             </p>
             <div className="flex flex-col sm:flex-row items-center justify-center gap-4">
