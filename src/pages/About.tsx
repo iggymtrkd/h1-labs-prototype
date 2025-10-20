@@ -1,21 +1,19 @@
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
-import { Target, Rocket, Users, Globe, Code, Shield } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { Target, Rocket, Users, Globe, Code, Shield, ArrowLeft } from "lucide-react";
 import { motion } from "framer-motion";
+import { useNavigate } from "react-router-dom";
 
 export default function About() {
+  const navigate = useNavigate();
+
   const timeline = [
     {
-      year: "2023",
+      year: "2023-2025",
       title: "MiniWhales",
       description: "Initial proof-of-concept demonstrating human-validated AI training on blockchain",
       status: "completed",
-    },
-    {
-      year: "2024",
-      title: "H1 Labs Protocol",
-      description: "Launch of the dual-token economy with $LABS and H1 tokens",
-      status: "current",
     },
     {
       year: "2025 Q1",
@@ -25,14 +23,20 @@ export default function About() {
     },
     {
       year: "2025 Q2",
+      title: "SDK Release",
+      description: "Developer SDK for building custom H1 Labs applications",
+      status: "upcoming",
+    },
+    {
+      year: "2025 Q3",
       title: "Multi-Domain Expansion",
       description: "Launch of Art, Robotics, and Legal domain applications",
       status: "upcoming",
     },
     {
-      year: "2025 Q3",
-      title: "SDK Release",
-      description: "Developer SDK for building custom H1 Labs applications",
+      year: "2025 Q3-Q4",
+      title: "H1 Labs Protocol Testnet",
+      description: "Launch of the dual-token economy testnet with $LABS and H1 tokens",
       status: "upcoming",
     },
     {
@@ -73,6 +77,16 @@ export default function About() {
   return (
     <div className="min-h-screen pt-8 md:pt-24 pb-12 overflow-x-hidden">
       <div className="container mx-auto px-4 max-w-6xl overflow-x-hidden">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          size="sm"
+          onClick={() => navigate(-1)}
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back
+        </Button>
         {/* Mission Section */}
         <motion.div
           initial={{ opacity: 0, y: 20 }}
@@ -133,6 +147,66 @@ export default function About() {
           </div>
         </Card>
 
+        {/* Core Principles */}
+        <Card className="mb-16 p-8 bg-gradient-hero/10 border-primary/30">
+          <h2 className="text-3xl font-bold mb-6 text-center">Core Principles</h2>
+          <div className="grid md:grid-cols-3 gap-8">
+            <div className="text-center">
+              <div className="inline-block p-4 bg-primary/20 rounded-2xl mb-4">
+                <Shield className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Provable</h3>
+              <p className="text-muted-foreground">
+                Every dataset has an immutable provenance record on the blockchain
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="inline-block p-4 bg-secondary/20 rounded-2xl mb-4">
+                <Users className="h-10 w-10 text-secondary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Human-First</h3>
+              <p className="text-muted-foreground">
+                AI advancement guided by expert human validation and supervision
+              </p>
+            </div>
+            <div className="text-center">
+              <div className="inline-block p-4 bg-primary/20 rounded-2xl mb-4">
+                <Globe className="h-10 w-10 text-primary" />
+              </div>
+              <h3 className="text-xl font-bold mb-2">Decentralized</h3>
+              <p className="text-muted-foreground">
+                Open protocol enabling global participation and contribution
+              </p>
+            </div>
+          </div>
+        </Card>
+
+        {/* Team Focus Areas */}
+        <div className="mb-16">
+          <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
+            <Users className="h-8 w-8 text-primary" />
+            What We're Building
+          </h2>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {team.map((area, index) => (
+              <motion.div
+                key={index}
+                initial={{ opacity: 0, y: 20 }}
+                whileInView={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.5, delay: index * 0.1 }}
+              >
+                <Card className="p-6 bg-gradient-card border-border hover:border-primary transition-all card-hover">
+                  <div className={`p-3 bg-${area.color}/20 rounded-xl w-fit mb-4`}>
+                    <area.icon className={`h-8 w-8 text-${area.color}`} />
+                  </div>
+                  <h3 className="text-xl font-bold mb-3">{area.role}</h3>
+                  <p className="text-muted-foreground">{area.description}</p>
+                </Card>
+              </motion.div>
+            ))}
+          </div>
+        </div>
+
         {/* Timeline */}
         <div className="mb-16">
           <div className="flex items-center gap-3 mb-8">
@@ -190,65 +264,6 @@ export default function About() {
           </div>
         </div>
 
-        {/* Team Focus Areas */}
-        <div>
-          <h2 className="text-3xl font-bold mb-8 flex items-center gap-3">
-            <Users className="h-8 w-8 text-primary" />
-            What We're Building
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-            {team.map((area, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, y: 20 }}
-                whileInView={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
-              >
-                <Card className="p-6 bg-gradient-card border-border hover:border-primary transition-all card-hover">
-                  <div className={`p-3 bg-${area.color}/20 rounded-xl w-fit mb-4`}>
-                    <area.icon className={`h-8 w-8 text-${area.color}`} />
-                  </div>
-                  <h3 className="text-xl font-bold mb-3">{area.role}</h3>
-                  <p className="text-muted-foreground">{area.description}</p>
-                </Card>
-              </motion.div>
-            ))}
-          </div>
-        </div>
-
-        {/* Core Principles */}
-        <Card className="mt-16 p-8 bg-gradient-hero/10 border-primary/30">
-          <h2 className="text-3xl font-bold mb-6 text-center">Core Principles</h2>
-          <div className="grid md:grid-cols-3 gap-8">
-            <div className="text-center">
-              <div className="inline-block p-4 bg-primary/20 rounded-2xl mb-4">
-                <Shield className="h-10 w-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Provable</h3>
-              <p className="text-muted-foreground">
-                Every dataset has an immutable provenance record on the blockchain
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="inline-block p-4 bg-secondary/20 rounded-2xl mb-4">
-                <Users className="h-10 w-10 text-secondary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Human-First</h3>
-              <p className="text-muted-foreground">
-                AI advancement guided by expert human validation and supervision
-              </p>
-            </div>
-            <div className="text-center">
-              <div className="inline-block p-4 bg-primary/20 rounded-2xl mb-4">
-                <Globe className="h-10 w-10 text-primary" />
-              </div>
-              <h3 className="text-xl font-bold mb-2">Decentralized</h3>
-              <p className="text-muted-foreground">
-                Open protocol enabling global participation and contribution
-              </p>
-            </div>
-          </div>
-        </Card>
       </div>
     </div>
   );
