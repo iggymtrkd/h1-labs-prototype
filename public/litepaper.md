@@ -39,14 +39,7 @@ We target regulated and semi‑regulated markets — starting with healthcare �
 
 H1 Labs uniquely combines **verified human intelligence, provenance, and compliance**. Unlike peers that focus on compute (Gensyn), model training (Bittensor), or data liquidity (Ocean), H1 targets regulated and semi-regulated markets with enterprise-grade trust.
 
-| Dimension | H1 Labs | Bittensor | Scale AI | Ocean | Gensyn |
-|-----------|---------|------------|----------|--------|---------|
-| **Focus** | Human-validated datasets | Model training | Centralized data | Data liquidity | Compute network |
-| **Compliance** | HIPAA, GDPR, C2PA, EU AI Act | None | Corporate | Optional | None |
-| **Credentialing** | Verified NFTs + KYC | None | Manual | None | None |
-| **Provenance** | Full onchain audit trail | None | Internal | Metadata only | None |
-| **Revenue Model** | Onchain splits + buybacks | Inflationary | Fiat only | Stake-reward | Stake-reward |
-| **Target Market** | Healthcare, Legal, Defense, Finance | General AI | Enterprise labeling | General data | ML infrastructure |
+<!-- Competitive comparison table replaced by visual component -->
 
 **Why it matters for investors:** H1's compliance-first approach opens regulated markets (healthcare TAM ~$200B+ in data licensing) that competitors cannot access.
 
@@ -293,12 +286,7 @@ Result: Early H1 holders gain from:
 
 **Why H1 ≠ Traditional Stake-Reward Models:**
 
-| Mechanic | H1 Labs | Competitors (Bittensor, Ocean) |
-|----------|---------|--------|
-| **Value Source** | Real dataset sales | Inflationary rewards |
-| **Supply** | Decreases (buybacks) | Increases (new issuance) |
-| **Price Pressure** | Buy pressure from revenue | Sell pressure from inflation |
-| **Sustainability** | Revenue-driven (durable) | Reward-dependent (temporary) |
+<!-- Comparison table replaced by visual component -->
 
 ---
 
@@ -348,13 +336,7 @@ graph TD
 
 Blockchain is not ornament — it is the enforcement layer for provenance, compliance, and fair economics:
 
-| Challenge | Blockchain Benefit | H1 Implementation | Result |
-|-----------|-------------------|-------------------|---------|
-| **Data Provenance** | Immutable audit trail | ProvenanceFacet logs enrichment, validators, timestamps | Regulators can verify dataset lineage |
-| **Validator Integrity** | Cryptographic proof of contribution | Credentials NFT + onchain records | Enterprise clients trust who validated data |
-| **Compliance Enforcement** | Programmable legal constraints | ComplianceFacet binds HIPAA/GDPR/C2PA rules | AI firms know data is legally compliant |
-| **Transparent Economics** | All payments recorded & verifiable | RevenueFacet splits logged per dataset sale | No opacity in revenue distribution |
-| **Security & Trust** | Prevents tampering & fraud | Reentrancy guards, access control, audit logs | Protected against data theft & spoofing |
+<!-- Blockchain benefits table replaced by visual component -->
 
 ---
 
@@ -394,12 +376,7 @@ if (H1SDK.Credential.verify(wallet, 'HIPAA_Clinician')) {
 
 Every Lab declares its domain (Healthcare, Legal, Robotics, etc.) at creation. The platform automatically enforces:
 
-| Domain | Compliance Standards | Contract Enforcement |
-|--------|----------------------|----------------------|
-| **Healthcare** | HIPAA, GDPR, EU AI Act | De-identification required; audit logs immutable; credentialed clinicians only |
-| **Legal** | Attorney-Client Privilege, Data Residency | Whitelisted lawyer credentials; encrypted case files; regional constraints |
-| **Defense** | ITAR, EAR, CMMC | Identity gating; zero-knowledge access; on-prem mirrors |
-| **Finance** | AML/KYC, Basel III, MiFID II | Onchain identity linking; transaction screening; audit trails |
+<!-- Compliance standards table replaced by visual component -->
 
 **For investors:** Programmable compliance opens markets that competitors cannot access (healthcare data licensing alone is $200B+).
 
@@ -539,13 +516,7 @@ graph LR
 
 **Financial Model (Y1-Y3):**
 
-| Metric | Year 1 | Year 2 | Year 3 |
-|--------|--------|--------|--------|
-| **Total TVL** | $5M | $50M | $250M |
-| **Annual Dataset Revenue** | $2M | $20M | $100M |
-| **$LABS Buyback Budget** | $500K | $5M | $25M |
-| **Validator Payouts** | $1M | $10M | $50M |
-| **Protocol Treasury** | $500K | $5M | $25M |
+<!-- Financial projections table replaced by interactive chart component -->
 
 **Key Mechanic for Investors:** Revenue-driven buybacks create sustained upward pressure on $LABS and H1 tokens without dividend semantics. Unlike stake-reward models, H1's value comes from dataset sales — creating external, real demand.
 
@@ -555,15 +526,7 @@ graph LR
 
 H1 Labs uniquely combines **verified human intelligence, provenance, and compliance**. Unlike peers that focus on compute (Gensyn), model training (Bittensor), or data liquidity (Ocean), H1 targets regulated and semi-regulated markets with enterprise-grade trust.
 
-| Dimension | H1 Labs | Bittensor | Scale AI | Ocean | Gensyn |
-|-----------|---------|------------|----------|--------|---------|
-| **Focus** | Human-validated datasets | Model training | Centralized data | Data liquidity | Compute network |
-| **Compliance** | HIPAA, GDPR, C2PA, EU AI Act | None | Corporate | Optional | None |
-| **Credentialing** | Verified NFTs + KYC | None | Manual | None | None |
-| **Provenance** | Full onchain audit trail | None | Internal | Metadata only | None |
-| **Revenue Model** | Onchain splits + buybacks | Inflationary | Fiat only | Stake-reward | Stake-reward |
-| **Target Market** | Healthcare, Legal, Defense, Finance | General AI | Enterprise labeling | General data | ML infrastructure |
-| **Value Driver** | Real dataset sales | Token inflation | Labor cost | Access licensing | Compute capacity |
+<!-- Competitive positioning table replaced by visual component (see section 2.5) -->
 
 **Why it matters:** H1's compliance-first approach opens regulated markets (healthcare TAM ~$200B+ in data licensing) that competitors cannot access. Programmable compliance means SDKs launch in regulated sectors without custom legal wrangling.
 
