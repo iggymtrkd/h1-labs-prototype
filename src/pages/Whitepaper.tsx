@@ -89,8 +89,8 @@ export default function Whitepaper() {
   };
 
   const TableOfContents = () => {
-    // Filter out the first h1 (title)
-    const filteredSections = sections.slice(1);
+    // Filter out the first two sections (title and subtitle)
+    const filteredSections = sections.slice(2);
     
     return (
       <nav className="space-y-1">
