@@ -1,6 +1,6 @@
 import { Link } from "react-router-dom";
 import { Button } from "@/components/ui/button";
-import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet, ChevronLeft, ChevronRight } from "lucide-react";
+import { ArrowRight, Zap, Shield, Users, TrendingUp, Heart, Brain, Stethoscope, Target, Info, FileText, Wallet, FlaskConical, PenTool, BrainCircuit } from "lucide-react";
 import { Carousel, CarouselContent, CarouselItem, CarouselPrevious, CarouselNext } from "@/components/ui/carousel";
 import { motion } from "framer-motion";
 import { toast } from "@/components/ui/use-toast";
@@ -295,11 +295,11 @@ export default function Home({ onConnect }: HomeProps) {
                 className="flex flex-col items-center"
               >
                 <div className="w-24 h-24 bg-gradient-primary rounded-full flex items-center justify-center mb-4 shadow-neon-green">
-                  <Users className="h-12 w-12 text-primary-foreground" />
+                  <FlaskConical className="h-12 w-12 text-primary-foreground" />
                 </div>
                 <h3 className="text-xl font-bold mb-2">Data Labs</h3>
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  Collaborative spaces for dataset creation and enrichment
+                  Collaborative spaces where data is created and enriched
                 </p>
               </motion.div>
 
@@ -313,11 +313,11 @@ export default function Home({ onConnect }: HomeProps) {
                 className="flex flex-col items-center"
               >
                 <div className="w-24 h-24 bg-gradient-secondary rounded-full flex items-center justify-center mb-4 shadow-neon-purple">
-                  <Shield className="h-12 w-12 text-secondary-foreground" />
+                  <PenTool className="h-12 w-12 text-secondary-foreground" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">Validators</h3>
+                <h3 className="text-xl font-bold mb-2">Scholars</h3>
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  Human experts verify and validate training data quality
+                  Credentialed experts validate quality and earn rewards
                 </p>
               </motion.div>
 
@@ -331,11 +331,11 @@ export default function Home({ onConnect }: HomeProps) {
                 className="flex flex-col items-center"
               >
                 <div className="w-24 h-24 bg-gradient-hero rounded-full flex items-center justify-center mb-4 shadow-neon-green">
-                  <Zap className="h-12 w-12 text-foreground" />
+                  <BrainCircuit className="h-12 w-12 text-foreground" />
                 </div>
-                <h3 className="text-xl font-bold mb-2">AI Models</h3>
+                <h3 className="text-xl font-bold mb-2">AI Companies</h3>
                 <p className="text-sm text-muted-foreground text-center max-w-xs">
-                  Enhanced artificial intelligence trained on verified data
+                  Purchase verified datasets with full onchain provenance
                 </p>
               </motion.div>
             </div>
