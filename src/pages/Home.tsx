@@ -358,7 +358,7 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
                 Sign In
               </Button>
               <Link to="/whitepaper">
-                <Button className="gap-2">
+                <Button size="lg" className="text-lg px-8">
                   Read Litepaper
                 </Button>
               </Link>
