@@ -502,7 +502,7 @@ export default function Home({ onConnect }: HomeProps) {
                 </Button>
               </Link>
               <Button className="bg-gradient-primary border-0 hover:opacity-90" onClick={simulateDeltaGain}>
-                Try the Demo
+                Upcoming Features
                 <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </div>
