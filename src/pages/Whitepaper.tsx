@@ -32,6 +32,7 @@ export default function Whitepaper() {
   const [content, setContent] = useState("");
   const [sections, setSections] = useState<{ title: string; id: string; level: number }[]>([]);
   const [activeSection, setActiveSection] = useState("");
+  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
   const [searchParams] = useSearchParams();
   const navigate = useNavigate();
   const fromHome = searchParams.get("from") === "home";
@@ -58,9 +59,13 @@ export default function Whitepaper() {
         }));
         setSections(tocSections);
         
-        // Initialize all sections as expanded
-        const allIndices = new Set(tocSections.map((_, i) => i));
-        setExpandedSections(allIndices);
+        // Initialize all level 1 sections as expanded (skip first which is the title)
+        const level1Indices = new Set(
+          tocSections
+            .map((section, i) => (section.level === 1 && i > 0 ? i : -1))
+            .filter(i => i !== -1)
+        );
+        setExpandedSections(level1Indices);
       })
       .catch((err) => console.error("Error loading litepaper:", err));
   }, []);
@@ -73,8 +78,6 @@ export default function Whitepaper() {
     }
   };
 
-  const [expandedSections, setExpandedSections] = useState<Set<number>>(new Set());
-
   const toggleSection = (index: number) => {
     const newExpanded = new Set(expandedSections);
     if (newExpanded.has(index)) {
@@ -86,7 +89,7 @@ export default function Whitepaper() {
   };
 
   const TableOfContents = () => {
-    // Filter out the first h1 (title) and group sections
+    // Filter out the first h1 (title)
     const filteredSections = sections.slice(1);
     
     return (
@@ -104,37 +107,41 @@ export default function Whitepaper() {
           </Button>
         </Link>
         {filteredSections.map((section, index) => {
-          const actualIndex = index + 1; // Adjust for filtered array
+          const originalIndex = index + 1; // Offset for skipped first section
           const hasSubsections = filteredSections[index + 1]?.level > section.level;
-          const isExpanded = expandedSections.has(actualIndex) || !expandedSections.size;
+          const isExpanded = expandedSections.has(originalIndex);
           const isLevel1 = section.level === 1;
           
-          // Skip rendering if this is a subsection and parent is collapsed
+          // Skip rendering subsections if parent is collapsed
           if (section.level > 1) {
-            let parentIndex = actualIndex - 1;
-            while (parentIndex >= 0 && filteredSections[parentIndex - 1]?.level >= section.level) {
-              parentIndex--;
+            // Find the parent level 1 section
+            let parentIdx = index - 1;
+            while (parentIdx >= 0 && filteredSections[parentIdx].level > 1) {
+              parentIdx--;
             }
-            if (parentIndex >= 0 && !expandedSections.has(parentIndex) && expandedSections.size > 0) {
-              return null;
+            if (parentIdx >= 0) {
+              const parentOriginalIndex = parentIdx + 1;
+              if (!expandedSections.has(parentOriginalIndex)) {
+                return null;
+              }
             }
           }
 
           return (
             <button
-              key={actualIndex}
+              key={originalIndex}
               onClick={() => {
                 if (isLevel1 && hasSubsections) {
-                  toggleSection(actualIndex);
+                  toggleSection(originalIndex);
                 }
                 scrollToSection(section.id);
               }}
-              className={`w-full text-left px-2 py-2 rounded-lg transition-all text-sm ${
+              className={`w-full text-left py-2 rounded-lg transition-all text-sm ${
                 section.level === 1
-                  ? "font-semibold"
+                  ? "font-semibold px-2"
                   : section.level === 2
-                  ? "pl-4 text-muted-foreground"
-                  : "pl-6 text-muted-foreground text-xs"
+                  ? "pl-6 pr-2 text-muted-foreground"
+                  : "pl-10 pr-2 text-muted-foreground text-xs"
               } ${
                 activeSection === section.id
                   ? "bg-primary/20 text-primary"
