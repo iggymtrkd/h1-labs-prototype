@@ -205,7 +205,7 @@ export default function Prototype() {
     }
 
     setLoading('mint');
-    addLog('info', 'Testing: Receive LABS', '🚰 Requesting 10,000 test LABS from faucet...');
+    addLog('info', 'Testing: Receive LABS', '🚰 Requesting 50,000 test LABS from faucet...');
 
     try {
       addLog('info', 'Testing: Receive LABS', '⏳ Waiting for faucet to process claim...');
@@ -474,7 +474,7 @@ export default function Prototype() {
                     variant="outline"
                   >
                     {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                    Receive 10,000 Test LABS
+                    Receive 50,000 Test LABS
                   </Button>
                 </div>
 

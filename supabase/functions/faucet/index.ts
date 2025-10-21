@@ -83,8 +83,23 @@ serve(async (req) => {
 
       // Send tokens
       console.log(`Sending ${FAUCET_AMOUNT} LABS to ${walletAddress}`);
-      const tx = await labsToken.transfer(walletAddress, FAUCET_AMOUNT);
-      await tx.wait();
+      let tx;
+      try {
+        tx = await labsToken.transfer(walletAddress, FAUCET_AMOUNT);
+        await tx.wait();
+      } catch (txError: any) {
+        // Check if it's a gas/funds error
+        if (txError.code === 'INSUFFICIENT_FUNDS') {
+          console.error('Faucet wallet needs ETH for gas fees');
+          return new Response(
+            JSON.stringify({ 
+              error: 'Faucet wallet needs ETH for gas fees. Please contact support or try again later.' 
+            }),
+            { status: 503, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
+          );
+        }
+        throw txError;
+      }
 
       // Update cooldown
       cooldowns.set(walletAddress.toLowerCase(), now);
