@@ -84,6 +84,11 @@ export default function Prototype() {
       return;
     }
 
+    if (!window.ethereum) {
+      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+      return;
+    }
+
     setLoading('stake');
     addLog('info', 'Stage 1: Stake $LABS', `🎯 STARTING: Stake ${stakeAmount} LABS tokens to unlock Lab creation`);
 
@@ -133,6 +138,11 @@ export default function Prototype() {
 
     if (!labName || !labSymbol || !labDomain) {
       toast.error('Please fill in all lab details');
+      return;
+    }
+
+    if (!window.ethereum) {
+      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
       return;
     }
 
@@ -240,6 +250,11 @@ export default function Prototype() {
       return;
     }
 
+    if (!window.ethereum) {
+      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+      return;
+    }
+
     setLoading('createData');
     addLog('info', 'Stage 2: Create Data', `📊 STARTING: Create dataset for Lab ID ${dataLabId} in ${dataDomain}`);
 
@@ -285,6 +300,11 @@ export default function Prototype() {
   const handleCreateCredential = async () => {
     if (!isConnected) {
       toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!window.ethereum) {
+      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
       return;
     }
 
@@ -345,6 +365,11 @@ export default function Prototype() {
   const handlePurchaseDataset = async () => {
     if (!isConnected) {
       toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!window.ethereum) {
+      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
       return;
     }
 
