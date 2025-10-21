@@ -545,7 +545,7 @@ export default function Prototype() {
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Connected Wallet</p>
-                  <p className="font-mono text-sm">{address.slice(0, 6)}...{address.slice(-4)}</p>
+                  <p className="font-mono text-sm break-all">{address}</p>
                 </div>
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">ETH Balance</p>
