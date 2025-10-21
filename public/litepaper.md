@@ -455,6 +455,231 @@ Auditable provenance & compliance artifacts for due diligence
 
 ---
 
+## 4.1 Credentialing & Data Validation (NEW)
+
+> **The Chain of Trust**: From verified identity → credentialed contributions → provable datasets → fair revenue distribution.
+
+### **Credentialing System: On-Chain Identity**
+
+Before contributing to regulated datasets, users must create **on-chain credentials** with verified expertise:
+
+```
+STEP 1: User Identity
+  User calls: createUserId(address, "medical")
+  On-chain result: userId = 42
+  
+STEP 2: Credential Issuance
+  Organization issues: issueCredential(userId=42, "physician", "medical", ipfsHash)
+  On-chain result: credentialId = 100 (status = PENDING)
+  
+STEP 3: Credential Verification
+  Organization verifies: verifyCredential(credentialId=100)
+  On-chain result: credentialId = 100 (status = VERIFIED)
+  
+User now has:
+  ✓ Persistent on-chain identity
+  ✓ Verified domain expertise (medical)
+  ✓ Credential linked to data operations
+```
+
+**Key Features**:
+- **Off-Chain Verification**: Credential documents stored on IPFS; only hash on-chain for privacy
+- **Domain Tagging**: Medical experts, engineers, lawyers each have tagged credentials
+- **Revocation Support**: Credentials can be revoked for misconduct; blocks future operations
+- **Immutable History**: All credential actions (issue, verify, revoke) recorded as events
+
+### **Dataset Validation: Proof of Provenance**
+
+Once credentialed, users create and validate datasets with **proof of provenance** on-chain:
+
+```
+PHASE 1: DATA CREATION (Creator with verified credential)
+  Creator calls: createData(
+    labId, 
+    dataHash,        // IPFS content pointer
+    "medical",       // domain
+    0xGPT4,         // base model
+    credentialId=42  // verified credential linkage
+  )
+  Result: dataId = 100 (PENDING)
+  
+PHASE 2: REVIEW SUBMISSION (Domain-matched supervisor)
+  Creator calls: submitForReview(
+    dataId=100,
+    0xPhysician,           // supervisor address
+    supervisorCredentialId=101  // must be domain-matching
+  )
+  On-chain validation:
+    ✓ supervisor has verified credential
+    ✓ supervisor domain = data domain ("medical" == "medical")
+    ✓ prevents unqualified reviewers
+  
+PHASE 3: OFF-CHAIN REVIEW
+  Supervisor downloads from IPFS using dataHash
+  Supervisor reviews for quality/compliance
+  Supervisor computes Δ-Gain: (92% - 85%) / 85% = 824 bps (8.24% improvement)
+  
+PHASE 4: ON-CHAIN APPROVAL
+  Supervisor calls: approveData(
+    dataId=100,
+    deltaGainScore=824,
+    approvalSignature
+  )
+  Result:
+    ✓ dataId = 100 (APPROVED)
+    ✓ Proof of provenance recorded on-chain
+    ✓ Attribution created for revenue splits
+    ✓ Event log: creator, supervisor, score, timestamp
+
+Flow Diagram:
+  Creator (Credential 42) → Create Data → Submit to Supervisor
+                                              ↓
+                    Supervisor (Credential 101, same domain)
+                         ↓
+                    Review offline (IPFS)
+                         ↓
+                    Approve with Δ-Gain (824)
+                         ↓
+                    Immutable Provenance On-Chain
+                         ↓
+                    Ready for Monetization
+```
+
+### **Attribution & Revenue Distribution**
+
+Approved datasets carry **immutable attribution** that enables fair revenue splits:
+
+```
+When dataset sells for $100K:
+├─ Identify creator & supervisor from on-chain Attribution
+├─ Calculate delta-gain: 824 bps (8.24% improvement)
+├─ Distribute revenue:
+│  ├─ Creator: 40% = $40K
+│  │  (Baseline 25% + delta-gain bonus 15%)
+│  ├─ Supervisor: 10% = $10K
+│  │  (Baseline 5% + delta-gain bonus 5%)
+│  └─ Lab: 50% = $50K
+├─ All payouts traceable to credentials
+└─ All splits verified on-chain
+```
+
+**Why it matters**:
+- Credentials tied to revenue = incentive for quality
+- Delta-gain measured against base model = objective quality metric
+- On-chain attribution = transparent, verifiable splits
+- Immutable history = regulatory compliance
+
+---
+
+### **Credentialing + Validation Flow Diagram**
+
+```
+┌────────────────────────────────────────────────────────────────┐
+│              H1 Labs: Credentialing → Validation               │
+└────────────────────────────────────────────────────────────────┘
+
+TIER 1: IDENTITY & CREDENTIALING (CredentialFacet)
+  
+  User Address (0xResearcher)
+        │
+        ├─ createUserId("medical")
+        │        │
+        │        └─ userId = 5
+        │
+        ├─ [Organization] issueCredential(5, "physician", "medical", 0xIPFS)
+        │        │
+        │        └─ credentialId = 42 (PENDING)
+        │
+        └─ [Organization] verifyCredential(42)
+                 │
+                 └─ credentialId = 42 (VERIFIED) ✅
+
+─────────────────────────────────────────────────────────────
+
+TIER 2: DATA CREATION & VALIDATION (DataValidationFacet)
+
+  Creator (0xResearcher, credential 42✅)
+        │
+        ├─ createData(lab, hash, "medical", model, credential=42)
+        │        │
+        │        └─ dataId = 100 (PENDING)
+        │
+        ├─ submitForReview(dataId=100, supervisor, credential=43✅)
+        │  [Domain match: "medical" == "medical" ✓]
+        │        │
+        │        └─ dataId = 100 (PENDING_REVIEW)
+        │
+        │  [Supervisor reviews offline]
+        │
+        └─ approveData(dataId=100, deltaGain=824, signature)
+                 │
+                 ├─ dataId = 100 (APPROVED) ✅
+                 ├─ Attribution stored on-chain
+                 │  └─ creator, supervisor, lab, delta-gain
+                 └─ Ready for monetization
+
+─────────────────────────────────────────────────────────────
+
+TIER 3: REVENUE ATTRIBUTION
+
+  $100K Dataset Sale
+        │
+        ├─ Query Attribution for dataId=100
+        ├─ Split based on credentials + delta-gain
+        │
+        ├─ Creator (credential 42): $40K (40%)
+        ├─ Supervisor (credential 43): $10K (10%)
+        └─ Lab: $50K (50%)
+
+  All splits traceable to credentials on-chain ✅
+```
+
+---
+
+## 4.2 Smart Contract Architecture
+
+The credentialing and validation systems are implemented as **Diamond facets** (EIP-2535):
+
+| Component | Location | Purpose |
+|-----------|----------|---------|
+| **CredentialFacet** | `/contracts/facets/CredentialFacet.sol` | User identity, issue/verify/revoke credentials |
+| **DataValidationFacet** | `/contracts/facets/DataValidationFacet.sol` | Data creation, review submission, approval with delta-gain |
+| **LibH1Storage** | `/contracts/libraries/LibH1Storage.sol` | Shared state: Credential struct, UserProfile, DataRecord, Attribution |
+| **H1Diamond** | `/contracts/H1Diamond.sol` | Router: delegates calls to appropriate facet |
+
+**Key Data Structures**:
+
+```solidity
+Credential:
+  ├─ credentialId: unique ID
+  ├─ holder: user address
+  ├─ userId: link to user profile
+  ├─ issuer: organization address
+  ├─ credentialType: "physician", "engineer", etc.
+  ├─ domain: "medical", "robotics", "finance"
+  ├─ status: 0=PENDING, 1=VERIFIED, 2=REVOKED
+  └─ offChainVerificationHash: IPFS document hash
+
+DataRecord:
+  ├─ dataId: unique ID
+  ├─ creator: creator address (has credential)
+  ├─ supervisor: approver address (has matching credential)
+  ├─ dataHash: IPFS/Arweave pointer
+  ├─ domain: "medical", "robotics", etc.
+  ├─ status: 0=PENDING, 1=APPROVED, 2=REJECTED
+  ├─ deltaGainScore: 0-10000 basis points (quality metric)
+  └─ timestamps: createdAt, approvedAt
+
+Attribution:
+  ├─ creator: who created data
+  ├─ supervisor: who approved data
+  ├─ labId: which lab owns dataset
+  ├─ deltaGainScore: quality measure
+  └─ revenueShare: allocated to creator + supervisor
+```
+
+---
+
 ## 4.5 Lab Creation & Growth Mechanics
 
 ### **Lab Lifecycle & Ownership**
@@ -893,7 +1118,8 @@ MONTHS 3-6: Dataset Revenue Phase
 Month 3: First Dataset Sale
 ├─ Dataset sold: $50,000
 ├─ Revenue split:
-│  ├─ Lab Owner/Validators: $25K (50% of sale)
+│  ├─ Lab Owner/Validators: $25K (50%)
+│  │  └─ Split among validators by contribution score (500 validators)
 │  ├─ Protocol Treasury: $12.5K (25%)
 │  └─ Buyback Reserve: $12.5K (25%)
 ├─ Lab assets now: $187.5K + $25K = $212.5K
