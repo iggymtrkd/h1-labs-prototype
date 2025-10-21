@@ -244,17 +244,25 @@ export default function Prototype() {
   const loadUserLabsBalance = async () => {
     if (!address || !sdk) return;
     
+    console.log('🔍 Loading balances for wallet:', address);
+    console.log('🔍 LABS Token contract:', CONTRACTS.LABSToken);
+    
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       
       // Get LABS balance from user's wallet (NOT faucet)
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
+      console.log('🔍 Fetching LABS balance...');
       const balance = await labsToken.balanceOf(address);
-      setUserLabsBalance(ethers.formatEther(balance));
+      console.log('🔍 Raw LABS balance:', balance.toString());
+      const formattedBalance = ethers.formatEther(balance);
+      console.log('🔍 Formatted LABS balance:', formattedBalance);
+      setUserLabsBalance(formattedBalance);
       
       // Get ETH balance from user's wallet
       const ethBalanceRaw = await provider.getBalance(address);
+      console.log('🔍 Raw ETH balance:', ethBalanceRaw.toString());
       setEthBalance(ethers.formatEther(ethBalanceRaw));
       
       // Get staked LABS and labs owned (using LABSCoreFacet)
@@ -262,6 +270,7 @@ export default function Prototype() {
       
       try {
         const stakedBalance = await diamond.getStakedBalance(address);
+        console.log('🔍 Staked LABS:', stakedBalance.toString());
         setStakedLabs(ethers.formatEther(stakedBalance));
       } catch (error) {
         console.log('getStakedBalance not available on contract:', error);
@@ -270,13 +279,14 @@ export default function Prototype() {
       
       try {
         const labCount = await diamond.getUserLabCount(address);
+        console.log('🔍 Labs owned:', labCount.toString());
         setLabsOwned(Number(labCount));
       } catch (error) {
         console.log('getUserLabCount not available on contract:', error);
         setLabsOwned(0);
       }
     } catch (error) {
-      console.error('Failed to load balances:', error);
+      console.error('❌ Failed to load balances:', error);
     }
   };
 
