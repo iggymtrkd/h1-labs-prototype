@@ -457,7 +457,7 @@ export default function Prototype() {
                 {/* Right: How it Works */}
                 <div className="space-y-3 flex flex-col h-full">
                   <h4 className="text-sm font-semibold text-muted-foreground">How it Works</h4>
-                  <div className="p-3 rounded-lg bg-muted/50 space-y-2 flex-1 flex flex-col justify-between">
+                  <div className="p-3 rounded-lg bg-muted/50 space-y-2 flex-1">
                     <p className="text-xs text-muted-foreground">
                       Follow the 4-step protocol flow to test the complete H1 ecosystem
                     </p>
