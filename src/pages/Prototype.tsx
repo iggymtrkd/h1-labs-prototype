@@ -125,22 +125,46 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
       
-      // Log ETH balance for reference
+      // Check ETH balance
       const balance = await provider.getBalance(address);
       const balanceInEth = ethers.formatEther(balance);
       addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
+      
+      if (parseFloat(balanceInEth) < 0.001) {
+        toast.error('Insufficient ETH for gas fees. Please get testnet ETH from the faucet.');
+        addLog('error', 'Stage 1: Stake $LABS', '❌ Need at least 0.001 ETH for gas fees');
+        return;
+      }
 
-      // Load LABS Token
+      // Check LABS balance before attempting to stake
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
+      const labsBalance = await labsToken.balanceOf(address);
+      const labsBalanceFormatted = ethers.formatEther(labsBalance);
+      addLog('info', 'Stage 1: Stake $LABS', `💰 LABS balance: ${labsBalanceFormatted} LABS`);
+      
+      const stakeAmountBN = ethers.parseEther(stakeAmount);
+      console.log('🔍 Stake validation:', {
+        balance: labsBalance.toString(),
+        stakeAmount: stakeAmountBN.toString(),
+        hasSufficient: labsBalance >= stakeAmountBN
+      });
+      
+      if (labsBalance < stakeAmountBN) {
+        toast.error(`Insufficient LABS balance. You have ${labsBalanceFormatted} LABS`);
+        addLog('error', 'Stage 1: Stake $LABS', `❌ Insufficient LABS: need ${stakeAmount}, have ${labsBalanceFormatted}`);
+        return;
+      }
 
-      // Approve Diamond to spend LABS with explicit gas settings for Base Sepolia
-      addLog('info', 'Stage 1: Stake $LABS', '🔐 Requesting approval for H1Diamond to spend LABS...');
+      // Approve Diamond to spend LABS (let wallet estimate gas)
+      addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
+      console.log('🔍 Approval params:', {
+        spender: CONTRACTS.H1Diamond,
+        amount: stakeAmountBN.toString()
+      });
+      
       const approvalTx = await labsToken.approve(
         CONTRACTS.H1Diamond,
-        ethers.parseEther(stakeAmount),
-        {
-          gasLimit: 100000, // Reasonable limit for approve on Base Sepolia
-        }
+        stakeAmountBN
       );
       
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Waiting for approval confirmation...');
@@ -151,17 +175,18 @@ export default function Prototype() {
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
       addLog('info', 'Stage 1: Stake $LABS', '📡 Broadcasting stake transaction to LABSCoreFacet...');
-      const stakeTx = await diamond.stakeLABS(ethers.parseEther(stakeAmount), {
-        gasLimit: 200000, // Reasonable limit for stakeLABS on Base Sepolia
-      });
+      const stakeTx = await diamond.stakeLABS(stakeAmountBN);
       
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();
 
       addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! Now eligible to create Labs`, stakeTx.hash);
       toast.success('LABS staked successfully!');
+      
+      // Reload balances
+      await loadUserLabsBalance();
     } catch (error: any) {
-      console.error('Stake error:', error);
+      console.error('❌ Stake error:', error);
       addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
       toast.error('Failed to stake LABS');
     } finally {
@@ -236,23 +261,30 @@ export default function Prototype() {
   };
 
   const loadUserLabsBalance = async () => {
-    if (!address) return;
+    if (!address || !sdk) return;
     
     console.log('🔍 Loading balances for wallet:', address);
     console.log('🔍 LABS Token contract:', CONTRACTS.LABSToken);
     
     try {
-      // Use RPC provider directly (avoids cross-origin issues in iframe)
-      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      // Use wallet provider for consistency with transactions
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       
-      // Get LABS balance from user's wallet (NOT faucet)
+      // Get LABS balance from user's wallet
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
       console.log('🔍 Fetching LABS balance...');
-      const balance = await labsToken.balanceOf(address);
-      console.log('🔍 Raw LABS balance:', balance.toString());
-      const formattedBalance = ethers.formatEther(balance);
-      console.log('🔍 Formatted LABS balance:', formattedBalance);
-      setUserLabsBalance(formattedBalance);
+      
+      try {
+        const balance = await labsToken.balanceOf(address);
+        console.log('🔍 Raw LABS balance:', balance.toString());
+        const formattedBalance = ethers.formatEther(balance);
+        console.log('🔍 Formatted LABS balance:', formattedBalance);
+        setUserLabsBalance(formattedBalance);
+      } catch (balanceError) {
+        console.error('❌ Failed to fetch LABS balance:', balanceError);
+        setUserLabsBalance('0');
+      }
       
       // Get ETH balance from user's wallet
       const ethBalanceRaw = await provider.getBalance(address);
