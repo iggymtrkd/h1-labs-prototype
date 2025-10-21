@@ -46,6 +46,8 @@ export default function Prototype() {
 
   // Wallet balances
   const [ethBalance, setEthBalance] = useState<string>('0');
+  const [stakedLabs, setStakedLabs] = useState<string>('0');
+  const [labsOwned, setLabsOwned] = useState<number>(0);
 
   // Step 1: Stake LABS
   const [stakeAmount, setStakeAmount] = useState('1000');
@@ -232,6 +234,25 @@ export default function Prototype() {
       // Get ETH balance
       const ethBalanceRaw = await provider.getBalance(address);
       setEthBalance(ethers.formatEther(ethBalanceRaw));
+      
+      // Get staked LABS and labs owned (using LABSCoreFacet)
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
+      
+      try {
+        const stakedBalance = await diamond.getStakedBalance(address);
+        setStakedLabs(ethers.formatEther(stakedBalance));
+      } catch (error) {
+        console.log('getStakedBalance not available on contract:', error);
+        setStakedLabs('0');
+      }
+      
+      try {
+        const labCount = await diamond.getUserLabCount(address);
+        setLabsOwned(Number(labCount));
+      } catch (error) {
+        console.log('getUserLabCount not available on contract:', error);
+        setLabsOwned(0);
+      }
     } catch (error) {
       console.error('Failed to load balances:', error);
     }
@@ -500,7 +521,7 @@ export default function Prototype() {
         {isConnected && address && (
           <Card className="mb-6 bg-card/50 backdrop-blur border-primary/20">
             <div className="p-4">
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+              <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">Connected Wallet</p>
                   <p className="font-mono text-sm">{address.slice(0, 6)}...{address.slice(-4)}</p>
@@ -512,6 +533,14 @@ export default function Prototype() {
                 <div className="space-y-1">
                   <p className="text-xs text-muted-foreground">LABS Balance</p>
                   <p className="font-mono text-sm">{userLabsBalance ? parseFloat(userLabsBalance).toFixed(2) : '0.00'} LABS</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">LABS Staked</p>
+                  <p className="font-mono text-sm text-primary">{parseFloat(stakedLabs).toFixed(2)} LABS</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Labs Owned</p>
+                  <p className="font-mono text-sm text-accent">{labsOwned}</p>
                 </div>
               </div>
             </div>

@@ -10,7 +10,10 @@ export const LABSToken_ABI = [
 export const LABSCoreFacet_ABI = [
   "function stakeLABS(uint256 amount) external",
   "function createLab(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId)",
-  "function isDomainAvailable(string calldata domain) external view returns (bool)"
+  "function isDomainAvailable(string calldata domain) external view returns (bool)",
+  "function getStakedBalance(address user) external view returns (uint256)",
+  "function getUserLabCount(address user) external view returns (uint256)",
+  "function getUserLabs(address user) external view returns (uint256[] memory)"
 ];
 
 export const DataValidationFacet_ABI = [
