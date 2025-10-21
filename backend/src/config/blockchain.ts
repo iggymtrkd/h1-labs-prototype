@@ -28,7 +28,7 @@ if (process.env.FAUCET_PRIVATE_KEY) {
 export { faucetWallet };
 
 // Constants
-export const FAUCET_AMOUNT = process.env.FAUCET_AMOUNT || '1000000000000000000000'; // 1000 LABS
+export const FAUCET_AMOUNT = process.env.FAUCET_AMOUNT || '50000000000000000000000'; // 50000 LABS
 export const FAUCET_COOLDOWN = parseInt(process.env.FAUCET_COOLDOWN || '86400'); // 24 hours
 
 // Validate configuration
@@ -40,5 +40,7 @@ if (!CONTRACTS.LABSToken) {
 }
 
 export default { provider, CONTRACTS, faucetWallet };
+
+
 
 
