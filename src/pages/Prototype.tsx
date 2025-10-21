@@ -125,16 +125,10 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
       
-      // Check ETH balance
+      // Log ETH balance for reference
       const balance = await provider.getBalance(address);
       const balanceInEth = ethers.formatEther(balance);
       addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
-      
-      if (balance === 0n) {
-        toast.error('No ETH for gas fees. Please get testnet ETH from the faucet.');
-        addLog('error', 'Stage 1: Stake $LABS', '❌ Insufficient ETH for gas fees');
-        return;
-      }
 
       // Load LABS Token
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
