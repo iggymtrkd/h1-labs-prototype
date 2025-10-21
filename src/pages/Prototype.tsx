@@ -44,6 +44,9 @@ export default function Prototype() {
     step4: false  // Purchase Dataset
   });
 
+  // Wallet balances
+  const [ethBalance, setEthBalance] = useState<string>('0');
+
   // Step 1: Stake LABS
   const [stakeAmount, setStakeAmount] = useState('1000');
   
@@ -220,11 +223,17 @@ export default function Prototype() {
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
+      
+      // Get LABS balance
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
       const balance = await labsToken.balanceOf(address);
       setUserLabsBalance(ethers.formatEther(balance));
+      
+      // Get ETH balance
+      const ethBalanceRaw = await provider.getBalance(address);
+      setEthBalance(ethers.formatEther(ethBalanceRaw));
     } catch (error) {
-      console.error('Failed to load LABS balance:', error);
+      console.error('Failed to load balances:', error);
     }
   };
 
@@ -486,6 +495,28 @@ export default function Prototype() {
           <p className="text-muted-foreground">Interactive testing interface for onchain flows</p>
           <Badge className="mt-2 bg-secondary">{CONTRACTS.H1Diamond}</Badge>
         </div>
+
+        {/* Wallet Info */}
+        {isConnected && address && (
+          <Card className="mb-6 bg-card/50 backdrop-blur border-primary/20">
+            <div className="p-4">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">Connected Wallet</p>
+                  <p className="font-mono text-sm">{address.slice(0, 6)}...{address.slice(-4)}</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">ETH Balance</p>
+                  <p className="font-mono text-sm">{parseFloat(ethBalance).toFixed(4)} ETH</p>
+                </div>
+                <div className="space-y-1">
+                  <p className="text-xs text-muted-foreground">LABS Balance</p>
+                  <p className="font-mono text-sm">{userLabsBalance ? parseFloat(userLabsBalance).toFixed(2) : '0.00'} LABS</p>
+                </div>
+              </div>
+            </div>
+          </Card>
+        )}
 
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6 pb-32">
           {/* Main Testing Interface */}
