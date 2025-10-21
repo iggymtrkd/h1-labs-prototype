@@ -29,7 +29,7 @@ interface LogEntry {
 
 export default function Prototype() {
   const navigate = useNavigate();
-  const { address, isConnected, connectWallet } = useBaseAccount();
+  const { address, isConnected, connectWallet, sdk } = useBaseAccount();
   const { claimFromFaucet, checkFaucetStatus, isClaiming } = useFaucet();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
@@ -84,8 +84,8 @@ export default function Prototype() {
       return;
     }
 
-    if (!window.ethereum) {
-      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
 
@@ -93,7 +93,9 @@ export default function Prototype() {
     addLog('info', 'Stage 1: Stake $LABS', `🎯 STARTING: Stake ${stakeAmount} LABS tokens to unlock Lab creation`);
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      // Get provider from Base Account SDK
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
 
       // Load LABS Token
@@ -141,8 +143,8 @@ export default function Prototype() {
       return;
     }
 
-    if (!window.ethereum) {
-      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
 
@@ -150,7 +152,8 @@ export default function Prototype() {
     addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain`);
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
 
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
@@ -196,10 +199,11 @@ export default function Prototype() {
   };
 
   const loadUserLabsBalance = async () => {
-    if (!address || !window.ethereum) return;
+    if (!address || !sdk) return;
     
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
       const balance = await labsToken.balanceOf(address);
       setUserLabsBalance(ethers.formatEther(balance));
@@ -250,8 +254,8 @@ export default function Prototype() {
       return;
     }
 
-    if (!window.ethereum) {
-      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
 
@@ -259,7 +263,8 @@ export default function Prototype() {
     addLog('info', 'Stage 2: Create Data', `📊 STARTING: Create dataset for Lab ID ${dataLabId} in ${dataDomain}`);
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
 
       // Generate data hash from content
@@ -303,8 +308,8 @@ export default function Prototype() {
       return;
     }
 
-    if (!window.ethereum) {
-      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
 
@@ -312,7 +317,8 @@ export default function Prototype() {
     addLog('info', 'Stage 3: Credentials', `🎓 STARTING: Issue "${credentialType}" credential in ${credentialDomain}`);
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
       const userAddress = await signer.getAddress();
 
@@ -368,8 +374,8 @@ export default function Prototype() {
       return;
     }
 
-    if (!window.ethereum) {
-      toast.error('Please install MetaMask or another Web3 wallet to interact with smart contracts');
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
 
@@ -377,7 +383,8 @@ export default function Prototype() {
     addLog('info', 'Stage 4: Purchase Dataset', `💰 STARTING: Purchase Dataset ID ${purchaseDatasetId} for ${purchaseAmount} ETH`);
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
 
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, RevenueFacet_ABI, signer);
