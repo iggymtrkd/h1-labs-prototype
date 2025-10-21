@@ -7,14 +7,16 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
-import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft } from 'lucide-react';
+import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI } from '@/contracts/abis';
+import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 interface LogEntry {
   id: string;
@@ -431,22 +433,56 @@ export default function Prototype() {
                 <Beaker className="h-5 w-5 text-primary" />
                 Testing Utilities
               </h3>
-              <div className="space-y-3">
-                {faucetBalance && (
-                  <div className="p-3 rounded-lg bg-muted/50">
-                    <p className="text-sm text-muted-foreground mb-1">Faucet Balance</p>
-                    <p className="text-lg font-bold">{faucetBalance} LABS</p>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                {/* Left: Faucet */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground">Faucet</h4>
+                  {faucetBalance && (
+                    <div className="p-3 rounded-lg bg-muted/50">
+                      <p className="text-sm text-muted-foreground mb-1">Faucet Balance</p>
+                      <p className="text-lg font-bold">{faucetBalance} LABS</p>
+                    </div>
+                  )}
+                  <Button
+                    onClick={handleMintTestLabs}
+                    disabled={loading === 'mint'}
+                    className="w-full"
+                    variant="outline"
+                  >
+                    {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    Receive 10,000 Test LABS
+                  </Button>
+                </div>
+
+                {/* Right: How it Works */}
+                <div className="space-y-3">
+                  <h4 className="text-sm font-semibold text-muted-foreground">How it Works</h4>
+                  <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+                    <p className="text-xs text-muted-foreground">
+                      Follow the 4-step protocol flow to test the complete H1 ecosystem
+                    </p>
+                    <Dialog>
+                      <DialogTrigger asChild>
+                        <Button variant="outline" size="sm" className="w-full">
+                          <HelpCircle className="h-4 w-4 mr-2" />
+                          View Protocol Guide
+                        </Button>
+                      </DialogTrigger>
+                      <DialogContent className="max-w-4xl max-h-[90vh]">
+                        <DialogHeader>
+                          <DialogTitle>The H1 Protocol Flow</DialogTitle>
+                        </DialogHeader>
+                        <div className="overflow-auto">
+                          <img 
+                            src={protocolFlowGuide} 
+                            alt="H1 Protocol Flow Diagram" 
+                            className="w-full h-auto rounded-lg"
+                          />
+                        </div>
+                      </DialogContent>
+                    </Dialog>
                   </div>
-                )}
-                <Button
-                  onClick={handleMintTestLabs}
-                  disabled={loading === 'mint'}
-                  className="w-full"
-                  variant="outline"
-                >
-                  {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Receive 10,000 Test LABS
-                </Button>
+                </div>
               </div>
             </Card>
 
