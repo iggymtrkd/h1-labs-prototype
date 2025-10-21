@@ -261,15 +261,22 @@ export default function Prototype() {
   };
 
   const loadUserLabsBalance = async () => {
-    if (!address || !sdk) return;
+    if (!address) return;
     
     console.log('🔍 Loading balances for wallet:', address);
     console.log('🔍 LABS Token contract:', CONTRACTS.LABSToken);
     
     try {
-      // Use wallet provider for consistency with transactions
-      const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
+      // Use RPC provider for read operations (more reliable)
+      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      
+      // Verify contract exists
+      const code = await provider.getCode(CONTRACTS.LABSToken);
+      if (code === '0x') {
+        console.error('❌ LABS Token contract not found at address:', CONTRACTS.LABSToken);
+        setUserLabsBalance('0');
+        return;
+      }
       
       // Get LABS balance from user's wallet
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
