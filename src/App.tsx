@@ -24,6 +24,9 @@ import Terms from "./pages/Terms";
 import UpcomingFeatures from "./pages/UpcomingFeatures";
 import NotFound from "./pages/NotFound";
 import FAQ from "./pages/FAQ";
+import DatasetMarketplace from "./pages/DatasetMarketplace";
+import DatasetDetails from "./pages/DatasetDetails";
+import CheckoutCart from "./pages/CheckoutCart";
 
 const queryClient = new QueryClient();
 
@@ -118,6 +121,19 @@ const AppContent = () => {
           <Route 
             path="/deploy-pool" 
             element={isConnected ? <DeployPool /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          {/* Dataset Marketplace Routes */}
+          <Route
+            path="/marketplace"
+            element={isConnected ? <DatasetMarketplace /> : <Home onConnect={handleConnectWallet} />}
+          />
+          <Route
+            path="/dataset/:id"
+            element={isConnected ? <DatasetDetails /> : <Home onConnect={handleConnectWallet} />}
+          />
+          <Route
+            path="/checkout"
+            element={isConnected ? <CheckoutCart /> : <Home onConnect={handleConnectWallet} />}
           />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />

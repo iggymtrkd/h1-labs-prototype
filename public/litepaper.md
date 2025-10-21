@@ -17,7 +17,7 @@ Through our Dual‑Intelligence SDK, every app pairs an agent with a credentiale
 - Make provenance, credentialing, and compliance default infrastructure for AI.
 
 **Why Now**  
-AI models demand trustworthy data. Today’s pipelines are opaque, legally risky, and misaligned with human contributors. H1 Labs merges blockchain guarantees (provenance, payments, programmable policy) with human expertise to create compliant, auditable datasets that enterprises can trust.
+AI models demand trustworthy data. Today's pipelines are opaque, legally risky, and misaligned with human contributors. H1 Labs merges blockchain guarantees (provenance, payments, programmable policy) with human expertise to create compliant, auditable datasets that enterprises can trust.
 
 We target regulated and semi‑regulated markets — starting with healthcare — and expanding to finance (AML/KYC), legal (privacy/privilege), defense (ITAR/EAR), robotics/industrial (safety standards), and media/creative (C2PA).
 
@@ -29,7 +29,7 @@ We target regulated and semi‑regulated markets — starting with healthcare �
 - **Credentialed Humans**: Domain experts verified via the Credentialing Portal; no anonymous crowdwork for regulated data.  
 - **Programmable Compliance**: Domain rules are enforced at the contract layer (HIPAA, GDPR, AEH, C2PA).  
 - **Dual‑Intelligence SDK (Agent + Human)**: Apps pair an agent with credentialed human oversight for compliant workflows in regulated and semi‑regulated markets.  
-- **Two‑Token Model ($LABS ↔ H1)**: $LABS governs and stakes; each Lab’s H1 token is its vault share, enabling per‑lab economies.  
+- **Two‑Token Model ($LABS ↔ H1)**: $LABS governs and stakes; each Lab's H1 token is its vault share, enabling per‑lab economies.  
 - **Modular Diamond Architecture**: EIP‑2535 facets make the system upgradeable, auditable, and extensible.  
 - **Enterprise‑friendly UX**: SDK credit mode abstracts blockchain for Web2‑style apps.
 
@@ -776,7 +776,7 @@ This section provides detailed mechanics of how $LABS and H1 interact within the
 ### Key Definitions:
 
 - **$LABS (Singleton ERC‑20)**: Platform governance, staking, and lab creation asset. Set via `TreasuryFacet.setLABSToken`.  
-- **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab’s `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
+- **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab's `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
 - **Bonding Curve (Optional)**: `BondingCurveSale` buys H1 at NAV + 0.5% premium, routing fees/POL to treasury and depositing net $LABS to the lab's vault.  
 - **Levels & App Slots**: LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.  
 - **Revenue Split (Current Implementation)**: 50% to lab owner, 25% to protocol treasury (H1 pool custody), 25% retained for future buyback execution.
@@ -901,44 +901,317 @@ H1 shares purchased via bonding curve can be redeemed like any other H1:
 - **Exit Caps**: Daily redemption limit (~20% of vault TVL per day) prevents sudden drains
 - **Grace Period**: If redemptions exceed caps, system waits for next epoch or allows backfilling by new deposits
 
-**Example — Robotics Lab Launch:**
+---
+
+### 6.91 Unstaking Flow — The Three Phases & Backfill Mechanism
+
+**Why the Three-Phase Flow?**
+
+Simple unstaking (deposit → immediate redemption) creates bank run risks. If 100% of stakeholders exit at once, the vault collapses and all benefits disappear. H1 uses a **three-phase redemption flow** with **grace periods** and **backfill mechanics** to:
+- Prevent panic exits
+- Preserve lab economics during exits
+- Allow new stakers to provide liquidity to existing unstakers
+- Protect long-term holders from sudden dilution
+
+---
+
+**Phase 1: Request Redemption (Immediate, but Queued)**
+
+When you want to unstake:
 
 ```
-Day 1: Lab created with $100K deposit
-├─ H1-Robotics NAV: $1.00/share
-├─ Curve price: $1.005/share (0.5% premium)
-├─ Protocol fee rate: 1.5%
-├─ POL reserve rate: 7.5%
-└─ Level 1 unlocked (1 app slot)
+Call: requestRedeem(h1_shares)
 
-Day 7: $250K total capital raised via curve
-├─ New deposits: $250K (from 50 early investors)
-├─ Protocol fee: $250K × 1.5% = $3.75K → treasury
-├─ POL reserve: $250K × 7.5% = $18.75K → treasury
-├─ Net deposited to vault: $250K - $22.5K = $227.5K
-├─ LabVault now holds: $100K + $227.5K = $327.5K
-├─ Total H1 supply: ~327.5K shares (minted at NAV)
-├─ New NAV: $327.5K / 327.5K = $1.00/share (stable, POL doesn't inflate)
-└─ Reaches Level 2 (2 app slots)
+What Happens:
+├─ Your H1 shares are burned immediately
+├─ LABS amount calculated at current NAV
+├─ Redemption request created with unique requestId
+├─ unlockTime = current_time + 7 days (default cooldown)
+├─ Assets marked as "pending exit" in vault accounting
+└─ Exit cap checked: (if exit + others exceed cap, rejected)
 
-Investor Experience (Example):
-├─ Investor sends: 1,000 LABS
-├─ Protocol fee: 15 LABS
-├─ POL reserve: 75 LABS
-├─ Amount deposited: 910 LABS
-├─ H1 received: 910 shares at $1.00/share
-└─ Early exit available:
-   ├─ Day 1-7: Cannot redeem (cooldown active)
-   ├─ Day 8+: Can request redemption
-   ├─ After 7 days: Claim 910 LABS back (subject to exit caps)
-   └─ If labs appreciate: 910 × $2.00 = $1,820 value at exit
-
-Safety Features:
-├─ Price bounds: [0.001, 1,000,000] LABS per share
-├─ Max 1-tx change: 50% (flash loan protection)
-├─ Reentrancy guards + slippage checks
-└─ Admin pause mechanism for emergencies
+You Receive:
+└─ requestId to use for later claiming
 ```
+
+**Key Point**: Your shares are gone immediately, but your LABS are **locked for 7 days**. This is not a delay—it's a **grace period** that protects the lab.
+
+**Exit Cap Check** (Happens at Request Time):
+```
+Lab TVL: $1,000,000
+Daily Exit Cap: 20% = $200,000/day (resets every 24 hours)
+
+Day 1, Scenario:
+├─ Alice requests: 50K LABS  → Approved (50K ≤ 200K)
+├─ Bob requests: 100K LABS   → Approved (150K ≤ 200K)
+├─ Carol requests: 60K LABS  → REJECTED (210K > 200K)
+│                                 │
+│                                 └─ Error: "epoch cap exceeded"
+│                                    Must wait for tomorrow's epoch
+└─ Carol can try again in 24 hours
+```
+
+---
+
+**Phase 2: Grace Period / Cooldown (7 Days of Waiting)**
+
+During the cooldown:
+
+```
+Timeline:
+
+Day 0 (Request):     Your shares burned, LABS locked
+Days 1-6 (Grace):    Waiting period... you CAN still:
+                     ├─ Change your mind: Cancel redemption
+                     │  └─ H1 shares re-minted at current NAV
+                     └─ Check market: See if bonding curve is raising capital
+Day 7 (Eligible):    Unlock time reached ✓
+                     Now you can either:
+                     ├─ Claim LABS (normal path)
+                     └─ Get backfilled (automatic path)
+```
+
+**Why 7 Days?**
+- Gives lab time to attract new capital via bonding curve
+- Allows arbitrage: savvy stakers see redemptions → deposit via curve → backfill unstakers
+- Prevents flash-loan attacks
+- Smooths outflows over time
+
+**What About Your Assets During Grace?**
+- Your LABS are **held in vault** but marked as "pending exit"
+- They **cannot be touched** by you or anyone
+- The lab **cannot use them** for new investments
+- They're "reserved" for you to claim
+
+---
+
+**Phase 3: Claim or Get Backfilled**
+
+After 7 days, **two paths**:
+
+#### **Path A: Normal Claim (You Get Your LABS Back)**
+
+```
+Call: claimRedeem(requestId)
+
+What Happens:
+├─ Cooldown check passed ✓
+├─ Your LABS transferred to your wallet
+├─ Redemption fee deducted (0.25-0.5% default)
+├─ "Pending exit" cleared from vault
+└─ NAV potentially updated (vault shrinks)
+
+You Receive:
+└─ LABS - fee back to wallet
+```
+
+**Example:**
+- Requested: 100 H1 shares (= ~100 LABS at NAV $1.00)
+- After 7 days, NAV = $1.10
+- Claim value: 100 × $1.10 = $110 LABS
+- Fee (0.5%): ~$0.55
+- You get: ~$109.45 LABS
+
+#### **Path B: Backfill (Someone Else Fills Your Order)**
+
+This is where the **bonding curve connects to unstaking**:
+
+```
+Scenario:
+├─ You requested redemption on Day 0
+├─ On Day 3: New investor (Bob) deposits via bonding curve
+│  ├─ Bob sends $LABS via BondingCurveSale
+│  ├─ Gets H1 shares + small premium
+│  ├─ Protocol fees/POL deducted
+│  └─ Remainder goes to vault (grows TVL)
+│
+├─ Bob notices your pending redemption request
+├─ Bob calls: fillRedeem(your_requestId)
+│  ├─ Bob sends your_redeem_amount directly to you
+│  ├─ You receive LABS immediately (no wait!)
+│  ├─ Bob keeps his H1 shares
+│  └─ Your redemption marked "claimed"
+│
+└─ Result: You get LABS before Day 7, Bob provides liquidity
+```
+
+**Code Level (What Happens)**:
+```javascript
+fillRedeem(requestId, receiver) {
+  // Bob sends LABS directly to the original redeemer (you)
+  transfer(labsToken, bob, you, assets);
+  
+  // Mark your redemption as fulfilled
+  redeemRequests[requestId].claimed = true;
+  
+  // Remove from pending exit queue
+  pendingExitAssets -= assets;
+}
+```
+
+**Incentives for Backfilling:**
+- Bob deposits at bonding curve price (NAV + 0.5% premium)
+- Bob gets H1 shares to hold/trade
+- Bob can immediately backfill pending redemptions
+- If NAV appreciates, Bob's shares are worth more
+- Bob's action helps other unstakers (social good)
+
+---
+
+**Putting It Together: Full Unstaking Timeline**
+
+```
+┌──────────────────────────────────────────────────────────────────┐
+│ NORMAL UNSTAKING (No Backfill)                                   │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│ Day 0:  Alice stakes 100K LABS                                   │
+│         ├─ Gets 100K H1 shares (NAV = $1.00)                    │
+│         └─ Labs TVL: $1,000,000                                  │
+│                                                                   │
+│ Month 6: Alice wants to exit                                     │
+│          ├─ NAV now $1.25 (revenue accrued)                     │
+│          ├─ H1 value: 100K × $1.25 = $125K                     │
+│          └─ Calls: requestRedeem(100K)                          │
+│             └─ Receives: requestId = #42                        │
+│                LABS locked: $125K                                │
+│                unlockTime: now + 7 days                          │
+│                                                                   │
+│ Days 1-6: Grace period (exit cap = 20% = $200K/day)             │
+│           ├─ No exits hit cap today                              │
+│           └─ Alice can cancel if she changes mind                │
+│                                                                   │
+│ Day 7:    Alice claims                                           │
+│           ├─ Call: claimRedeem(42)                              │
+│           ├─ Fee deducted: $125K × 0.5% = $625                 │
+│           └─ Alice receives: ~$124,375 LABS ✓                  │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+
+┌──────────────────────────────────────────────────────────────────┐
+│ BACKFILLED UNSTAKING (With New Capital)                          │
+├──────────────────────────────────────────────────────────────────┤
+│                                                                   │
+│ Day 0:  Alice stakes 100K LABS                                   │
+│         └─ Gets 100K H1 shares                                   │
+│                                                                   │
+│ Month 6: Alice requests redemption                               │
+│          ├─ requestRedeem(100K)                                  │
+│          ├─ LABS locked: $125K                                  │
+│          └─ requestId: #42                                       │
+│                                                                   │
+│ Day 2:   Bob sees opportunity                                    │
+│          ├─ Deposits $200K via bonding curve                    │
+│          ├─ Curve price: $1.25 × 1.005 = $1.25625              │
+│          ├─ Gets: ~159.2K H1 shares                             │
+│          ├─ Fees/POL: $10K reserved                             │
+│          └─ Remaining: $190K to vault                            │
+│                                                                   │
+│ Day 2, Later: Bob backsand liquidity by calling fillRedeem()    │
+│          ├─ Notices Alice's pending redemption                   │
+│          ├─ fillRedeem(requestId=42, receiver=bob)              │
+│          │  └─ Bob sends $125K LABS directly to Alice          │
+│          │     Alice receives funds IMMEDIATELY ✓                │
+│          ├─ Alice's redemption marked claimed                    │
+│          └─ Result:                                              │
+│             ├─ Alice: Got LABS on Day 2 (5 days early!) ✓       │
+│             ├─ Bob: Holds 159.2K H1 shares (his investment)     │
+│             └─ Lab: Received new capital ($190K), TVL intact    │
+│                                                                   │
+└──────────────────────────────────────────────────────────────────┘
+```
+
+---
+
+**What if No One Backfills? (Standard Path)**
+
+Even without backfilling, redemptions still work:
+
+```
+├─ Exit cap throttles redemptions (20% per day)
+├─ Cooldown ensures grace period for recovery
+├─ After 7 days: Normal claim pathway available
+└─ Result: Smooth, predictable exit timeline
+```
+
+---
+
+**Exit Cap Resets**
+
+```javascript
+Epoch Duration: 24 hours (resets automatically)
+
+Lab with $1M TVL:
+├─ Hour 0-23 (Day 1): Max exit = $200K
+│                      ├─ $150K exits approved
+│                      └─ Remaining capacity: $50K
+│
+├─ Hour 24 (Day 2): EPOCH RESETS
+│                    └─ Capacity resets to $200K
+│                       (Even if Day 1 didn't use full cap)
+│
+└─ Sliding window prevents bank runs
+```
+
+---
+
+**Cooldown Parameters (Configurable)**
+
+Lab admins can adjust redemption parameters:
+
+| Parameter | Default | Max | Purpose |
+|-----------|---------|-----|---------|
+| **Cooldown Period** | 7 days | 30 days | Grace period before claiming |
+| **Exit Cap %** | 20% TVL/day | 100% TVL/day | Daily redemption limit |
+| **Redemption Fee** | 0.5% | 1% | Incentivizes long-term holding |
+
+Example: A mature lab with $10M TVL might set:
+- Cooldown: 3 days (faster exits)
+- Exit Cap: 25% ($2.5M/day)
+- Fee: 0.25% (attracts large unstakers)
+
+---
+
+**Visual Summary: When Can You Exit?**
+
+```
+│ Status              │ Can Unstake? │ Can Claim? │ Can Cancel? │
+├────────────────────┼──────────────┼───────────┼─────────────┤
+│ Staked, Day 0      │ YES ✓        │ NO        │ N/A         │
+│ Requested, Day 1-6 │ NO           │ NO        │ YES ✓       │
+│ Requested, Day 7+  │ NO           │ YES ✓     │ NO          │
+│ Claimed            │ N/A          │ N/A       │ N/A         │
+│ Backfilled         │ N/A          │ YES (auto)│ NO          │
+└────────────────────┴──────────────┴───────────┴─────────────┘
+```
+
+---
+
+**Why This Design Prevents Disasters**
+
+```
+WITHOUT grace periods + exit caps:
+  Day 1: $1M TVL, 1000 stakers each with 1000 H1
+  Day 2: Market panic → Everyone unstakes
+         └─ All 1000 call requestRedeem()
+  Day 3: All 1000 claim → $1M drained to $0
+         └─ Lab level collapses, TVL → 0
+         └─ Validators lose income, buyers lose credibility
+         └─ Lab is DEAD
+
+WITH grace periods + exit caps + backfill:
+  Day 1: $1M TVL
+  Day 2: 50 call requestRedeem (limit: 20% = $200K)
+         └─ Cap allows: 40 exits at $5K each
+         └─ 10 requesters rejected, try tomorrow
+  Day 3: Bonding curve attracts new capital
+         └─ New stakers backfill yesterday's queue
+         └─ TVL stable or growing
+  Day 4-7: Remaining exits absorbed gradually
+           └─ Lab continues operating normally
+```
+
+This is the **key difference** between fragile systems and robust ones.
 
 ---
 
@@ -1546,6 +1819,243 @@ A: No leverage. H1 can outgrow $LABS because:
 - $LABS appreciates slower (demand-driven)
 
 Think: H1 = equity in specific lab; $LABS = platform governance token.
+
+---
+
+## 17. Dataset Marketplace: Buying & Revenue Distribution
+
+> **For AI Companies & Data Buyers**: The Dataset Marketplace enables enterprise and AI firms to discover, evaluate, and purchase verified datasets with transparent, on-chain revenue distribution.
+
+### **The Marketplace Experience**
+
+**Browse Verified Datasets:**
+- Filter by domain (Healthcare, Finance, Legal, Robotics, Art)
+- Sort by quality score, delta-gain, price, or availability
+- Search by dataset name, creator, or compliance standard
+- View full provenance: creator, supervisor, regulatory approvals
+
+**Evaluate Before Buying:**
+```
+Each dataset displays:
+├─ Quality Score (80-99%)
+├─ Delta-Gain vs. GPT-4 baseline (e.g., +8.24%)
+├─ Creator Name & Credential ID
+├─ Supervisor Name & Credential ID
+├─ Compliance Standards (HIPAA, GDPR, FDA, C2PA, etc.)
+├─ Data Points (10K, 50K, 100K+)
+├─ Revenue History (transparent pricing)
+└─ On-Chain Provenance (IPFS hash, creator address, supervisor address)
+```
+
+**Bulk Purchase & Batch Discount:**
+```
+1 dataset:    Full price (e.g., $2,500)
+2 datasets:   Full price
+3+ datasets:  5% bulk discount applies automatically
+Example:      3 × $2,500 = $7,500 → 5% off = $7,125 total
+```
+
+**Pay with Multiple Assets:**
+- **ETH** (primary, recommended)
+- **USDC / USDT** (stablecoins)
+- **$LABS** (protocol token at current rate)
+
+### **Revenue Distribution Model: Per-Dataset, Per-Lab**
+
+When a dataset is purchased, the revenue is distributed **per-dataset to that specific dataset's lab owner** according to the following model:
+
+```
+Purchase Price: $X
+Distribution:
+
+├─ Lab Owners:        50% ($0.50X)        → Direct to lab owner's wallet
+├─ Data Creators:      40% ($0.40X)        → Treasury (for later distribution to creators)
+├─ Supervisors:        10% ($0.10X)        → Treasury (for later distribution to supervisors)
+├─ Buyback Reserve:    20% ($0.20X)        → Treasury (to repurchase H1 tokens)
+└─ H1 Protocol Fee:     5% ($0.05X)        → Treasury (operational costs)
+                       ─────────────
+Total:                 125% ($1.25X)*
+
+* Note: The percentages represent allocation of revenue where creators/supervisors/buyback/H1 
+  are tracked in the protocol treasury for distribution. Lab owners receive 50% directly.
+```
+
+### **Example: $10,000 Dataset Purchase**
+
+```
+DATASET: "Medical Imaging Annotations"
+Creator: Cleveland Clinic (Lab ID: 1)
+Supervisor: ACR Standards Board
+Purchase Price: $10,000
+
+Revenue Breakdown:
+├─ Cleveland Clinic (Lab Owner, 50%):    $5,000 ✓ Sent immediately
+├─ Data Creators (40%):                  $4,000 → Treasury
+├─ Supervisors (10%):                    $1,000 → Treasury
+├─ Buyback Reserve (20%):                $2,000 → Treasury
+└─ H1 Protocol Fee (5%):                   $500 → Treasury
+
+Lab Vault Impact:
+├─ Lab's H1 shareholders gain:           50% NAV appreciation ($5,000)
+├─ Buyback pressure:                     $2,000 in H1 buyback capacity
+├─ Protocol revenue:                     $500
+└─ Creator/Supervisor future payouts:    $5,000 reserved
+```
+
+### **Per-Dataset, Per-Lab Mechanics**
+
+**Key Principle:** Each dataset is linked to exactly one lab. Revenue flows to that lab's owner and vault.
+
+```
+Dataset ID    Lab ID    Lab Owner              Purchase Price    Lab Receives
+─────────────────────────────────────────────────────────────────────────────
+ds_001        1         Cleveland Clinic       $4,500           $2,250 (50%)
+ds_002        2         Mayo Cardiology        $3,500           $1,750 (50%)
+ds_003        1         Cleveland Clinic       $2,000           $1,000 (50%)
+              
+Lab 1 Total Revenue: $3,250 (from 2 datasets)
+Lab 2 Total Revenue: $1,750 (from 1 dataset)
+```
+
+**Why Per-Lab?**
+- Each lab has its own economics and staking pool
+- Datasets are created within a specific domain lab
+- Lab owners directly benefit from their own datasets being purchased
+- Incentivizes labs to produce high-quality, marketable datasets
+
+### **Bulk Purchase Example: 3 Datasets**
+
+```
+BUYER: Acme AI (purchases for $12,000 before discount)
+DATASETS:
+  1. Cardiovascular Records ($4,500) from Lab 1
+  2. Legal Document Corpus ($3,500) from Lab 3  
+  3. Robotics Motion Data ($2,000) from Lab 4
+
+Step 1: Bulk Discount Applied
+Total: $12,000 → 5% off → $11,400 final price
+
+Step 2: Single On-Chain Transaction
+Revenue Distribution (per-dataset, per-lab):
+
+Dataset 1 ($4,500 to Lab 1):
+├─ Lab 1 Owner:       $2,250
+├─ Creators:          $1,800 → Treasury
+├─ Supervisors:         $450 → Treasury
+├─ Buyback:             $900 → Treasury
+└─ H1 Fee:             $225 → Treasury
+
+Dataset 2 ($3,500 to Lab 3):
+├─ Lab 3 Owner:       $1,750
+├─ Creators:          $1,400 → Treasury
+├─ Supervisors:         $350 → Treasury
+├─ Buyback:             $700 → Treasury
+└─ H1 Fee:             $175 → Treasury
+
+Dataset 3 ($2,000 to Lab 4):
+├─ Lab 4 Owner:       $1,000
+├─ Creators:            $800 → Treasury
+├─ Supervisors:         $200 → Treasury
+├─ Buyback:             $400 → Treasury
+└─ H1 Fee:             $100 → Treasury
+
+Bulk Discount Applied:
+├─ Total before discount: $12,000
+├─ 5% bulk savings:        -$600
+├─ Final amount sent:    $11,400
+└─ Savings distributed proportionally to each dataset
+
+Step 3: Automatic H1 Impact
+
+Lab 1 Shareholders:
+├─ Gain: 50% revenue ($2,250) added to vault → NAV appreciation
+├─ Benefit: Buyback capacity (+$900)
+└─ Effect: H1-Healthcare shares increase in value
+
+Lab 3 Shareholders:
+├─ Gain: 50% revenue ($1,750) added to vault → NAV appreciation
+├─ Benefit: Buyback capacity (+$700)
+└─ Effect: H1-Legal shares increase in value
+
+Lab 4 Shareholders:
+├─ Gain: 50% revenue ($1,000) added to vault → NAV appreciation
+├─ Benefit: Buyback capacity (+$400)
+└─ Effect: H1-Robotics shares increase in value
+
+Treasury (Protocol):
+├─ Creator payouts reserved: $5,000
+├─ Supervisor payouts reserved: $1,000
+├─ Buyback execution capacity: $2,000
+└─ Protocol operations: $500
+```
+
+### **Transparency & On-Chain Verification**
+
+Every dataset purchase emits events that can be verified on the blockchain:
+
+```solidity
+event RevenueDistributed(
+  uint256 indexed datasetId,
+  uint256 indexed labId,
+  uint256 labOwnerAmount,
+  uint256 creatorAmount,
+  uint256 supervisorAmount,
+  uint256 buybackAmount,
+  uint256 h1FeeAmount
+)
+```
+
+**Users can verify:**
+✓ Transaction hash on Etherscan  
+✓ Lab owner address received correct amount  
+✓ Exact breakdown of all payments  
+✓ Link to dataset provenance (IPFS hash)  
+✓ Creator and supervisor credentials on-chain  
+
+### **From Purchase to Payout Timeline**
+
+```
+Day 0: User purchases $10,000 dataset
+├─ Lab owner receives: $5,000 immediately
+└─ Treasury receives: $5,000 (creators/supervisors/buyback/fees)
+
+Day 1-7: Creator/Supervisor Payout Phase
+├─ Protocol calculates: Which creators/supervisors worked on this dataset
+├─ Attribution Facet retrieves: On-chain credential records
+├─ Payout queue: Ready to distribute via batched transactions
+
+Day 7-14: Buyback Execution
+├─ H1 buyback bot monitors: $2,000 in buyback capacity (from example)
+├─ Market conditions: Execute buyback when price < NAV
+├─ H1 supply decreases: All existing H1 holders gain scarcity value
+└─ Effect: H1-Healthcare shares increase in value automatically
+
+Ongoing: NAV Appreciation
+├─ Lab vault grows: +$5,000 added to vault assets
+├─ H1 NAV increases: Assets / Shares = higher value per share
+├─ Dividend effect: Without selling, H1 holders gain value
+└─ Compounding: Next purchase = higher NAV base
+```
+
+### **Why This Model Works**
+
+| Stakeholder | Incentive |
+|-------------|-----------|
+| **Lab Owners** | Direct 50% of revenue; benefit from producing high-quality datasets |
+| **Data Creators** | 40% allocated; reputation and payment tied to dataset quality & sales |
+| **Supervisors** | 10% allocated; incentivized to approve only high-quality data |
+| **H1 Holders** | Automatic buyback pressure + NAV appreciation; passive yield |
+| **Buyers** | Bulk discounts, transparent pricing, on-chain provenance verification |
+| **Protocol** | 5% operational fee; sustainable growth without rug-pull risk |
+
+### **Compliance & Auditability**
+
+Every dataset purchase is:
+- ✓ **On-chain**: Transaction recorded immutably
+- ✓ **Transparent**: Revenue split visible to all parties
+- ✓ **Traceable**: Links to creator credentials, supervisor credentials, and lab ownership
+- ✓ **Auditable**: Enterprise customers can verify revenue destination
+- ✓ **Compliant**: Enforced HIPAA/GDPR/FDA/C2PA rules per domain
 
 ---
 

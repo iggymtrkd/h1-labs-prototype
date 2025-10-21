@@ -17,7 +17,7 @@ Through our Dual‑Intelligence SDK, every app pairs an agent with a credentiale
 - Make provenance, credentialing, and compliance default infrastructure for AI.
 
 **Why Now**  
-AI models demand trustworthy data. Today’s pipelines are opaque, legally risky, and misaligned with human contributors. H1 Labs merges blockchain guarantees (provenance, payments, programmable policy) with human expertise to create compliant, auditable datasets that enterprises can trust.
+AI models demand trustworthy data. Today's pipelines are opaque, legally risky, and misaligned with human contributors. H1 Labs merges blockchain guarantees (provenance, payments, programmable policy) with human expertise to create compliant, auditable datasets that enterprises can trust.
 
 We target regulated and semi‑regulated markets — starting with healthcare — and expanding to finance (AML/KYC), legal (privacy/privilege), defense (ITAR/EAR), robotics/industrial (safety standards), and media/creative (C2PA).
 
@@ -29,7 +29,7 @@ We target regulated and semi‑regulated markets — starting with healthcare �
 - **Credentialed Humans**: Domain experts verified via the Credentialing Portal; no anonymous crowdwork for regulated data.  
 - **Programmable Compliance**: Domain rules are enforced at the contract layer (HIPAA, GDPR, AEH, C2PA).  
 - **Dual‑Intelligence SDK (Agent + Human)**: Apps pair an agent with credentialed human oversight for compliant workflows in regulated and semi‑regulated markets.  
-- **Two‑Token Model ($LABS ↔ H1)**: $LABS governs and stakes; each Lab’s H1 token is its vault share, enabling per‑lab economies.  
+- **Two‑Token Model ($LABS ↔ H1)**: $LABS governs and stakes; each Lab's H1 token is its vault share, enabling per‑lab economies.  
 - **Modular Diamond Architecture**: EIP‑2535 facets make the system upgradeable, auditable, and extensible.  
 - **Enterprise‑friendly UX**: SDK credit mode abstracts blockchain for Web2‑style apps.
 
@@ -776,7 +776,7 @@ This section provides detailed mechanics of how $LABS and H1 interact within the
 ### Key Definitions:
 
 - **$LABS (Singleton ERC‑20)**: Platform governance, staking, and lab creation asset. Set via `TreasuryFacet.setLABSToken`.  
-- **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab’s `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
+- **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab's `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
 - **Bonding Curve (Optional)**: `BondingCurveSale` buys H1 at NAV + 0.5% premium, routing fees/POL to treasury and depositing net $LABS to the lab's vault.  
 - **Levels & App Slots**: LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.  
 - **Revenue Split (Current Implementation)**: 50% to lab owner, 25% to protocol treasury (H1 pool custody), 25% retained for future buyback execution.
@@ -1546,6 +1546,243 @@ A: No leverage. H1 can outgrow $LABS because:
 - $LABS appreciates slower (demand-driven)
 
 Think: H1 = equity in specific lab; $LABS = platform governance token.
+
+---
+
+## 17. Dataset Marketplace: Buying & Revenue Distribution
+
+> **For AI Companies & Data Buyers**: The Dataset Marketplace enables enterprise and AI firms to discover, evaluate, and purchase verified datasets with transparent, on-chain revenue distribution.
+
+### **The Marketplace Experience**
+
+**Browse Verified Datasets:**
+- Filter by domain (Healthcare, Finance, Legal, Robotics, Art)
+- Sort by quality score, delta-gain, price, or availability
+- Search by dataset name, creator, or compliance standard
+- View full provenance: creator, supervisor, regulatory approvals
+
+**Evaluate Before Buying:**
+```
+Each dataset displays:
+├─ Quality Score (80-99%)
+├─ Delta-Gain vs. GPT-4 baseline (e.g., +8.24%)
+├─ Creator Name & Credential ID
+├─ Supervisor Name & Credential ID
+├─ Compliance Standards (HIPAA, GDPR, FDA, C2PA, etc.)
+├─ Data Points (10K, 50K, 100K+)
+├─ Revenue History (transparent pricing)
+└─ On-Chain Provenance (IPFS hash, creator address, supervisor address)
+```
+
+**Bulk Purchase & Batch Discount:**
+```
+1 dataset:    Full price (e.g., $2,500)
+2 datasets:   Full price
+3+ datasets:  5% bulk discount applies automatically
+Example:      3 × $2,500 = $7,500 → 5% off = $7,125 total
+```
+
+**Pay with Multiple Assets:**
+- **ETH** (primary, recommended)
+- **USDC / USDT** (stablecoins)
+- **$LABS** (protocol token at current rate)
+
+### **Revenue Distribution Model: Per-Dataset, Per-Lab**
+
+When a dataset is purchased, the revenue is distributed **per-dataset to that specific dataset's lab owner** according to the following model:
+
+```
+Purchase Price: $X
+Distribution:
+
+├─ Lab Owners:        50% ($0.50X)        → Direct to lab owner's wallet
+├─ Data Creators:      40% ($0.40X)        → Treasury (for later distribution to creators)
+├─ Supervisors:        10% ($0.10X)        → Treasury (for later distribution to supervisors)
+├─ Buyback Reserve:    20% ($0.20X)        → Treasury (to repurchase H1 tokens)
+└─ H1 Protocol Fee:     5% ($0.05X)        → Treasury (operational costs)
+                       ─────────────
+Total:                 125% ($1.25X)*
+
+* Note: The percentages represent allocation of revenue where creators/supervisors/buyback/H1 
+  are tracked in the protocol treasury for distribution. Lab owners receive 50% directly.
+```
+
+### **Example: $10,000 Dataset Purchase**
+
+```
+DATASET: "Medical Imaging Annotations"
+Creator: Cleveland Clinic (Lab ID: 1)
+Supervisor: ACR Standards Board
+Purchase Price: $10,000
+
+Revenue Breakdown:
+├─ Cleveland Clinic (Lab Owner, 50%):    $5,000 ✓ Sent immediately
+├─ Data Creators (40%):                  $4,000 → Treasury
+├─ Supervisors (10%):                    $1,000 → Treasury
+├─ Buyback Reserve (20%):                $2,000 → Treasury
+└─ H1 Protocol Fee (5%):                   $500 → Treasury
+
+Lab Vault Impact:
+├─ Lab's H1 shareholders gain:           50% NAV appreciation ($5,000)
+├─ Buyback pressure:                     $2,000 in H1 buyback capacity
+├─ Protocol revenue:                     $500
+└─ Creator/Supervisor future payouts:    $5,000 reserved
+```
+
+### **Per-Dataset, Per-Lab Mechanics**
+
+**Key Principle:** Each dataset is linked to exactly one lab. Revenue flows to that lab's owner and vault.
+
+```
+Dataset ID    Lab ID    Lab Owner              Purchase Price    Lab Receives
+─────────────────────────────────────────────────────────────────────────────
+ds_001        1         Cleveland Clinic       $4,500           $2,250 (50%)
+ds_002        2         Mayo Cardiology        $3,500           $1,750 (50%)
+ds_003        1         Cleveland Clinic       $2,000           $1,000 (50%)
+              
+Lab 1 Total Revenue: $3,250 (from 2 datasets)
+Lab 2 Total Revenue: $1,750 (from 1 dataset)
+```
+
+**Why Per-Lab?**
+- Each lab has its own economics and staking pool
+- Datasets are created within a specific domain lab
+- Lab owners directly benefit from their own datasets being purchased
+- Incentivizes labs to produce high-quality, marketable datasets
+
+### **Bulk Purchase Example: 3 Datasets**
+
+```
+BUYER: Acme AI (purchases for $12,000 before discount)
+DATASETS:
+  1. Cardiovascular Records ($4,500) from Lab 1
+  2. Legal Document Corpus ($3,500) from Lab 3  
+  3. Robotics Motion Data ($2,000) from Lab 4
+
+Step 1: Bulk Discount Applied
+Total: $12,000 → 5% off → $11,400 final price
+
+Step 2: Single On-Chain Transaction
+Revenue Distribution (per-dataset, per-lab):
+
+Dataset 1 ($4,500 to Lab 1):
+├─ Lab 1 Owner:       $2,250
+├─ Creators:          $1,800 → Treasury
+├─ Supervisors:         $450 → Treasury
+├─ Buyback:             $900 → Treasury
+└─ H1 Fee:             $225 → Treasury
+
+Dataset 2 ($3,500 to Lab 3):
+├─ Lab 3 Owner:       $1,750
+├─ Creators:          $1,400 → Treasury
+├─ Supervisors:         $350 → Treasury
+├─ Buyback:             $700 → Treasury
+└─ H1 Fee:             $175 → Treasury
+
+Dataset 3 ($2,000 to Lab 4):
+├─ Lab 4 Owner:       $1,000
+├─ Creators:            $800 → Treasury
+├─ Supervisors:         $200 → Treasury
+├─ Buyback:             $400 → Treasury
+└─ H1 Fee:             $100 → Treasury
+
+Bulk Discount Applied:
+├─ Total before discount: $12,000
+├─ 5% bulk savings:        -$600
+├─ Final amount sent:    $11,400
+└─ Savings distributed proportionally to each dataset
+
+Step 3: Automatic H1 Impact
+
+Lab 1 Shareholders:
+├─ Gain: 50% revenue ($2,250) added to vault → NAV appreciation
+├─ Benefit: Buyback capacity (+$900)
+└─ Effect: H1-Healthcare shares increase in value
+
+Lab 3 Shareholders:
+├─ Gain: 50% revenue ($1,750) added to vault → NAV appreciation
+├─ Benefit: Buyback capacity (+$700)
+└─ Effect: H1-Legal shares increase in value
+
+Lab 4 Shareholders:
+├─ Gain: 50% revenue ($1,000) added to vault → NAV appreciation
+├─ Benefit: Buyback capacity (+$400)
+└─ Effect: H1-Robotics shares increase in value
+
+Treasury (Protocol):
+├─ Creator payouts reserved: $5,000
+├─ Supervisor payouts reserved: $1,000
+├─ Buyback execution capacity: $2,000
+└─ Protocol operations: $500
+```
+
+### **Transparency & On-Chain Verification**
+
+Every dataset purchase emits events that can be verified on the blockchain:
+
+```solidity
+event RevenueDistributed(
+  uint256 indexed datasetId,
+  uint256 indexed labId,
+  uint256 labOwnerAmount,
+  uint256 creatorAmount,
+  uint256 supervisorAmount,
+  uint256 buybackAmount,
+  uint256 h1FeeAmount
+)
+```
+
+**Users can verify:**
+✓ Transaction hash on Etherscan  
+✓ Lab owner address received correct amount  
+✓ Exact breakdown of all payments  
+✓ Link to dataset provenance (IPFS hash)  
+✓ Creator and supervisor credentials on-chain  
+
+### **From Purchase to Payout Timeline**
+
+```
+Day 0: User purchases $10,000 dataset
+├─ Lab owner receives: $5,000 immediately
+└─ Treasury receives: $5,000 (creators/supervisors/buyback/fees)
+
+Day 1-7: Creator/Supervisor Payout Phase
+├─ Protocol calculates: Which creators/supervisors worked on this dataset
+├─ Attribution Facet retrieves: On-chain credential records
+├─ Payout queue: Ready to distribute via batched transactions
+
+Day 7-14: Buyback Execution
+├─ H1 buyback bot monitors: $2,000 in buyback capacity (from example)
+├─ Market conditions: Execute buyback when price < NAV
+├─ H1 supply decreases: All existing H1 holders gain scarcity value
+└─ Effect: H1-Healthcare shares increase in value automatically
+
+Ongoing: NAV Appreciation
+├─ Lab vault grows: +$5,000 added to vault assets
+├─ H1 NAV increases: Assets / Shares = higher value per share
+├─ Dividend effect: Without selling, H1 holders gain value
+└─ Compounding: Next purchase = higher NAV base
+```
+
+### **Why This Model Works**
+
+| Stakeholder | Incentive |
+|-------------|-----------|
+| **Lab Owners** | Direct 50% of revenue; benefit from producing high-quality datasets |
+| **Data Creators** | 40% allocated; reputation and payment tied to dataset quality & sales |
+| **Supervisors** | 10% allocated; incentivized to approve only high-quality data |
+| **H1 Holders** | Automatic buyback pressure + NAV appreciation; passive yield |
+| **Buyers** | Bulk discounts, transparent pricing, on-chain provenance verification |
+| **Protocol** | 5% operational fee; sustainable growth without rug-pull risk |
+
+### **Compliance & Auditability**
+
+Every dataset purchase is:
+- ✓ **On-chain**: Transaction recorded immutably
+- ✓ **Transparent**: Revenue split visible to all parties
+- ✓ **Traceable**: Links to creator credentials, supervisor credentials, and lab ownership
+- ✓ **Auditable**: Enterprise customers can verify revenue destination
+- ✓ **Compliant**: Enforced HIPAA/GDPR/FDA/C2PA rules per domain
 
 ---
 
