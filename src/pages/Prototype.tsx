@@ -6,6 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
+import { Progress } from '@/components/ui/progress';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
 import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft } from 'lucide-react';
@@ -31,6 +32,14 @@ export default function Prototype() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [faucetBalance, setFaucetBalance] = useState<string | null>(null);
+  
+  // Progress tracking
+  const [completedSteps, setCompletedSteps] = useState({
+    step1: false, // Stake & Create Lab
+    step2: false, // Create Dataset
+    step3: false, // Issue Credential
+    step4: false  // Purchase Dataset
+  });
 
   // Step 1: Stake LABS
   const [stakeAmount, setStakeAmount] = useState('1000');
@@ -145,6 +154,7 @@ export default function Prototype() {
 
       addLog('success', 'Stage 1: Create Lab', `🎊 Lab "${labName}" (ID: ${labId}) created! H1 Token vault deployed and ready for deposits`, createTx.hash);
       toast.success(`Lab created with ID: ${labId}!`);
+      setCompletedSteps(prev => ({ ...prev, step1: true }));
       
       // Reset form
       setLabName('');
@@ -243,6 +253,7 @@ export default function Prototype() {
 
       addLog('success', 'Stage 2: Create Data', `✅ Dataset created! Data ID: ${dataId}. Ready for validation & training`, createTx.hash);
       toast.success(`Data created with ID: ${dataId}!`);
+      setCompletedSteps(prev => ({ ...prev, step2: true }));
       
       setDataContent('');
     } catch (error: any) {
@@ -304,6 +315,7 @@ export default function Prototype() {
 
       addLog('success', 'Stage 3: Credentials', `🎉 Credential issued! Credential ID: ${credentialId}. Scholar can now validate data`, issueTx.hash);
       toast.success(`Credential issued with ID: ${credentialId}!`);
+      setCompletedSteps(prev => ({ ...prev, step3: true }));
     } catch (error: any) {
       console.error('Credential error:', error);
       addLog('error', 'Stage 3: Credentials', `❌ ${error.message || 'Failed to issue credential'}`);
@@ -347,6 +359,7 @@ export default function Prototype() {
 
       addLog('success', 'Stage 4: Purchase Dataset', `🎊 Purchase complete! Revenue distributed. H1 token buyback initiated`, purchaseTx.hash);
       toast.success('Dataset purchased successfully!');
+      setCompletedSteps(prev => ({ ...prev, step4: true }));
     } catch (error: any) {
       console.error('Purchase error:', error);
       addLog('error', 'Stage 4: Purchase Dataset', `❌ ${error.message || 'Failed to purchase dataset'}`);
@@ -361,6 +374,10 @@ export default function Prototype() {
       loadFaucetBalance();
     }
   }, [isConnected, address]);
+
+  const completedCount = Object.values(completedSteps).filter(Boolean).length;
+  const progressPercentage = (completedCount / 4) * 100;
+  const allStepsComplete = completedCount === 4;
 
   const getLogIcon = (type: LogEntry['type']) => {
     switch (type) {
@@ -690,6 +707,48 @@ export default function Prototype() {
                 )}
               </ScrollArea>
             </Card>
+          </div>
+        </div>
+
+        {/* Progress Banner */}
+        <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
+          <div className="container mx-auto px-4 py-4">
+            {allStepsComplete ? (
+              <div className="flex items-center justify-center gap-3 py-2">
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+                <div className="text-center">
+                  <h3 className="text-2xl font-bold text-green-500">🎉 Flow Complete!</h3>
+                  <p className="text-sm text-muted-foreground">All 4 steps successfully executed on-chain</p>
+                </div>
+                <CheckCircle2 className="h-8 w-8 text-green-500" />
+              </div>
+            ) : (
+              <div className="space-y-3">
+                <div className="flex items-center justify-between">
+                  <h4 className="text-sm font-semibold">Protocol Flow Progress</h4>
+                  <span className="text-sm text-muted-foreground">{completedCount} / 4 Steps Complete</span>
+                </div>
+                <Progress value={progressPercentage} className="h-2" />
+                <div className="grid grid-cols-4 gap-2 text-xs">
+                  <div className={`flex items-center gap-1 ${completedSteps.step1 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    {completedSteps.step1 ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border-2 border-current" />}
+                    <span>Stake & Lab</span>
+                  </div>
+                  <div className={`flex items-center gap-1 ${completedSteps.step2 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    {completedSteps.step2 ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border-2 border-current" />}
+                    <span>Dataset</span>
+                  </div>
+                  <div className={`flex items-center gap-1 ${completedSteps.step3 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    {completedSteps.step3 ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border-2 border-current" />}
+                    <span>Credential</span>
+                  </div>
+                  <div className={`flex items-center gap-1 ${completedSteps.step4 ? 'text-green-500' : 'text-muted-foreground'}`}>
+                    {completedSteps.step4 ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border-2 border-current" />}
+                    <span>Purchase</span>
+                  </div>
+                </div>
+              </div>
+            )}
           </div>
         </div>
       </div>
