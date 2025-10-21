@@ -7,6 +7,7 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
+import { useFaucet } from '@/hooks/useFaucet';
 import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -26,6 +27,7 @@ interface LogEntry {
 export default function Prototype() {
   const navigate = useNavigate();
   const { address, isConnected, connectWallet } = useBaseAccount();
+  const { claimFromFaucet, isClaiming } = useFaucet();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -132,8 +134,31 @@ export default function Prototype() {
   };
 
   const handleMintTestLabs = async () => {
-    toast.info('Test LABS minting coming soon - please use faucet endpoint');
-    addLog('info', 'Testing: Mint LABS', 'Test minting endpoint not yet implemented. Use faucet for test tokens.');
+    if (!address) {
+      toast.error('Wallet not connected');
+      return;
+    }
+
+    setLoading('mint');
+    addLog('info', 'Testing: Mint LABS', 'Claiming 10,000 test LABS from faucet...');
+
+    try {
+      const result = await claimFromFaucet(address);
+      
+      if (result.success) {
+        addLog('success', 'Testing: Mint LABS', `Successfully claimed ${result.amount} LABS tokens`, result.txHash);
+        toast.success(`Claimed ${result.amount} LABS tokens!`);
+      } else {
+        addLog('error', 'Testing: Mint LABS', result.error || 'Failed to claim from faucet');
+        toast.error(result.error || 'Failed to claim from faucet');
+      }
+    } catch (error: any) {
+      console.error('Faucet error:', error);
+      addLog('error', 'Testing: Mint LABS', error.message || 'Unknown error');
+      toast.error('Failed to claim from faucet');
+    } finally {
+      setLoading(null);
+    }
   };
 
   const getLogIcon = (type: LogEntry['type']) => {
