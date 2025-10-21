@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { Card } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,9 +27,10 @@ interface LogEntry {
 export default function Prototype() {
   const navigate = useNavigate();
   const { address, isConnected, connectWallet } = useBaseAccount();
-  const { claimFromFaucet, isClaiming } = useFaucet();
+  const { claimFromFaucet, checkFaucetStatus, isClaiming } = useFaucet();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
+  const [faucetBalance, setFaucetBalance] = useState<string | null>(null);
 
   // Step 1: Stake LABS
   const [stakeAmount, setStakeAmount] = useState('1000');
@@ -158,6 +159,19 @@ export default function Prototype() {
     }
   };
 
+  const loadFaucetBalance = async () => {
+    if (!address) return;
+    
+    try {
+      const status = await checkFaucetStatus(address);
+      if (status) {
+        setFaucetBalance(status.faucetBalance);
+      }
+    } catch (error) {
+      console.error('Failed to load faucet balance:', error);
+    }
+  };
+
   const handleMintTestLabs = async () => {
     if (!address) {
       toast.error('Wallet not connected');
@@ -165,22 +179,23 @@ export default function Prototype() {
     }
 
     setLoading('mint');
-    addLog('info', 'Testing: Mint LABS', '🚰 Requesting 10,000 test LABS from faucet...');
+    addLog('info', 'Testing: Receive LABS', '🚰 Requesting 10,000 test LABS from faucet...');
 
     try {
-      addLog('info', 'Testing: Mint LABS', '⏳ Waiting for faucet to process claim...');
+      addLog('info', 'Testing: Receive LABS', '⏳ Waiting for faucet to process claim...');
       const result = await claimFromFaucet(address);
       
       if (result.success) {
-        addLog('success', 'Testing: Mint LABS', `💰 Faucet claim successful! ${result.amount} LABS transferred to your wallet`, result.txHash);
+        addLog('success', 'Testing: Receive LABS', `💰 Faucet claim successful! ${result.amount} LABS transferred to your wallet`, result.txHash);
         toast.success(`Claimed ${result.amount} LABS tokens!`);
+        await loadFaucetBalance(); // Refresh balance
       } else {
-        addLog('error', 'Testing: Mint LABS', `❌ ${result.error || 'Failed to claim from faucet'}`);
+        addLog('error', 'Testing: Receive LABS', `❌ ${result.error || 'Failed to claim from faucet'}`);
         toast.error(result.error || 'Failed to claim from faucet');
       }
     } catch (error: any) {
       console.error('Faucet error:', error);
-      addLog('error', 'Testing: Mint LABS', `❌ ${error.message || 'Unknown error'}`);
+      addLog('error', 'Testing: Receive LABS', `❌ ${error.message || 'Unknown error'}`);
       toast.error('Failed to claim from faucet');
     } finally {
       setLoading(null);
@@ -341,6 +356,12 @@ export default function Prototype() {
     }
   };
 
+  useEffect(() => {
+    if (isConnected && address) {
+      loadFaucetBalance();
+    }
+  }, [isConnected, address]);
+
   const getLogIcon = (type: LogEntry['type']) => {
     switch (type) {
       case 'success':
@@ -382,15 +403,23 @@ export default function Prototype() {
                 <Beaker className="h-5 w-5 text-primary" />
                 Testing Utilities
               </h3>
-              <Button
-                onClick={handleMintTestLabs}
-                disabled={loading === 'mint'}
-                className="w-full"
-                variant="outline"
-              >
-                {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                Mint 10,000 Test LABS
-              </Button>
+              <div className="space-y-3">
+                {faucetBalance && (
+                  <div className="p-3 rounded-lg bg-muted/50">
+                    <p className="text-sm text-muted-foreground mb-1">Faucet Balance</p>
+                    <p className="text-lg font-bold">{faucetBalance} LABS</p>
+                  </div>
+                )}
+                <Button
+                  onClick={handleMintTestLabs}
+                  disabled={loading === 'mint'}
+                  className="w-full"
+                  variant="outline"
+                >
+                  {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Receive 10,000 Test LABS
+                </Button>
+              </div>
             </Card>
 
             {/* Stage 1: Stake LABS & Create Lab */}
