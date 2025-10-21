@@ -299,10 +299,7 @@ export default function Home({ onConnect, showHowItWorksDialog = false, onDialog
             className="max-w-4xl mx-auto text-center"
           >
             <h1 className="text-5xl lg:text-7xl font-bold mb-6 glow-green leading-tight">
-              Advancing AI Through <br />
-              <span className="text-transparent bg-clip-text bg-gradient-hero">
-                Proven Human Intelligence
-              </span>
+              Home
             </h1>
             
             <div className="relative flex items-center justify-center gap-4 mb-8">

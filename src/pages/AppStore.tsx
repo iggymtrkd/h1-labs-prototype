@@ -343,7 +343,7 @@ export default function AppStore() {
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold text-white mb-2">
-            H1 Labs Marketplace
+            Marketplace
           </h1>
           <p className="text-slate-400">
             Explore datasets and decentralized applications

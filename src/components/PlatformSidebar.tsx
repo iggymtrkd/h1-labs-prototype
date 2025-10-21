@@ -19,9 +19,9 @@ export const PlatformSidebar = ({
   const location = useLocation();
 
   const mainLinks = [
-    { name: "Marketplace", path: "/dashboard", icon: Home },
+    { name: "Home", path: "/dashboard", icon: Home },
     { name: "Launchpad", path: "/staking", icon: Rocket },
-    { name: "dApp Store", path: "/apps", icon: Store },
+    { name: "Marketplace", path: "/apps", icon: Store },
     { name: "Litepaper", path: "/whitepaper", icon: BookOpen },
   ];
 

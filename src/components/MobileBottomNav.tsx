@@ -5,18 +5,17 @@ export const MobileBottomNav = () => {
   const location = useLocation();
 
   const links = [
-    { name: "Marketplace", path: "/dashboard", icon: Home },
+    { name: "Home", path: "/dashboard", icon: Home },
     { name: "Launchpad", path: "/staking", icon: Rocket },
-    { name: "dApp Store", path: "/apps", icon: Store },
+    { name: "Marketplace", path: "/apps", icon: Store },
     { name: "Litepaper", path: "/whitepaper", icon: BookOpen },
-    { name: "Profile", path: "/profile", icon: User },
   ];
 
   const isActive = (path: string) => location.pathname === path;
 
   return (
     <nav className="md:hidden fixed bottom-0 left-0 right-0 z-50 bg-card/95 backdrop-blur-xl border-t border-border">
-      <div className="grid grid-cols-5 gap-1 px-2 py-2">
+      <div className="grid grid-cols-4 gap-1 px-2 py-2">
         {links.map((link) => {
           const Icon = link.icon;
           return (
