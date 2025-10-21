@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
 import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle } from 'lucide-react';
@@ -17,6 +18,26 @@ import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
+
+// Available domains for lab creation
+const AVAILABLE_DOMAINS = [
+  'healthcare',
+  'medical',
+  'biotech',
+  'finance',
+  'legal',
+  'education',
+  'research',
+  'robotics',
+  'art',
+  'music',
+  'climate',
+  'agriculture',
+  'manufacturing',
+  'logistics',
+  'retail',
+  'other'
+] as const;
 
 interface LogEntry {
   id: string;
@@ -674,12 +695,18 @@ export default function Prototype() {
                   </div>
                   <div>
                     <Label htmlFor="labDomain">Domain</Label>
-                    <Input
-                      id="labDomain"
-                      value={labDomain}
-                      onChange={(e) => setLabDomain(e.target.value)}
-                      placeholder="healthcare"
-                    />
+                    <Select value={labDomain} onValueChange={setLabDomain}>
+                      <SelectTrigger id="labDomain" className="bg-background">
+                        <SelectValue placeholder="Select domain" />
+                      </SelectTrigger>
+                      <SelectContent className="bg-background z-50">
+                        {AVAILABLE_DOMAINS.map((domain) => (
+                          <SelectItem key={domain} value={domain} className="capitalize">
+                            {domain}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                   <Button
                     onClick={handleCreateLab}
@@ -728,12 +755,18 @@ export default function Prototype() {
                 </div>
                 <div>
                   <Label htmlFor="dataDomain">Domain</Label>
-                  <Input
-                    id="dataDomain"
-                    value={dataDomain}
-                    onChange={(e) => setDataDomain(e.target.value)}
-                    placeholder="healthcare"
-                  />
+                  <Select value={dataDomain} onValueChange={setDataDomain}>
+                    <SelectTrigger id="dataDomain" className="bg-background">
+                      <SelectValue placeholder="Select domain" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {AVAILABLE_DOMAINS.map((domain) => (
+                        <SelectItem key={domain} value={domain} className="capitalize">
+                          {domain}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   onClick={handleCreateData}
@@ -771,12 +804,18 @@ export default function Prototype() {
                 </div>
                 <div>
                   <Label htmlFor="credentialDomain">Domain</Label>
-                  <Input
-                    id="credentialDomain"
-                    value={credentialDomain}
-                    onChange={(e) => setCredentialDomain(e.target.value)}
-                    placeholder="healthcare"
-                  />
+                  <Select value={credentialDomain} onValueChange={setCredentialDomain}>
+                    <SelectTrigger id="credentialDomain" className="bg-background">
+                      <SelectValue placeholder="Select domain" />
+                    </SelectTrigger>
+                    <SelectContent className="bg-background z-50">
+                      {AVAILABLE_DOMAINS.map((domain) => (
+                        <SelectItem key={domain} value={domain} className="capitalize">
+                          {domain}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
                 <Button
                   onClick={handleCreateCredential}
