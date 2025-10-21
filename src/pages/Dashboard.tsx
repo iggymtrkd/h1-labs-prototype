@@ -183,7 +183,7 @@ export default function Dashboard() {
       <div className="container mx-auto px-4 max-w-full">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 glow-green">H1 Labs Marketplace</h1>
+          <h1 className="text-4xl font-bold mb-4 glow-green">Home</h1>
           <p className="text-xl text-muted-foreground">
             Discover and invest in AI training data labs across multiple domains
           </p>
