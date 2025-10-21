@@ -24,7 +24,7 @@ interface HomeProps {
 const DESCRIPTION_VARIANTS = [
   {
     audience: "Developers",
-    text: "The H1 SDK embeds two intelligence systems in every app—an Agent and a credentialed Human—producing compliant, high-quality data for regulated and semi-regulated markets. Healthcare first."
+    text: "The H1 SDK embeds a dual-intelligence system in every app—an Agent and a credentialed Human—producing compliant, high-quality data for regulated and semi-regulated markets. Healthcare first."
   },
   {
     audience: "Investors & Traders",
