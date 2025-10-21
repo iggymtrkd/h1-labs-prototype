@@ -1,10 +1,147 @@
+import { useState, useMemo } from "react";
+import { useNavigate } from "react-router-dom";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
+import { Input } from "@/components/ui/input";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { DatasetCard, Dataset } from "@/components/DatasetCard";
 import { 
   Heart, Stethoscope, Palette, Bot, Scale, DollarSign, 
-  Users, TrendingUp, ExternalLink 
+  Users, TrendingUp, ExternalLink, Search, Filter, ShoppingCart
 } from "lucide-react";
+
+// Mock dataset inventory
+const MOCK_DATASETS: Dataset[] = [
+  {
+    id: "ds_001",
+    name: "Cardiovascular Patient Records",
+    description:
+      "De-identified patient data with ECG readings and diagnoses from major medical centers",
+    domain: "Healthcare",
+    creator: "Dr. Sarah Chen",
+    supervisor: "Mayo Clinic Cardiology",
+    dataCount: 10000,
+    qualityScore: 94,
+    deltaGain: 8.24,
+    price: 2500,
+    availability: 1543,
+    approved: true,
+    createdAt: "2025-10-15",
+    credentialId: 42,
+    supervisorCredentialId: 43,
+    tags: ["HIPAA", "Medical", "Validated"],
+    reviewerCount: 12,
+    complianceStandards: ["HIPAA", "GDPR"],
+    labId: 1,
+  },
+  {
+    id: "ds_002",
+    name: "Financial Transaction Patterns",
+    description: "Anonymized transaction records for fraud detection and AML/KYC",
+    domain: "Finance",
+    creator: "Morgan Stanley Analytics",
+    supervisor: "SEC Compliance",
+    dataCount: 50000,
+    qualityScore: 89,
+    deltaGain: 6.15,
+    price: 5000,
+    availability: 2341,
+    approved: true,
+    createdAt: "2025-10-14",
+    credentialId: 44,
+    supervisorCredentialId: 45,
+    tags: ["AML/KYC", "Finance", "High-Volume"],
+    reviewerCount: 18,
+    complianceStandards: ["AML/KYC", "SOC 2"],
+    labId: 2,
+  },
+  {
+    id: "ds_003",
+    name: "Legal Document Classification",
+    description:
+      "Classified legal documents for AI-powered legal research and due diligence",
+    domain: "Legal",
+    creator: "LexisNexis AI",
+    supervisor: "Bar Association Review",
+    dataCount: 15000,
+    qualityScore: 92,
+    deltaGain: 7.85,
+    price: 3500,
+    availability: 876,
+    approved: true,
+    createdAt: "2025-10-13",
+    credentialId: 46,
+    supervisorCredentialId: 47,
+    tags: ["Legal", "NLP", "Document"],
+    reviewerCount: 8,
+    complianceStandards: ["Legal Privilege", "Confidentiality"],
+    labId: 3,
+  },
+  {
+    id: "ds_004",
+    name: "Medical Imaging Annotations",
+    description: "X-ray and CT scan annotations by board-certified radiologists",
+    domain: "Healthcare",
+    creator: "Cleveland Clinic",
+    supervisor: "ACR Standards Board",
+    dataCount: 25000,
+    qualityScore: 96,
+    deltaGain: 9.42,
+    price: 4500,
+    availability: 3234,
+    approved: true,
+    createdAt: "2025-10-12",
+    credentialId: 48,
+    supervisorCredentialId: 49,
+    tags: ["Medical", "Imaging", "Verified"],
+    reviewerCount: 25,
+    complianceStandards: ["HIPAA", "FDA 21 CFR"],
+    labId: 1,
+  },
+  {
+    id: "ds_005",
+    name: "Robotics Motion Trajectories",
+    description: "Industrial robot motion data with safety validation",
+    domain: "Robotics",
+    creator: "Tesla Robotics",
+    supervisor: "ISO 26262 Expert",
+    dataCount: 8000,
+    qualityScore: 88,
+    deltaGain: 5.73,
+    price: 2000,
+    availability: 567,
+    approved: true,
+    createdAt: "2025-10-11",
+    credentialId: 50,
+    supervisorCredentialId: 51,
+    tags: ["Robotics", "Safety", "Industrial"],
+    reviewerCount: 6,
+    complianceStandards: ["ISO 26262", "ISO 13849"],
+    labId: 4,
+  },
+  {
+    id: "ds_006",
+    name: "Game Asset Collections",
+    description: "Creative assets with provenance tracking via C2PA",
+    domain: "Art",
+    creator: "Artstation Collective",
+    supervisor: "C2PA Verifier",
+    dataCount: 5000,
+    qualityScore: 91,
+    deltaGain: 7.12,
+    price: 1500,
+    availability: 2100,
+    approved: true,
+    createdAt: "2025-10-10",
+    credentialId: 52,
+    supervisorCredentialId: 53,
+    tags: ["Art", "Gaming", "Creative"],
+    reviewerCount: 14,
+    complianceStandards: ["C2PA", "Copyright"],
+    labId: 5,
+  },
+];
 
 interface App {
   id: string;
@@ -102,6 +239,87 @@ const apps: App[] = [
 ];
 
 export default function AppStore() {
+  const navigate = useNavigate();
+  const [searchQuery, setSearchQuery] = useState("");
+  const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
+  const [selectedDatasets, setSelectedDatasets] = useState<Set<string>>(
+    new Set()
+  );
+  const [sortBy, setSortBy] = useState("popular");
+  const [qualityFilter, setQualityFilter] = useState("all");
+
+  const domains = ["Healthcare", "Finance", "Legal", "Robotics", "Art"];
+
+  // Filter logic for datasets
+  const filteredDatasets = useMemo(() => {
+    return MOCK_DATASETS.filter((ds) => {
+      const matchesSearch =
+        ds.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ds.description.toLowerCase().includes(searchQuery.toLowerCase()) ||
+        ds.tags.some((tag) =>
+          tag.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+
+      const matchesDomain = !selectedDomain || ds.domain === selectedDomain;
+
+      let matchesQuality = true;
+      if (qualityFilter !== "all") {
+        const minScore = parseInt(qualityFilter);
+        matchesQuality = ds.qualityScore >= minScore;
+      }
+
+      return matchesSearch && matchesDomain && matchesQuality;
+    });
+  }, [searchQuery, selectedDomain, qualityFilter]);
+
+  // Sort logic for datasets
+  const sortedDatasets = useMemo(() => {
+    const sorted = [...filteredDatasets];
+    switch (sortBy) {
+      case "quality":
+        return sorted.sort((a, b) => b.qualityScore - a.qualityScore);
+      case "delta-gain":
+        return sorted.sort((a, b) => b.deltaGain - a.deltaGain);
+      case "newest":
+        return sorted.sort(
+          (a, b) =>
+            new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime()
+        );
+      case "price-low":
+        return sorted.sort((a, b) => a.price - b.price);
+      case "price-high":
+        return sorted.sort((a, b) => b.price - a.price);
+      default: // popular
+        return sorted.sort((a, b) => b.availability - a.availability);
+    }
+  }, [filteredDatasets, sortBy]);
+
+  const cartTotal = Array.from(selectedDatasets).reduce((sum, id) => {
+    const ds = MOCK_DATASETS.find((d) => d.id === id);
+    return sum + (ds?.price || 0);
+  }, 0);
+
+  const toggleDataset = (id: string) => {
+    const newSelected = new Set(selectedDatasets);
+    if (newSelected.has(id)) {
+      newSelected.delete(id);
+    } else {
+      newSelected.add(id);
+    }
+    setSelectedDatasets(newSelected);
+  };
+
+  const handleViewDetails = (id: string) => {
+    navigate(`/dataset/${id}`);
+  };
+
+  const handleCheckout = () => {
+    const selectedItems = Array.from(selectedDatasets).map((id) =>
+      MOCK_DATASETS.find((d) => d.id === id)
+    );
+    navigate("/checkout", { state: { items: selectedItems, total: cartTotal } });
+  };
+
   const getStatusColor = (status: string) => {
     switch (status) {
       case "live":
@@ -120,170 +338,358 @@ export default function AppStore() {
   };
 
   return (
-    <div className="min-h-screen pt-8 md:pt-12 pb-12 overflow-x-hidden">
-      <div className="container mx-auto px-4 max-w-full">
+    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      <div className="max-w-7xl mx-auto p-8">
         {/* Header */}
         <div className="mb-8">
-          <h1 className="text-4xl font-bold mb-4 glow-green">H1 Labs dApp Store</h1>
-          <p className="text-xl text-muted-foreground max-w-3xl">
-            Discover dApps built on the H1 Labs protocol across healthcare, art, robotics, and more
+          <h1 className="text-4xl font-bold text-white mb-2">
+            H1 Labs Marketplace
+          </h1>
+          <p className="text-slate-400">
+            Explore datasets and decentralized applications
           </p>
         </div>
 
-        {/* Stats */}
-        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 mb-12">
-          <Card className="p-6 bg-gradient-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <ExternalLink className="h-5 w-5 text-primary" />
-              </div>
-              <p className="text-sm text-muted-foreground">Total Apps</p>
-            </div>
-            <p className="text-3xl font-bold text-primary">{apps.length}</p>
-          </Card>
-          <Card className="p-6 bg-gradient-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-secondary/20 rounded-lg">
-                <Users className="h-5 w-5 text-secondary" />
-              </div>
-              <p className="text-sm text-muted-foreground">Active Users</p>
-            </div>
-            <p className="text-3xl font-bold text-secondary">5.2K+</p>
-          </Card>
-          <Card className="p-6 bg-gradient-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-primary/20 rounded-lg">
-                <DollarSign className="h-5 w-5 text-primary" />
-              </div>
-              <p className="text-sm text-muted-foreground">Monthly Revenue</p>
-            </div>
-            <p className="text-3xl font-bold text-primary">$490K+</p>
-          </Card>
-          <Card className="p-6 bg-gradient-card border-border">
-            <div className="flex items-center gap-3 mb-2">
-              <div className="p-2 bg-secondary/20 rounded-lg">
-                <TrendingUp className="h-5 w-5 text-secondary" />
-              </div>
-              <p className="text-sm text-muted-foreground">Growth Rate</p>
-            </div>
-            <p className="text-3xl font-bold text-secondary">+42%</p>
-          </Card>
-        </div>
+        {/* Tabs */}
+        <Tabs defaultValue="datasets" className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="datasets">Dataset Marketplace</TabsTrigger>
+            <TabsTrigger value="dapps">dApp Marketplace</TabsTrigger>
+          </TabsList>
 
-        {/* Healthcare Apps Section */}
-        <div className="mb-12">
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
-            <Heart className="h-8 w-8 text-primary" />
-            Healthcare Applications
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {apps
-              .filter((app) => app.category === "Healthcare")
-              .map((app) => (
-                <Card
-                  key={app.id}
-                  className="p-6 bg-gradient-card border-border hover:border-primary transition-all duration-300 card-hover"
+          {/* Dataset Marketplace Tab */}
+          <TabsContent value="datasets">
+            <div className="space-y-6">
+              {/* Search & Cart Header */}
+              <div className="flex items-center justify-between gap-4">
+                <div className="flex-1 max-w-xl relative">
+                  <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+                  <Input
+                    placeholder="Search datasets, domains, creators..."
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                    className="pl-10 bg-slate-800 border-slate-700 text-white"
+                  />
+                </div>
+                <Button
+                  size="lg"
+                  onClick={handleCheckout}
+                  disabled={selectedDatasets.size === 0}
+                  className={selectedDatasets.size > 0 ? "bg-blue-600" : ""}
                 >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-xl bg-${app.color}/20`}>
-                      <app.icon className={`h-8 w-8 text-${app.color}`} />
-                    </div>
-                    <Badge className={getStatusColor(app.status)}>
-                      {getStatusLabel(app.status)}
+                  <ShoppingCart className="mr-2 h-5 w-5" />
+                  Cart ({selectedDatasets.size})
+                  {selectedDatasets.size > 0 && (
+                    <Badge className="ml-2 bg-red-500">
+                      ${cartTotal.toLocaleString()}
                     </Badge>
+                  )}
+                </Button>
+              </div>
+
+              <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
+                {/* Sidebar Filters */}
+                <div className="lg:col-span-1">
+                  <Card className="bg-slate-800 border-slate-700 sticky top-24">
+                    <div className="p-6 space-y-6">
+                      {/* Domain Filter */}
+                      <div>
+                        <h3 className="font-semibold text-white mb-3 flex items-center">
+                          <Filter className="mr-2 h-4 w-4" />
+                          Domain
+                        </h3>
+                        <div className="space-y-2">
+                          {domains.map((domain) => (
+                            <button
+                              key={domain}
+                              onClick={() =>
+                                setSelectedDomain(
+                                  selectedDomain === domain ? null : domain
+                                )
+                              }
+                              className={`w-full text-left px-3 py-2 rounded transition ${
+                                selectedDomain === domain
+                                  ? "bg-blue-600 text-white"
+                                  : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                              }`}
+                            >
+                              {domain}
+                            </button>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Quality Filter */}
+                      <div>
+                        <h3 className="font-semibold text-white mb-3">Quality Score</h3>
+                        <div className="space-y-2">
+                          {[
+                            { value: "all", label: "All Qualities" },
+                            { value: "90", label: "90+ Score" },
+                            { value: "95", label: "95+ Score" },
+                          ].map((option) => (
+                            <label
+                              key={option.value}
+                              className="flex items-center text-slate-300 cursor-pointer"
+                            >
+                              <input
+                                type="radio"
+                                name="quality"
+                                value={option.value}
+                                checked={qualityFilter === option.value}
+                                onChange={(e) => setQualityFilter(e.target.value)}
+                                className="rounded mr-2"
+                              />
+                              {option.label}
+                            </label>
+                          ))}
+                        </div>
+                      </div>
+
+                      {/* Reset Button */}
+                      <Button
+                        variant="outline"
+                        className="w-full"
+                        onClick={() => {
+                          setSelectedDomain(null);
+                          setSearchQuery("");
+                          setQualityFilter("all");
+                        }}
+                      >
+                        Reset Filters
+                      </Button>
+                    </div>
+                  </Card>
+                </div>
+
+                {/* Main Content */}
+                <div className="lg:col-span-3">
+                  {/* Sort Options */}
+                  <div className="flex items-center justify-between mb-6">
+                    <h2 className="text-lg font-semibold text-white">
+                      Datasets ({sortedDatasets.length})
+                    </h2>
+                    <div className="flex items-center gap-2">
+                      <span className="text-sm text-slate-400">Sort by:</span>
+                      <select
+                        value={sortBy}
+                        onChange={(e) => setSortBy(e.target.value)}
+                        className="bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm"
+                      >
+                        <option value="popular">Most Popular</option>
+                        <option value="quality">Highest Quality</option>
+                        <option value="delta-gain">Best Delta-Gain</option>
+                        <option value="newest">Newest</option>
+                        <option value="price-low">Price: Low to High</option>
+                        <option value="price-high">Price: High to Low</option>
+                      </select>
+                    </div>
                   </div>
 
-                  <h3 className="text-xl font-bold mb-2">{app.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    by {app.developer}
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {app.description}
-                  </p>
-
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      <span>{app.revenue}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      <span>{app.users} users</span>
-                    </div>
+                  {/* Dataset Grid */}
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    {sortedDatasets.map((dataset) => (
+                      <DatasetCard
+                        key={dataset.id}
+                        dataset={dataset}
+                        isSelected={selectedDatasets.has(dataset.id)}
+                        onToggle={toggleDataset}
+                        onViewDetails={handleViewDetails}
+                      />
+                    ))}
                   </div>
 
-                  <Button className="w-full bg-primary text-primary-foreground hover:opacity-90">
-                    Launch App
-                  </Button>
+                  {/* Empty State */}
+                  {sortedDatasets.length === 0 && (
+                    <div className="text-center py-12">
+                      <Search className="h-12 w-12 text-slate-600 mx-auto mb-4" />
+                      <h3 className="text-lg font-semibold text-slate-300 mb-2">
+                        No datasets found
+                      </h3>
+                      <p className="text-slate-400">
+                        Try adjusting your filters or search query
+                      </p>
+                    </div>
+                  )}
+                </div>
+              </div>
+            </div>
+          </TabsContent>
+
+          {/* dApp Marketplace Tab */}
+          <TabsContent value="dapps">
+            <div className="space-y-8">
+              {/* Stats */}
+              <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4">
+                <Card className="p-6 bg-gradient-card border-border">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <ExternalLink className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Total Apps</p>
+                  </div>
+                  <p className="text-3xl font-bold text-primary">{apps.length}</p>
                 </Card>
-              ))}
-          </div>
-        </div>
-
-        {/* Other Domains */}
-        <div>
-          <h2 className="text-3xl font-bold mb-6 flex items-center gap-2">
-            <Palette className="h-8 w-8 text-secondary" />
-            Other Domains
-          </h2>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {apps
-              .filter((app) => app.category !== "Healthcare")
-              .map((app) => (
-                <Card
-                  key={app.id}
-                  className="p-6 bg-gradient-card border-border hover:border-primary transition-all duration-300 card-hover"
-                >
-                  <div className="flex items-start justify-between mb-4">
-                    <div className={`p-3 rounded-xl bg-${app.color}/20`}>
-                      <app.icon className={`h-8 w-8 text-${app.color}`} />
+                <Card className="p-6 bg-gradient-card border-border">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-secondary/20 rounded-lg">
+                      <Users className="h-5 w-5 text-secondary" />
                     </div>
-                    <Badge className={getStatusColor(app.status)}>
-                      {getStatusLabel(app.status)}
-                    </Badge>
+                    <p className="text-sm text-muted-foreground">Active Users</p>
                   </div>
-
-                  <h3 className="text-xl font-bold mb-2">{app.name}</h3>
-                  <p className="text-sm text-muted-foreground mb-3">
-                    by {app.developer}
-                  </p>
-                  <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
-                    {app.description}
-                  </p>
-
-                  <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
-                    <div className="flex items-center gap-1">
-                      <DollarSign className="h-3 w-3" />
-                      <span>{app.revenue}</span>
-                    </div>
-                    <div className="flex items-center gap-1">
-                      <Users className="h-3 w-3" />
-                      <span>{app.users} users</span>
-                    </div>
-                  </div>
-
-                  <Button 
-                    className="w-full bg-primary text-primary-foreground hover:opacity-90"
-                    disabled={app.status === "prototype"}
-                  >
-                    {app.status === "prototype" ? "Coming Soon" : "Launch App"}
-                  </Button>
+                  <p className="text-3xl font-bold text-secondary">5.2K+</p>
                 </Card>
-              ))}
-          </div>
-        </div>
+                <Card className="p-6 bg-gradient-card border-border">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-primary/20 rounded-lg">
+                      <DollarSign className="h-5 w-5 text-primary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Monthly Revenue</p>
+                  </div>
+                  <p className="text-3xl font-bold text-primary">$490K+</p>
+                </Card>
+                <Card className="p-6 bg-gradient-card border-border">
+                  <div className="flex items-center gap-3 mb-2">
+                    <div className="p-2 bg-secondary/20 rounded-lg">
+                      <TrendingUp className="h-5 w-5 text-secondary" />
+                    </div>
+                    <p className="text-sm text-muted-foreground">Growth Rate</p>
+                  </div>
+                  <p className="text-3xl font-bold text-secondary">+42%</p>
+                </Card>
+              </div>
 
-        {/* Developer CTA */}
-        <Card className="mt-12 p-12 bg-gradient-hero/10 border-primary/30 text-center">
-          <h2 className="text-3xl font-bold mb-4">Build on H1 Labs</h2>
-          <p className="text-xl text-muted-foreground mb-8 max-w-2xl mx-auto">
-            Create your own data enrichment application and earn revenue from the growing H1 ecosystem
-          </p>
-          <Button size="lg" className="bg-gradient-primary border-0 hover:opacity-90">
-            Developer Documentation
-            <ExternalLink className="ml-2 h-5 w-5" />
-          </Button>
-        </Card>
+              {/* Healthcare Apps Section */}
+              <div>
+                <h2 className="text-3xl font-bold mb-6 flex items-center gap-2 text-white">
+                  <Heart className="h-8 w-8 text-primary" />
+                  Healthcare Applications
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {apps
+                    .filter((app) => app.category === "Healthcare")
+                    .map((app) => (
+                      <Card
+                        key={app.id}
+                        className="p-6 bg-gradient-card border-border hover:border-primary transition-all duration-300 card-hover"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className={`p-3 rounded-xl bg-${app.color}/20`}>
+                            <app.icon className={`h-8 w-8 text-${app.color}`} />
+                          </div>
+                          <Badge className={getStatusColor(app.status)}>
+                            {getStatusLabel(app.status)}
+                          </Badge>
+                        </div>
+
+                        <h3 className="text-xl font-bold mb-2 text-white">{app.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          by {app.developer}
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {app.description}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            <span>{app.revenue}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            <span>{app.users} users</span>
+                          </div>
+                        </div>
+
+                        <Button className="w-full bg-primary text-primary-foreground hover:opacity-90">
+                          Launch App
+                        </Button>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+
+              {/* Other Domains */}
+              <div>
+                <h2 className="text-3xl font-bold mb-6 flex items-center gap-2 text-white">
+                  <Palette className="h-8 w-8 text-secondary" />
+                  Other Domains
+                </h2>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                  {apps
+                    .filter((app) => app.category !== "Healthcare")
+                    .map((app) => (
+                      <Card
+                        key={app.id}
+                        className="p-6 bg-gradient-card border-border hover:border-primary transition-all duration-300 card-hover"
+                      >
+                        <div className="flex items-start justify-between mb-4">
+                          <div className={`p-3 rounded-xl bg-${app.color}/20`}>
+                            <app.icon className={`h-8 w-8 text-${app.color}`} />
+                          </div>
+                          <Badge className={getStatusColor(app.status)}>
+                            {getStatusLabel(app.status)}
+                          </Badge>
+                        </div>
+
+                        <h3 className="text-xl font-bold mb-2 text-white">{app.name}</h3>
+                        <p className="text-sm text-muted-foreground mb-3">
+                          by {app.developer}
+                        </p>
+                        <p className="text-sm text-muted-foreground mb-4 line-clamp-2">
+                          {app.description}
+                        </p>
+
+                        <div className="flex items-center gap-4 text-xs text-muted-foreground mb-4">
+                          <div className="flex items-center gap-1">
+                            <DollarSign className="h-3 w-3" />
+                            <span>{app.revenue}</span>
+                          </div>
+                          <div className="flex items-center gap-1">
+                            <Users className="h-3 w-3" />
+                            <span>{app.users} users</span>
+                          </div>
+                        </div>
+
+                        <Button 
+                          className="w-full bg-primary text-primary-foreground hover:opacity-90"
+                          disabled={app.status === "prototype"}
+                        >
+                          {app.status === "prototype" ? "Coming Soon" : "Launch App"}
+                        </Button>
+                      </Card>
+                    ))}
+                </div>
+              </div>
+
+              {/* Developer CTA */}
+              <Card className="bg-gradient-to-r from-blue-600 to-purple-600 border-0 text-white">
+                <div className="p-8 text-center">
+                  <h2 className="text-2xl font-bold mb-2">Build on H1 Labs</h2>
+                  <p className="text-blue-100 mb-6">
+                    Create the next generation of AI-powered dApps with our protocol
+                  </p>
+                  <div className="flex gap-4 justify-center">
+                    <Button
+                      variant="secondary"
+                      size="lg"
+                      className="bg-white text-blue-600 hover:bg-blue-50"
+                    >
+                      Developer Docs
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="lg"
+                      className="border-white text-white hover:bg-white/10"
+                    >
+                      View SDK
+                    </Button>
+                  </div>
+                </div>
+              </Card>
+            </div>
+          </TabsContent>
+        </Tabs>
       </div>
     </div>
   );
