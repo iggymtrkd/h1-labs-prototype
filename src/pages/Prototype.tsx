@@ -34,6 +34,7 @@ export default function Prototype() {
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [faucetBalance, setFaucetBalance] = useState<string | null>(null);
+  const [userLabsBalance, setUserLabsBalance] = useState<string | null>(null);
   
   // Progress tracking
   const [completedSteps, setCompletedSteps] = useState({
@@ -184,6 +185,19 @@ export default function Prototype() {
     }
   };
 
+  const loadUserLabsBalance = async () => {
+    if (!address) return;
+    
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
+      const balance = await labsToken.balanceOf(address);
+      setUserLabsBalance(ethers.formatEther(balance));
+    } catch (error) {
+      console.error('Failed to load LABS balance:', error);
+    }
+  };
+
   const handleMintTestLabs = async () => {
     if (!address) {
       toast.error('Wallet not connected');
@@ -201,6 +215,7 @@ export default function Prototype() {
         addLog('success', 'Testing: Receive LABS', `💰 Faucet claim successful! ${result.amount} LABS transferred to your wallet`, result.txHash);
         toast.success(`Claimed ${result.amount} LABS tokens!`);
         await loadFaucetBalance(); // Refresh balance
+        await loadUserLabsBalance(); // Refresh user balance
       } else {
         addLog('error', 'Testing: Receive LABS', `❌ ${result.error || 'Failed to claim from faucet'}`);
         toast.error(result.error || 'Failed to claim from faucet');
@@ -374,6 +389,7 @@ export default function Prototype() {
   useEffect(() => {
     if (isConnected && address) {
       loadFaucetBalance();
+      loadUserLabsBalance();
     }
   }, [isConnected, address]);
 
@@ -437,12 +453,20 @@ export default function Prototype() {
                 {/* Left: Faucet */}
                 <div className="space-y-3 flex flex-col h-full">
                   <h4 className="text-sm font-semibold text-muted-foreground">Faucet</h4>
-                  {faucetBalance && (
-                    <div className="p-3 rounded-lg bg-muted/50">
-                      <p className="text-sm text-muted-foreground mb-1">Faucet Balance</p>
-                      <p className="text-lg font-bold">{faucetBalance} LABS</p>
-                    </div>
-                  )}
+                  <div className="grid grid-cols-2 gap-3">
+                    {userLabsBalance !== null && (
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <p className="text-sm text-muted-foreground mb-1">Your Balance</p>
+                        <p className="text-lg font-bold">{parseFloat(userLabsBalance).toLocaleString(undefined, { maximumFractionDigits: 2 })} LABS</p>
+                      </div>
+                    )}
+                    {faucetBalance && (
+                      <div className="p-3 rounded-lg bg-muted/50">
+                        <p className="text-sm text-muted-foreground mb-1">Faucet Balance</p>
+                        <p className="text-lg font-bold">{faucetBalance} LABS</p>
+                      </div>
+                    )}
+                  </div>
                   <Button
                     onClick={handleMintTestLabs}
                     disabled={loading === 'mint'}
