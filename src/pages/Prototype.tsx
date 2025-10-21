@@ -58,7 +58,7 @@ export default function Prototype() {
     }
 
     setLoading('stake');
-    addLog('info', 'Stage 1: Stake $LABS', `Attempting to stake ${stakeAmount} LABS tokens...`);
+    addLog('info', 'Stage 1: Stake $LABS', `🎯 Initiating stake of ${stakeAmount} LABS tokens...`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -68,26 +68,30 @@ export default function Prototype() {
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
 
       // Approve Diamond to spend LABS
-      addLog('info', 'Stage 1: Stake $LABS', 'Approving LABS tokens...');
+      addLog('info', 'Stage 1: Stake $LABS', '🔐 Requesting approval for H1Diamond to spend LABS...');
       const approvalTx = await labsToken.approve(
         CONTRACTS.H1Diamond,
         ethers.parseEther(stakeAmount)
       );
+      
+      addLog('info', 'Stage 1: Stake $LABS', '⏳ Waiting for approval confirmation...');
       await approvalTx.wait();
-      addLog('success', 'Stage 1: Stake $LABS', 'LABS tokens approved', approvalTx.hash);
+      addLog('success', 'Stage 1: Stake $LABS', `✅ Approval confirmed! ${stakeAmount} LABS authorized`, approvalTx.hash);
 
       // Stake LABS via LABSCoreFacet
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
-      addLog('info', 'Stage 1: Stake $LABS', 'Staking LABS tokens...');
+      addLog('info', 'Stage 1: Stake $LABS', '📡 Broadcasting stake transaction to LABSCoreFacet...');
       const stakeTx = await diamond.stakeLABS(ethers.parseEther(stakeAmount));
+      
+      addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();
 
-      addLog('success', 'Stage 1: Stake $LABS', `Successfully staked ${stakeAmount} LABS tokens`, stakeTx.hash);
+      addLog('success', 'Stage 1: Stake $LABS', `🎉 Successfully staked ${stakeAmount} LABS! You are now eligible for LabSlot NFTs`, stakeTx.hash);
       toast.success('LABS staked successfully!');
     } catch (error: any) {
       console.error('Stake error:', error);
-      addLog('error', 'Stage 1: Stake $LABS', error.message || 'Failed to stake LABS tokens');
+      addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
       toast.error('Failed to stake LABS');
     } finally {
       setLoading(null);
@@ -106,7 +110,7 @@ export default function Prototype() {
     }
 
     setLoading('createLab');
-    addLog('info', 'Stage 1: Create Lab', `Creating lab: ${labName} (${labSymbol})...`);
+    addLog('info', 'Stage 1: Create Lab', `🏗️ Initiating lab creation: ${labName} (${labSymbol}) in ${labDomain} domain...`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -114,11 +118,18 @@ export default function Prototype() {
 
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
+      addLog('info', 'Stage 1: Create Lab', '📡 Broadcasting lab creation transaction to LABSCoreFacet...');
       const createTx = await diamond.createLab(labName, labSymbol, labDomain);
+      
+      addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation & auto-deploying LabVault contract...');
       const receipt = await createTx.wait();
 
-      addLog('success', 'Stage 1: Create Lab', `Lab "${labName}" created successfully! Vault deployed.`, createTx.hash);
-      toast.success('Lab created successfully!');
+      // Parse events to get lab ID
+      const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string)"));
+      const labId = labCreatedEvent ? ethers.toNumber(labCreatedEvent.topics[1]) : "unknown";
+
+      addLog('success', 'Stage 1: Create Lab', `🎊 Lab "${labName}" (ID: ${labId}) created! H1 Token vault deployed and ready for deposits`, createTx.hash);
+      toast.success(`Lab created with ID: ${labId}!`);
       
       // Reset form
       setLabName('');
@@ -126,7 +137,7 @@ export default function Prototype() {
       setLabDomain('healthcare');
     } catch (error: any) {
       console.error('Create lab error:', error);
-      addLog('error', 'Stage 1: Create Lab', error.message || 'Failed to create lab');
+      addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
       toast.error('Failed to create lab');
     } finally {
       setLoading(null);
@@ -140,21 +151,22 @@ export default function Prototype() {
     }
 
     setLoading('mint');
-    addLog('info', 'Testing: Mint LABS', 'Claiming 10,000 test LABS from faucet...');
+    addLog('info', 'Testing: Mint LABS', '🚰 Requesting 10,000 test LABS from faucet...');
 
     try {
+      addLog('info', 'Testing: Mint LABS', '⏳ Waiting for faucet to process claim...');
       const result = await claimFromFaucet(address);
       
       if (result.success) {
-        addLog('success', 'Testing: Mint LABS', `Successfully claimed ${result.amount} LABS tokens`, result.txHash);
+        addLog('success', 'Testing: Mint LABS', `💰 Faucet claim successful! ${result.amount} LABS transferred to your wallet`, result.txHash);
         toast.success(`Claimed ${result.amount} LABS tokens!`);
       } else {
-        addLog('error', 'Testing: Mint LABS', result.error || 'Failed to claim from faucet');
+        addLog('error', 'Testing: Mint LABS', `❌ ${result.error || 'Failed to claim from faucet'}`);
         toast.error(result.error || 'Failed to claim from faucet');
       }
     } catch (error: any) {
       console.error('Faucet error:', error);
-      addLog('error', 'Testing: Mint LABS', error.message || 'Unknown error');
+      addLog('error', 'Testing: Mint LABS', `❌ ${error.message || 'Unknown error'}`);
       toast.error('Failed to claim from faucet');
     } finally {
       setLoading(null);
