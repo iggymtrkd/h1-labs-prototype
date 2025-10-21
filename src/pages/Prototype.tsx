@@ -97,15 +97,29 @@ export default function Prototype() {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
+      
+      // Check ETH balance
+      const balance = await provider.getBalance(address);
+      const balanceInEth = ethers.formatEther(balance);
+      addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
+      
+      if (balance === 0n) {
+        toast.error('No ETH for gas fees. Please get testnet ETH from the faucet.');
+        addLog('error', 'Stage 1: Stake $LABS', '❌ Insufficient ETH for gas fees');
+        return;
+      }
 
       // Load LABS Token
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
 
-      // Approve Diamond to spend LABS
+      // Approve Diamond to spend LABS with explicit gas settings for Base Sepolia
       addLog('info', 'Stage 1: Stake $LABS', '🔐 Requesting approval for H1Diamond to spend LABS...');
       const approvalTx = await labsToken.approve(
         CONTRACTS.H1Diamond,
-        ethers.parseEther(stakeAmount)
+        ethers.parseEther(stakeAmount),
+        {
+          gasLimit: 100000, // Reasonable limit for approve on Base Sepolia
+        }
       );
       
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Waiting for approval confirmation...');
@@ -116,7 +130,9 @@ export default function Prototype() {
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
       addLog('info', 'Stage 1: Stake $LABS', '📡 Broadcasting stake transaction to LABSCoreFacet...');
-      const stakeTx = await diamond.stakeLABS(ethers.parseEther(stakeAmount));
+      const stakeTx = await diamond.stakeLABS(ethers.parseEther(stakeAmount), {
+        gasLimit: 200000, // Reasonable limit for stakeLABS on Base Sepolia
+      });
       
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();
