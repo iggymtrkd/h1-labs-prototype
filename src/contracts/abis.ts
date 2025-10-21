@@ -16,6 +16,10 @@ export const LABSCoreFacet_ABI = [
   "function getUserLabs(address user) external view returns (uint256[] memory)"
 ];
 
+export const DiamondLoupeFacet_ABI = [
+  "function facetAddress(bytes4) external view returns (address)"
+];
+
 export const DataValidationFacet_ABI = [
   "function createData(uint256 labId, bytes32 dataHash, string calldata domain, address baseModel, uint256 creatorCredentialId) external returns (uint256 dataId)",
   "function submitForReview(uint256 dataId, address supervisor, uint256 supervisorCredentialId) external",
