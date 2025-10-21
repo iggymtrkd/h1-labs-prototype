@@ -242,14 +242,14 @@ export default function Prototype() {
   };
 
   const loadUserLabsBalance = async () => {
-    if (!address || !sdk) return;
+    if (!address) return;
     
     console.log('🔍 Loading balances for wallet:', address);
     console.log('🔍 LABS Token contract:', CONTRACTS.LABSToken);
     
     try {
-      const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
+      // Use RPC provider directly (avoids cross-origin issues in iframe)
+      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
       
       // Get LABS balance from user's wallet (NOT faucet)
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
