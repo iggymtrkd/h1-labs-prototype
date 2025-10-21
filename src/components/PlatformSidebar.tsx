@@ -1,5 +1,5 @@
 import { Link, useLocation } from "react-router-dom";
-import { Home, Rocket, Store, BookOpen, Settings, User, ChevronLeft, ChevronRight } from "lucide-react";
+import { Home, Rocket, Store, BookOpen, Settings, User, ChevronLeft, ChevronRight, Beaker } from "lucide-react";
 import { useState } from "react";
 import logo from "@/assets/logo.png";
 
@@ -23,6 +23,7 @@ export const PlatformSidebar = ({
     { name: "Launchpad", path: "/staking", icon: Rocket },
     { name: "Marketplace", path: "/apps", icon: Store },
     { name: "Litepaper", path: "/whitepaper", icon: BookOpen },
+    { name: "Prototype", path: "/prototype", icon: Beaker },
   ];
 
   const bottomLinks = [

@@ -27,6 +27,7 @@ import FAQ from "./pages/FAQ";
 import DatasetMarketplace from "./pages/DatasetMarketplace";
 import DatasetDetails from "./pages/DatasetDetails";
 import CheckoutCart from "./pages/CheckoutCart";
+import Prototype from "./pages/Prototype";
 
 const queryClient = new QueryClient();
 
@@ -134,6 +135,10 @@ const AppContent = () => {
           <Route
             path="/checkout"
             element={isConnected ? <CheckoutCart /> : <Home onConnect={handleConnectWallet} />}
+          />
+          <Route 
+            path="/prototype" 
+            element={isConnected ? <Prototype /> : <Home onConnect={handleConnectWallet} />} 
           />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
