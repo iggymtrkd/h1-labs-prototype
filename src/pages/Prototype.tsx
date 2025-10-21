@@ -82,7 +82,7 @@ export default function Prototype() {
     }
 
     setLoading('stake');
-    addLog('info', 'Stage 1: Stake $LABS', `🎯 Initiating stake of ${stakeAmount} LABS tokens...`);
+    addLog('info', 'Stage 1: Stake $LABS', `🎯 STARTING: Stake ${stakeAmount} LABS tokens to unlock Lab creation`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -111,7 +111,7 @@ export default function Prototype() {
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();
 
-      addLog('success', 'Stage 1: Stake $LABS', `🎉 Successfully staked ${stakeAmount} LABS! You are now eligible for LabSlot NFTs`, stakeTx.hash);
+      addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! Now eligible to create Labs`, stakeTx.hash);
       toast.success('LABS staked successfully!');
     } catch (error: any) {
       console.error('Stake error:', error);
@@ -134,7 +134,7 @@ export default function Prototype() {
     }
 
     setLoading('createLab');
-    addLog('info', 'Stage 1: Create Lab', `🏗️ Initiating lab creation: ${labName} (${labSymbol}) in ${labDomain} domain...`);
+    addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -152,8 +152,8 @@ export default function Prototype() {
       const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string)"));
       const labId = labCreatedEvent ? ethers.toNumber(labCreatedEvent.topics[1]) : "unknown";
 
-      addLog('success', 'Stage 1: Create Lab', `🎊 Lab "${labName}" (ID: ${labId}) created! H1 Token vault deployed and ready for deposits`, createTx.hash);
-      toast.success(`Lab created with ID: ${labId}!`);
+      addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}) with vault deployed!`, createTx.hash);
+      toast.success(`Step 1 Complete! Lab created with ID: ${labId}`);
       setCompletedSteps(prev => ({ ...prev, step1: true }));
       
       // Reset form
@@ -224,7 +224,7 @@ export default function Prototype() {
     }
 
     setLoading('createData');
-    addLog('info', 'Stage 2: Create Data', `📊 Initiating dataset creation for lab ${dataLabId}...`);
+    addLog('info', 'Stage 2: Create Data', `📊 STARTING: Create dataset for Lab ID ${dataLabId} in ${dataDomain}`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -251,8 +251,8 @@ export default function Prototype() {
       const dataCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("DataCreated(uint256,uint256,bytes32,string,address)"));
       const dataId = dataCreatedEvent ? ethers.toNumber(dataCreatedEvent.topics[1]) : "unknown";
 
-      addLog('success', 'Stage 2: Create Data', `✅ Dataset created! Data ID: ${dataId}. Ready for validation & training`, createTx.hash);
-      toast.success(`Data created with ID: ${dataId}!`);
+      addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: Dataset created (ID: ${dataId}) and recorded onchain!`, createTx.hash);
+      toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
       setCompletedSteps(prev => ({ ...prev, step2: true }));
       
       setDataContent('');
@@ -272,7 +272,7 @@ export default function Prototype() {
     }
 
     setLoading('createCredential');
-    addLog('info', 'Stage 3: Credentials', '🎓 Creating user ID and issuing credential...');
+    addLog('info', 'Stage 3: Credentials', `🎓 STARTING: Issue "${credentialType}" credential in ${credentialDomain}`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -313,8 +313,8 @@ export default function Prototype() {
       const credIssuedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("CredentialIssued(uint256,uint256,string,string)"));
       const credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[2]) : "unknown";
 
-      addLog('success', 'Stage 3: Credentials', `🎉 Credential issued! Credential ID: ${credentialId}. Scholar can now validate data`, issueTx.hash);
-      toast.success(`Credential issued with ID: ${credentialId}!`);
+      addLog('success', 'Stage 3: Credentials', `✅ STEP 3 COMPLETE: Credential issued (ID: ${credentialId}) - Scholar verified!`, issueTx.hash);
+      toast.success(`Step 3 Complete! Credential ID: ${credentialId}`);
       setCompletedSteps(prev => ({ ...prev, step3: true }));
     } catch (error: any) {
       console.error('Credential error:', error);
@@ -332,7 +332,7 @@ export default function Prototype() {
     }
 
     setLoading('purchase');
-    addLog('info', 'Stage 4: Purchase Dataset', `💰 Initiating dataset purchase (${purchaseAmount} ETH)...`);
+    addLog('info', 'Stage 4: Purchase Dataset', `💰 STARTING: Purchase Dataset ID ${purchaseDatasetId} for ${purchaseAmount} ETH`);
 
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -357,8 +357,8 @@ export default function Prototype() {
       addLog('info', 'Stage 4: Purchase Dataset', '⏳ Mining transaction & distributing revenue to all stakeholders...');
       await purchaseTx.wait();
 
-      addLog('success', 'Stage 4: Purchase Dataset', `🎊 Purchase complete! Revenue distributed. H1 token buyback initiated`, purchaseTx.hash);
-      toast.success('Dataset purchased successfully!');
+      addLog('success', 'Stage 4: Purchase Dataset', `✅ STEP 4 COMPLETE: Dataset purchased! Revenue distributed + H1 buyback executed!`, purchaseTx.hash);
+      toast.success('Step 4 Complete! All stakeholders paid!');
       setCompletedSteps(prev => ({ ...prev, step4: true }));
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -378,6 +378,17 @@ export default function Prototype() {
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
   const progressPercentage = (completedCount / 4) * 100;
   const allStepsComplete = completedCount === 4;
+
+  const handleResetFlow = () => {
+    setCompletedSteps({
+      step1: false,
+      step2: false,
+      step3: false,
+      step4: false
+    });
+    setLogs([]);
+    toast.success('Flow reset! Ready to start again.');
+  };
 
   const getLogIcon = (type: LogEntry['type']) => {
     switch (type) {
@@ -670,7 +681,19 @@ export default function Prototype() {
           {/* Activity Sidebar */}
           <div className="lg:col-span-1">
             <Card className="p-6 bg-gradient-card sticky top-6">
-              <h3 className="font-bold mb-4">Activity Log</h3>
+              <div className="flex items-center justify-between mb-4">
+                <h3 className="font-bold">Activity Log</h3>
+                {logs.length > 0 && (
+                  <Button 
+                    variant="ghost" 
+                    size="sm"
+                    onClick={handleResetFlow}
+                    className="text-xs"
+                  >
+                    Reset Flow
+                  </Button>
+                )}
+              </div>
               <ScrollArea className="h-[calc(100vh-200px)]">
                 {logs.length === 0 ? (
                   <p className="text-sm text-muted-foreground text-center py-8">
@@ -684,7 +707,13 @@ export default function Prototype() {
                           {getLogIcon(log.type)}
                           <div className="flex-1 min-w-0">
                             <p className="text-sm font-medium">{log.stage}</p>
-                            <p className="text-xs text-muted-foreground break-words">{log.message}</p>
+                            <p className={`text-xs break-words ${
+                              log.message.includes('COMPLETE') || log.message.includes('STARTING') 
+                                ? 'font-bold text-foreground' 
+                                : 'text-muted-foreground'
+                            }`}>
+                              {log.message}
+                            </p>
                             {log.txHash && (
                               <a
                                 href={`${CONTRACTS.BLOCK_EXPLORER}/tx/${log.txHash}`}
