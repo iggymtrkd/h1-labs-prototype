@@ -435,7 +435,7 @@ export default function Prototype() {
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 {/* Left: Faucet */}
-                <div className="space-y-3">
+                <div className="space-y-3 flex flex-col h-full">
                   <h4 className="text-sm font-semibold text-muted-foreground">Faucet</h4>
                   {faucetBalance && (
                     <div className="p-3 rounded-lg bg-muted/50">
@@ -455,9 +455,9 @@ export default function Prototype() {
                 </div>
 
                 {/* Right: How it Works */}
-                <div className="space-y-3">
+                <div className="space-y-3 flex flex-col h-full">
                   <h4 className="text-sm font-semibold text-muted-foreground">How it Works</h4>
-                  <div className="p-3 rounded-lg bg-muted/50 space-y-2">
+                  <div className="p-3 rounded-lg bg-muted/50 space-y-2 flex-1 flex flex-col justify-between">
                     <p className="text-xs text-muted-foreground">
                       Follow the 4-step protocol flow to test the complete H1 ecosystem
                     </p>
