@@ -186,7 +186,7 @@ export default function Prototype() {
   };
 
   const loadUserLabsBalance = async () => {
-    if (!address) return;
+    if (!address || !window.ethereum) return;
     
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
@@ -463,7 +463,7 @@ export default function Prototype() {
                     {faucetBalance && (
                       <div className="p-3 rounded-lg bg-muted/50">
                         <p className="text-sm text-muted-foreground mb-1">Faucet Balance</p>
-                        <p className="text-lg font-bold">{faucetBalance} LABS</p>
+                        <p className="text-lg font-bold">{parseFloat(faucetBalance).toLocaleString(undefined, { maximumFractionDigits: 0 })} LABS</p>
                       </div>
                     )}
                   </div>

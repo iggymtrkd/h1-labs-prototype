@@ -2,3 +2,6 @@ project_id = "svtrdycanaflrfbfzuau"
 
 [functions.deploy-uniswap-pool]
 verify_jwt = false
+
+[functions.faucet]
+verify_jwt = false

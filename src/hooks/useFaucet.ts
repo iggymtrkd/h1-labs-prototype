@@ -1,6 +1,6 @@
 // Faucet Hook for H1 Labs (Testnet only)
 import { useState } from 'react';
-import { API_CONFIG } from '../config/contracts';
+import { supabase } from '@/integrations/supabase/client';
 
 export interface FaucetStatus {
   canClaim: boolean;
@@ -26,15 +26,14 @@ export function useFaucet() {
   const checkFaucetStatus = async (address: string): Promise<FaucetStatus | null> => {
     setIsChecking(true);
     try {
-      const response = await fetch(
-        `${API_CONFIG.BASE_URL}/api/faucet/status/${address}`
-      );
+      const { data, error } = await supabase.functions.invoke(`faucet/status/${address}`, {
+        method: 'GET',
+      });
 
-      if (!response.ok) {
-        throw new Error('Failed to check faucet status');
+      if (error) {
+        throw error;
       }
 
-      const data = await response.json();
       return data;
     } catch (error: any) {
       console.error('Error checking faucet status:', error);
@@ -50,18 +49,17 @@ export function useFaucet() {
   const claimFromFaucet = async (address: string): Promise<ClaimResult> => {
     setIsClaiming(true);
     try {
-      const response = await fetch(`${API_CONFIG.BASE_URL}/api/faucet/claim`, {
+      const { data, error } = await supabase.functions.invoke('faucet/claim', {
         method: 'POST',
-        headers: {
-          'Content-Type': 'application/json',
-        },
-        body: JSON.stringify({ walletAddress: address }),
+        body: { walletAddress: address },
       });
 
-      const data = await response.json();
+      if (error) {
+        throw error;
+      }
 
-      if (!response.ok) {
-        throw new Error(data.error || 'Failed to claim from faucet');
+      if (data.error) {
+        throw new Error(data.error);
       }
 
       return {
