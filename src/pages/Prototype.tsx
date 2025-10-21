@@ -50,6 +50,7 @@ interface LogEntry {
 
 export default function Prototype() {
   const navigate = useNavigate();
+  // User's connected Base wallet (NOT the faucet wallet)
   const { address, isConnected, connectWallet, sdk } = useBaseAccount();
   const { claimFromFaucet, checkFaucetStatus, isClaiming } = useFaucet();
   const [logs, setLogs] = useState<LogEntry[]>([]);
@@ -247,12 +248,12 @@ export default function Prototype() {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       
-      // Get LABS balance
+      // Get LABS balance from user's wallet (NOT faucet)
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
       const balance = await labsToken.balanceOf(address);
       setUserLabsBalance(ethers.formatEther(balance));
       
-      // Get ETH balance
+      // Get ETH balance from user's wallet
       const ethBalanceRaw = await provider.getBalance(address);
       setEthBalance(ethers.formatEther(ethBalanceRaw));
       
@@ -538,21 +539,21 @@ export default function Prototype() {
           <Badge className="mt-2 bg-secondary">{CONTRACTS.H1Diamond}</Badge>
         </div>
 
-        {/* Wallet Info */}
+        {/* Wallet Info - Shows USER'S Base Wallet (not faucet) */}
         {isConnected && address && (
           <Card className="mb-6 bg-card/50 backdrop-blur border-primary/20">
             <div className="p-4">
               <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">Connected Wallet</p>
+                  <p className="text-xs text-muted-foreground">Your Base Wallet</p>
                   <p className="font-mono text-sm break-all">{address}</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">ETH Balance</p>
+                  <p className="text-xs text-muted-foreground">Your ETH Balance</p>
                   <p className="font-mono text-sm">{parseFloat(ethBalance).toFixed(4)} ETH</p>
                 </div>
                 <div className="space-y-1">
-                  <p className="text-xs text-muted-foreground">LABS Balance</p>
+                  <p className="text-xs text-muted-foreground">Your LABS Balance</p>
                   <p className="font-mono text-sm">{userLabsBalance ? parseFloat(userLabsBalance).toFixed(2) : '0.00'} LABS</p>
                 </div>
                 <div className="space-y-1">
