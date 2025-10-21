@@ -125,43 +125,19 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner();
       
-      // Check ETH balance
+      // Log balances for reference
       const balance = await provider.getBalance(address);
       const balanceInEth = ethers.formatEther(balance);
       addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
-      
-      if (parseFloat(balanceInEth) < 0.001) {
-        toast.error('Insufficient ETH for gas fees. Please get testnet ETH from the faucet.');
-        addLog('error', 'Stage 1: Stake $LABS', '❌ Need at least 0.001 ETH for gas fees');
-        return;
-      }
 
-      // Check LABS balance before attempting to stake
+      // Load LABS Token
       const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-      const labsBalance = await labsToken.balanceOf(address);
-      const labsBalanceFormatted = ethers.formatEther(labsBalance);
-      addLog('info', 'Stage 1: Stake $LABS', `💰 LABS balance: ${labsBalanceFormatted} LABS`);
       
       const stakeAmountBN = ethers.parseEther(stakeAmount);
-      console.log('🔍 Stake validation:', {
-        balance: labsBalance.toString(),
-        stakeAmount: stakeAmountBN.toString(),
-        hasSufficient: labsBalance >= stakeAmountBN
-      });
-      
-      if (labsBalance < stakeAmountBN) {
-        toast.error(`Insufficient LABS balance. You have ${labsBalanceFormatted} LABS`);
-        addLog('error', 'Stage 1: Stake $LABS', `❌ Insufficient LABS: need ${stakeAmount}, have ${labsBalanceFormatted}`);
-        return;
-      }
+      console.log('🔍 Attempting to stake:', stakeAmountBN.toString(), 'LABS');
 
       // Approve Diamond to spend LABS (let wallet estimate gas)
       addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
-      console.log('🔍 Approval params:', {
-        spender: CONTRACTS.H1Diamond,
-        amount: stakeAmountBN.toString()
-      });
-      
       const approvalTx = await labsToken.approve(
         CONTRACTS.H1Diamond,
         stakeAmountBN
