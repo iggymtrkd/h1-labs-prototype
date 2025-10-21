@@ -112,12 +112,12 @@ contract CredentialFacet {
     string calldata domain,
     bytes32 offChainVerificationHash
   ) external returns (uint256 credentialId) {
+    LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+    
     if (hs.userIdToAddress[userId] == address(0)) revert InvalidUserId();
     if (bytes(credentialType).length == 0) revert InvalidCredentialType();
     if (bytes(domain).length == 0) revert InvalidDomain();
     if (offChainVerificationHash == bytes32(0)) revert InvalidCredentialId();
-
-    LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     
     // Generate credentialId
     credentialId = ++hs.nextCredentialId;
@@ -326,3 +326,4 @@ contract CredentialFacet {
     return hs.credentials[credentialId].status;
   }
 }
+
