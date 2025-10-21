@@ -6,7 +6,7 @@ import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
-import { useWallet } from '@/hooks/useWallet';
+import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -25,7 +25,7 @@ interface LogEntry {
 
 export default function Prototype() {
   const navigate = useNavigate();
-  const { address, isConnected, connectWallet } = useWallet();
+  const { address, isConnected, connectWallet } = useBaseAccount();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
 
@@ -170,37 +170,23 @@ export default function Prototype() {
         <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
           {/* Main Testing Interface */}
           <div className="lg:col-span-2 space-y-6">
-            {/* Connection Status */}
-            {!isConnected && (
-              <Card className="p-6 bg-gradient-card border-accent">
-                <div className="flex items-center justify-between">
-                  <div>
-                    <h3 className="font-bold mb-1">Connect Wallet</h3>
-                    <p className="text-sm text-muted-foreground">Connect to Base Sepolia to start testing</p>
-                  </div>
-                  <Button onClick={connectWallet}>Connect Wallet</Button>
-                </div>
-              </Card>
-            )}
 
             {/* Testing Controls */}
-            {isConnected && (
-              <Card className="p-6 bg-gradient-card">
-                <h3 className="font-bold mb-4 flex items-center gap-2">
-                  <Beaker className="h-5 w-5 text-primary" />
-                  Testing Utilities
-                </h3>
-                <Button
-                  onClick={handleMintTestLabs}
-                  disabled={loading === 'mint'}
-                  className="w-full"
-                  variant="outline"
-                >
-                  {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Mint 10,000 Test LABS
-                </Button>
-              </Card>
-            )}
+            <Card className="p-6 bg-gradient-card">
+              <h3 className="font-bold mb-4 flex items-center gap-2">
+                <Beaker className="h-5 w-5 text-primary" />
+                Testing Utilities
+              </h3>
+              <Button
+                onClick={handleMintTestLabs}
+                disabled={loading === 'mint'}
+                className="w-full"
+                variant="outline"
+              >
+                {loading === 'mint' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                Mint 10,000 Test LABS
+              </Button>
+            </Card>
 
             {/* Stage 1: Stake LABS & Create Lab */}
             <Card className="p-6 bg-gradient-card border-primary/20">
@@ -224,12 +210,11 @@ export default function Prototype() {
                     value={stakeAmount}
                     onChange={(e) => setStakeAmount(e.target.value)}
                     placeholder="1000"
-                    disabled={!isConnected}
                   />
                 </div>
                 <Button
                   onClick={handleStakeLabs}
-                  disabled={loading === 'stake' || !isConnected}
+                  disabled={loading === 'stake'}
                   className="w-full"
                 >
                   {loading === 'stake' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
@@ -246,7 +231,6 @@ export default function Prototype() {
                       value={labName}
                       onChange={(e) => setLabName(e.target.value)}
                       placeholder="CardioLab"
-                      disabled={!isConnected}
                     />
                   </div>
                   <div>
@@ -256,7 +240,6 @@ export default function Prototype() {
                       value={labSymbol}
                       onChange={(e) => setLabSymbol(e.target.value)}
                       placeholder="CARDIO"
-                      disabled={!isConnected}
                     />
                   </div>
                   <div>
@@ -266,12 +249,11 @@ export default function Prototype() {
                       value={labDomain}
                       onChange={(e) => setLabDomain(e.target.value)}
                       placeholder="healthcare"
-                      disabled={!isConnected}
                     />
                   </div>
                   <Button
                     onClick={handleCreateLab}
-                    disabled={loading === 'createLab' || !isConnected}
+                    disabled={loading === 'createLab'}
                     className="w-full"
                   >
                     {loading === 'createLab' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
