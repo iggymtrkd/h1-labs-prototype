@@ -7,8 +7,9 @@ import { Label } from '@/components/ui/label';
 import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { useWallet } from '@/hooks/useWallet';
-import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info } from 'lucide-react';
+import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI } from '@/contracts/abis';
@@ -23,6 +24,7 @@ interface LogEntry {
 }
 
 export default function Prototype() {
+  const navigate = useNavigate();
   const { address, isConnected, connectWallet } = useWallet();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
@@ -148,6 +150,16 @@ export default function Prototype() {
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
+        {/* Back Button */}
+        <Button
+          variant="ghost"
+          onClick={() => navigate('/get-started')}
+          className="mb-6"
+        >
+          <ArrowLeft className="h-4 w-4 mr-2" />
+          Back to Choice
+        </Button>
+
         {/* Header */}
         <div className="mb-8">
           <h1 className="text-4xl font-bold mb-2 text-primary font-mono">The H1 Protocol</h1>

@@ -28,6 +28,7 @@ import DatasetMarketplace from "./pages/DatasetMarketplace";
 import DatasetDetails from "./pages/DatasetDetails";
 import CheckoutCart from "./pages/CheckoutCart";
 import Prototype from "./pages/Prototype";
+import GetStarted from "./pages/GetStarted";
 
 const queryClient = new QueryClient();
 
@@ -35,6 +36,8 @@ const AppContent = () => {
   const navigate = useNavigate();
   const location = useLocation();
   const isHomePage = location.pathname === "/";
+  const isGetStartedPage = location.pathname === "/get-started";
+  const isPrototypePage = location.pathname === "/prototype";
   const { isConnected, address, labsBalance, connectWallet } = useBaseAccount();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
@@ -45,7 +48,7 @@ const AppContent = () => {
     await connectWallet();
     // Small delay to ensure state updates before navigation
     setTimeout(() => {
-      navigate("/dashboard");
+      navigate("/get-started");
     }, 100);
   };
 
@@ -66,8 +69,8 @@ const AppContent = () => {
         }}
       />
 
-      {/* Platform sidebar (desktop only, when connected and not on home page) */}
-      {isConnected && !isHomePage && (
+      {/* Platform sidebar (desktop only, when connected and not on home/choice/prototype page) */}
+      {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && (
         <PlatformSidebar
           address={address} 
           labsBalance={labsBalance}
@@ -81,12 +84,16 @@ const AppContent = () => {
 
       {/* Main content area */}
       <main className={`flex-1 transition-all duration-300 ${
-        isConnected && !isHomePage
+        isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage
           ? `mb-20 md:mb-0 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}` 
           : ""
       }`}>
         <Routes>
           <Route path="/" element={<Home onConnect={handleConnectWallet} showHowItWorksDialog={showHowItWorks} onDialogClose={() => setShowHowItWorks(false)} />} />
+          <Route 
+            path="/get-started" 
+            element={isConnected ? <GetStarted /> : <Home onConnect={handleConnectWallet} />} 
+          />
           <Route 
             path="/dashboard" 
             element={isConnected ? <Dashboard /> : <Home onConnect={handleConnectWallet} />} 
@@ -146,8 +153,8 @@ const AppContent = () => {
         </Routes>
       </main>
 
-      {/* Mobile bottom navigation (when connected and not on home page) */}
-      {isConnected && !isHomePage && <MobileBottomNav />}
+      {/* Mobile bottom navigation (when connected and not on home/choice/prototype page) */}
+      {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && <MobileBottomNav />}
     </div>
   );
 };
