@@ -13,7 +13,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
-import { LABSToken_ABI, LABSCoreFacet_ABI } from '@/contracts/abis';
+import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI } from '@/contracts/abis';
 
 interface LogEntry {
   id: string;
@@ -38,6 +38,20 @@ export default function Prototype() {
   const [labName, setLabName] = useState('');
   const [labSymbol, setLabSymbol] = useState('');
   const [labDomain, setLabDomain] = useState('healthcare');
+
+  // Step 2: Create Data (Devs)
+  const [dataLabId, setDataLabId] = useState('1');
+  const [dataContent, setDataContent] = useState('');
+  const [dataDomain, setDataDomain] = useState('healthcare');
+
+  // Step 3: Credentials (Scholars)
+  const [credentialType, setCredentialType] = useState('Medical Degree');
+  const [credentialDomain, setCredentialDomain] = useState('healthcare');
+
+  // Step 4: Purchase Dataset (AI Companies)
+  const [purchaseDatasetId, setPurchaseDatasetId] = useState('1');
+  const [purchaseLabId, setPurchaseLabId] = useState('1');
+  const [purchaseAmount, setPurchaseAmount] = useState('1');
 
   const addLog = (type: LogEntry['type'], stage: string, message: string, txHash?: string) => {
     const log: LogEntry = {
@@ -173,6 +187,160 @@ export default function Prototype() {
     }
   };
 
+  const handleCreateData = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!dataContent || !dataDomain) {
+      toast.error('Please fill in all data details');
+      return;
+    }
+
+    setLoading('createData');
+    addLog('info', 'Stage 2: Create Data', `📊 Initiating dataset creation for lab ${dataLabId}...`);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      // Generate data hash from content
+      const dataHash = ethers.keccak256(ethers.toUtf8Bytes(dataContent));
+      
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+
+      addLog('info', 'Stage 2: Create Data', '📡 Broadcasting data creation to DataValidationFacet...');
+      const createTx = await diamond.createData(
+        dataLabId,
+        dataHash,
+        dataDomain,
+        ethers.ZeroAddress, // baseModel (not required for demo)
+        0 // creatorCredentialId (0 = none)
+      );
+      
+      addLog('info', 'Stage 2: Create Data', '⏳ Mining transaction & recording data provenance onchain...');
+      const receipt = await createTx.wait();
+
+      // Parse DataCreated event
+      const dataCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("DataCreated(uint256,uint256,bytes32,string,address)"));
+      const dataId = dataCreatedEvent ? ethers.toNumber(dataCreatedEvent.topics[1]) : "unknown";
+
+      addLog('success', 'Stage 2: Create Data', `✅ Dataset created! Data ID: ${dataId}. Ready for validation & training`, createTx.hash);
+      toast.success(`Data created with ID: ${dataId}!`);
+      
+      setDataContent('');
+    } catch (error: any) {
+      console.error('Create data error:', error);
+      addLog('error', 'Stage 2: Create Data', `❌ ${error.message || 'Failed to create data'}`);
+      toast.error('Failed to create data');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleCreateCredential = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    setLoading('createCredential');
+    addLog('info', 'Stage 3: Credentials', '🎓 Creating user ID and issuing credential...');
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+      const userAddress = await signer.getAddress();
+
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
+
+      // Check if user already has an ID
+      addLog('info', 'Stage 3: Credentials', '🔍 Checking for existing user ID...');
+      let userId = await diamond.getUserId(userAddress);
+
+      if (userId === 0n) {
+        addLog('info', 'Stage 3: Credentials', '📡 Creating new user ID...');
+        const createUserTx = await diamond.createUserId(userAddress, credentialDomain);
+        await createUserTx.wait();
+        userId = await diamond.getUserId(userAddress);
+        addLog('success', 'Stage 3: Credentials', `✅ User ID created: ${userId}`, createUserTx.hash);
+      } else {
+        addLog('info', 'Stage 3: Credentials', `📋 Existing user ID found: ${userId}`);
+      }
+
+      // Generate verification hash
+      const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`${credentialType}-${Date.now()}`));
+
+      addLog('info', 'Stage 3: Credentials', '📡 Broadcasting credential issuance to CredentialFacet...');
+      const issueTx = await diamond.issueCredential(
+        userId,
+        credentialType,
+        credentialDomain,
+        verificationHash
+      );
+
+      addLog('info', 'Stage 3: Credentials', '⏳ Mining transaction & recording credential onchain...');
+      const receipt = await issueTx.wait();
+
+      // Parse CredentialIssued event
+      const credIssuedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("CredentialIssued(uint256,uint256,string,string)"));
+      const credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[2]) : "unknown";
+
+      addLog('success', 'Stage 3: Credentials', `🎉 Credential issued! Credential ID: ${credentialId}. Scholar can now validate data`, issueTx.hash);
+      toast.success(`Credential issued with ID: ${credentialId}!`);
+    } catch (error: any) {
+      console.error('Credential error:', error);
+      addLog('error', 'Stage 3: Credentials', `❌ ${error.message || 'Failed to issue credential'}`);
+      toast.error('Failed to issue credential');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handlePurchaseDataset = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    setLoading('purchase');
+    addLog('info', 'Stage 4: Purchase Dataset', `💰 Initiating dataset purchase (${purchaseAmount} ETH)...`);
+
+    try {
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const signer = await provider.getSigner();
+
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, RevenueFacet_ABI, signer);
+
+      // Get revenue breakdown
+      const amountWei = ethers.parseEther(purchaseAmount);
+      const breakdown = await diamond.getRevenueBreakdown(amountWei);
+      
+      addLog('info', 'Stage 4: Purchase Dataset', `📊 Revenue split: Buyback=${ethers.formatEther(breakdown[0])} ETH, Dev=${ethers.formatEther(breakdown[1])} ETH, Creator=${ethers.formatEther(breakdown[2])} ETH, Scholar=${ethers.formatEther(breakdown[3])} ETH, Treasury=${ethers.formatEther(breakdown[4])} ETH`);
+
+      addLog('info', 'Stage 4: Purchase Dataset', '📡 Broadcasting purchase to RevenueFacet...');
+      const purchaseTx = await diamond.batchDistributeRevenue(
+        [purchaseDatasetId],
+        [purchaseLabId],
+        [amountWei],
+        { value: amountWei }
+      );
+
+      addLog('info', 'Stage 4: Purchase Dataset', '⏳ Mining transaction & distributing revenue to all stakeholders...');
+      await purchaseTx.wait();
+
+      addLog('success', 'Stage 4: Purchase Dataset', `🎊 Purchase complete! Revenue distributed. H1 token buyback initiated`, purchaseTx.hash);
+      toast.success('Dataset purchased successfully!');
+    } catch (error: any) {
+      console.error('Purchase error:', error);
+      addLog('error', 'Stage 4: Purchase Dataset', `❌ ${error.message || 'Failed to purchase dataset'}`);
+      toast.error('Failed to purchase dataset');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const getLogIcon = (type: LogEntry['type']) => {
     switch (type) {
       case 'success':
@@ -300,48 +468,155 @@ export default function Prototype() {
               </div>
             </Card>
 
-            {/* Stage 2: Devs (Coming Soon) */}
-            <Card className="p-6 bg-gradient-card border-secondary/20 opacity-60">
-              <div className="flex items-start gap-4">
+            {/* Stage 2: Devs */}
+            <Card className="p-6 bg-gradient-card border-secondary/20">
+              <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 rounded-lg bg-secondary/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl font-bold text-secondary">2</span>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold mb-1">Devs</h2>
-                  <p className="text-sm text-muted-foreground">DualIntelligenceSDK (soon) & DataValidationFacet.sol</p>
-                  <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Apps</Badge>
-                  <p className="text-sm text-muted-foreground mt-2">Coming soon...</p>
+                  <p className="text-sm text-muted-foreground">DataValidationFacet.sol</p>
+                  <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="dataLabId">Lab ID</Label>
+                  <Input
+                    id="dataLabId"
+                    type="number"
+                    value={dataLabId}
+                    onChange={(e) => setDataLabId(e.target.value)}
+                    placeholder="1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dataContent">Data Content</Label>
+                  <Input
+                    id="dataContent"
+                    value={dataContent}
+                    onChange={(e) => setDataContent(e.target.value)}
+                    placeholder="Patient X-ray scan data..."
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="dataDomain">Domain</Label>
+                  <Input
+                    id="dataDomain"
+                    value={dataDomain}
+                    onChange={(e) => setDataDomain(e.target.value)}
+                    placeholder="healthcare"
+                  />
+                </div>
+                <Button
+                  onClick={handleCreateData}
+                  disabled={loading === 'createData'}
+                  className="w-full"
+                >
+                  {loading === 'createData' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Create Dataset
+                </Button>
               </div>
             </Card>
 
-            {/* Stage 3: Scholars (Coming Soon) */}
-            <Card className="p-6 bg-gradient-card border-accent/20 opacity-60">
-              <div className="flex items-start gap-4">
+            {/* Stage 3: Scholars */}
+            <Card className="p-6 bg-gradient-card border-accent/20">
+              <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl font-bold text-accent">3</span>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold mb-1">Scholars</h2>
                   <p className="text-sm text-muted-foreground">CredentialFacet.sol</p>
-                  <Badge className="mt-2 bg-accent/20 text-accent">Create, Enrich, Annotate and Supervise</Badge>
-                  <p className="text-sm text-muted-foreground mt-2">Coming soon...</p>
+                  <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="credentialType">Credential Type</Label>
+                  <Input
+                    id="credentialType"
+                    value={credentialType}
+                    onChange={(e) => setCredentialType(e.target.value)}
+                    placeholder="Medical Degree"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="credentialDomain">Domain</Label>
+                  <Input
+                    id="credentialDomain"
+                    value={credentialDomain}
+                    onChange={(e) => setCredentialDomain(e.target.value)}
+                    placeholder="healthcare"
+                  />
+                </div>
+                <Button
+                  onClick={handleCreateCredential}
+                  disabled={loading === 'createCredential'}
+                  className="w-full"
+                >
+                  {loading === 'createCredential' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Issue Credential
+                </Button>
               </div>
             </Card>
 
-            {/* Stage 4: AI Companies (Coming Soon) */}
-            <Card className="p-6 bg-gradient-card border-primary/20 opacity-60">
-              <div className="flex items-start gap-4">
+            {/* Stage 4: AI Companies */}
+            <Card className="p-6 bg-gradient-card border-primary/20">
+              <div className="flex items-start gap-4 mb-4">
                 <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl font-bold text-primary">4</span>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold mb-1">AI Companies</h2>
                   <p className="text-sm text-muted-foreground">RevenueFacet.sol</p>
-                  <Badge className="mt-2 bg-primary/20 text-primary">Purchase Datasets (Buyback of H1 tokens)</Badge>
-                  <p className="text-sm text-muted-foreground mt-2">Coming soon...</p>
+                  <Badge className="mt-2 bg-primary/20 text-primary">Purchase Datasets (Buyback H1)</Badge>
                 </div>
+              </div>
+
+              <div className="space-y-4">
+                <div>
+                  <Label htmlFor="purchaseDatasetId">Dataset ID</Label>
+                  <Input
+                    id="purchaseDatasetId"
+                    type="number"
+                    value={purchaseDatasetId}
+                    onChange={(e) => setPurchaseDatasetId(e.target.value)}
+                    placeholder="1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="purchaseLabId">Lab ID</Label>
+                  <Input
+                    id="purchaseLabId"
+                    type="number"
+                    value={purchaseLabId}
+                    onChange={(e) => setPurchaseLabId(e.target.value)}
+                    placeholder="1"
+                  />
+                </div>
+                <div>
+                  <Label htmlFor="purchaseAmount">Amount (ETH)</Label>
+                  <Input
+                    id="purchaseAmount"
+                    type="number"
+                    step="0.01"
+                    value={purchaseAmount}
+                    onChange={(e) => setPurchaseAmount(e.target.value)}
+                    placeholder="1.0"
+                  />
+                </div>
+                <Button
+                  onClick={handlePurchaseDataset}
+                  disabled={loading === 'purchase'}
+                  className="w-full"
+                >
+                  {loading === 'purchase' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                  Purchase Dataset
+                </Button>
               </div>
             </Card>
           </div>
