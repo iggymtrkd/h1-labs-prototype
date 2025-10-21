@@ -18,6 +18,61 @@ library LibH1Storage {
     string domain;          // slot 4+: dynamic
   }
 
+  /// @notice Data record with provenance and human supervision metadata
+  /// @dev Tracks creator, supervisor, content hash, and delta-gain for revenue attribution
+  struct DataRecord {
+    address creator;                // 20 bytes: who created the data
+    address supervisor;             // 20 bytes: who reviewed/approved
+    address pendingSupervisor;      // 20 bytes: supervisor awaiting approval
+    address baseModel;              // 20 bytes: model used to generate
+    uint256 labId;                  // 32 bytes: associated lab
+    bytes32 dataHash;               // 32 bytes: IPFS/Arweave content hash
+    string domain;                  // variable: data domain (medical, research, etc)
+    uint256 status;                 // 32 bytes: 0=PENDING, 1=APPROVED, 2=REJECTED
+    uint256 deltaGainScore;         // 32 bytes: improvement vs base model (0-10000 bps)
+    bytes32 approvalSignature;      // 32 bytes: supervisor's signature hash
+    uint256 createdAt;              // 32 bytes: creation timestamp
+    uint256 approvedAt;             // 32 bytes: approval timestamp (0 if not approved)
+  }
+
+  /// @notice Attribution record for revenue distribution
+  /// @dev Links creator, supervisor, and delta-gain to data ID for correct splits
+  struct Attribution {
+    address creator;                // 20 bytes: data creator
+    address supervisor;             // 20 bytes: human supervisor
+    uint256 labId;                  // 32 bytes: lab ID
+    uint256 deltaGainScore;         // 32 bytes: delta-gain percentage (bps)
+    uint256 revenueShare;           // 32 bytes: revenue allocated to data
+    uint256 recordedAt;             // 32 bytes: when recorded
+  }
+
+  /// @notice User credential record
+  /// @dev Tracks individual credentials issued to users with verification status
+  struct Credential {
+    uint256 credentialId;           // 32 bytes: unique credential ID
+    address holder;                 // 20 bytes: credential holder address
+    uint256 userId;                 // 32 bytes: associated user ID
+    address issuer;                 // 20 bytes: organization/body that issued
+    string credentialType;          // variable: type (physician, engineer, etc)
+    string domain;                  // variable: domain (medical, finance, etc)
+    uint256 status;                 // 32 bytes: 0=PENDING, 1=VERIFIED, 2=REVOKED
+    bytes32 offChainVerificationHash; // 32 bytes: IPFS/Arweave verification doc
+    uint256 issuedAt;               // 32 bytes: issuance timestamp
+    uint256 verifiedAt;             // 32 bytes: verification timestamp (0 if pending)
+    uint256 revokedAt;              // 32 bytes: revocation timestamp (0 if active)
+  }
+
+  /// @notice User profile with credential tracking
+  /// @dev Aggregates credential information for quick access
+  struct UserProfile {
+    address userAddress;            // 20 bytes: associated address
+    string domainFocus;             // variable: primary domain focus
+    uint256 createdAt;              // 32 bytes: profile creation timestamp
+    uint256 credentialCount;        // 32 bytes: total issued credentials
+    uint256 verifiedCredentialCount;// 32 bytes: verified credentials
+    bool isActive;                  // 1 byte: profile active status
+  }
+
   struct H1Storage {
     mapping(uint256 => Lab) labs;
     uint256 nextLabId;
@@ -39,6 +94,25 @@ library LibH1Storage {
     mapping(uint256 => address) labIdToLabPass;
     // Per-lab bonding curve sale contract
     mapping(uint256 => address) labIdToCurve;
+    // ============ Data Validation Storage ============
+    // Data records indexed by dataId
+    mapping(uint256 => DataRecord) dataRecords;
+    // Attribution records indexed by dataId
+    mapping(uint256 => Attribution) attributionRecords;
+    // All data IDs for a lab
+    mapping(uint256 => uint256[]) labDataRecords;
+    // Next data ID counter
+    uint256 nextDataId;
+    // ============ Credentialing Storage ============
+    // User ID management
+    mapping(address => uint256) userAddressToId;    // address → userId
+    mapping(uint256 => address) userIdToAddress;    // userId → address
+    mapping(uint256 => UserProfile) userProfiles;   // userId → profile
+    uint256 nextUserId;                             // userId counter
+    // Credential management
+    mapping(uint256 => Credential) credentials;     // credentialId → record
+    mapping(uint256 => uint256[]) userCredentials;  // userId → [credentialIds]
+    uint256 nextCredentialId;                       // credentialId counter
   }
 
   function h1Storage() internal pure returns (H1Storage storage hs) {
