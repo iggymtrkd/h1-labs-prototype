@@ -15,6 +15,8 @@ library LibLabVaultFactory {
   /// @param cooldownSeconds Cooldown period for redemptions
   /// @param epochExitCapBps Exit cap in basis points
   /// @param admin Admin address for the vault
+  /// @param labOwner Lab owner address for fee distribution
+  /// @param treasury Treasury address for fee distribution
   /// @return vault The address of the deployed vault
   function deployVault(
     address labsToken,
@@ -23,7 +25,9 @@ library LibLabVaultFactory {
     string memory labDisplayName,
     uint64 cooldownSeconds,
     uint16 epochExitCapBps,
-    address admin
+    address admin,
+    address labOwner,
+    address treasury
   ) internal returns (address vault) {
     vault = address(new LabVault(
       labsToken,
@@ -32,7 +36,9 @@ library LibLabVaultFactory {
       labDisplayName,
       cooldownSeconds,
       epochExitCapBps,
-      admin
+      admin,
+      labOwner,
+      treasury
     ));
   }
 }

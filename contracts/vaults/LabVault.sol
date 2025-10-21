@@ -339,7 +339,7 @@ contract LabVault is ERC20Base {
     depositFeeTreasuryBps = depositTreasuryBps_;
     redemptionFeeLabOwnerBps = redemptionLabOwnerBps_;
     redemptionFeeTreasuryBps = redemptionTreasuryBps_;
-    emit FeesUpdated(depositLabOwnerBps, depositTreasuryBps, redemptionLabOwnerBps, redemptionTreasuryBps);
+    emit FeesUpdated(depositFeeLabOwnerBps, depositFeeTreasuryBps, redemptionFeeLabOwnerBps, redemptionFeeTreasuryBps);
   }
 
   function setCooldown(uint64 seconds_) external onlyAdmin {
@@ -437,5 +437,3 @@ contract LabVault is ERC20Base {
     return block.timestamp + testTimeOffset;
   }
 }
-
-

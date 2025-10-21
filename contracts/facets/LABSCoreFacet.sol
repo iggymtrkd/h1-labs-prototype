@@ -4,6 +4,10 @@ pragma solidity ^0.8.20;
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
 import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
+interface IERC20 {
+  function transferFrom(address from, address to, uint256 amount) external returns (bool);
+}
+
 /// @title LABSCoreFacet
 /// @notice Core functionality for lab creation and LABS token staking
 /// @dev Diamond facet for H1 Labs platform core operations
@@ -29,13 +33,11 @@ contract LABSCoreFacet {
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     if (hs.labsToken == address(0)) revert LabsTokenNotSet();
     
-    // Transfer LABS tokens from user to this contract
-    (bool success, bytes memory data) = hs.labsToken.call(
-      abi.encodeWithSignature("transferFrom(address,address,uint256)", msg.sender, address(this), amount)
+    // Transfer LABS tokens from user to this contract using proper ERC-20 interface
+    require(
+      IERC20(hs.labsToken).transferFrom(msg.sender, address(this), amount),
+      "TransferFailed"
     );
-    if (!success || (data.length > 0 && !abi.decode(data, (bool)))) {
-      revert TransferFailed();
-    }
     
     // Track staked balance
     unchecked {
@@ -73,7 +75,9 @@ contract LABSCoreFacet {
       name,
       hs.defaultCooldown,
       hs.defaultExitCapBps,
-      msg.sender
+      msg.sender,
+      msg.sender,
+      hs.protocolTreasury
     );
     hs.labIdToVault[labId] = vault;
     hs.labs[labId].h1Token = vault;
@@ -87,5 +91,3 @@ contract LABSCoreFacet {
     return !LibH1Storage.h1Storage().domainTaken[domainKey];
   }
 }
-
-
