@@ -1,0 +1,38 @@
+{
+  "name": "H1 Labs - Advancing AI Through Proven Human Intelligence",
+  "short_name": "H1 Labs",
+  "description": "Decentralized AI training protocol powered by human validation on Base blockchain",
+  "start_url": "/",
+  "display": "standalone",
+  "scope": "/",
+  "theme_color": "#0f172a",
+  "background_color": "#ffffff",
+  "orientation": "portrait-primary",
+  "icons": [
+    {
+      "src": "/favicon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/favicon.png",
+      "sizes": "256x256",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/favicon.ico",
+      "sizes": "64x64",
+      "type": "image/x-icon"
+    }
+  ],
+  "categories": ["finance", "blockchain"],
+  "screenshots": [
+    {
+      "src": "/favicon.png",
+      "sizes": "256x256",
+      "type": "image/png"
+    }
+  ]
+}

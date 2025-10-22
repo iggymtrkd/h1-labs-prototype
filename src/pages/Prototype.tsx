@@ -12,6 +12,8 @@ import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
+import { useWindowSize } from '@/hooks/use-window-size';
+import Confetti from 'react-confetti';
 import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
@@ -54,10 +56,12 @@ export default function Prototype() {
   // User's connected Base wallet (NOT the faucet wallet)
   const { address, isConnected, connectWallet, sdk } = useBaseAccount();
   const { claimFromFaucet, checkFaucetStatus, isClaiming } = useFaucet();
+  const { width, height } = useWindowSize();
   const [logs, setLogs] = useState<LogEntry[]>([]);
   const [loading, setLoading] = useState<string | null>(null);
   const [faucetBalance, setFaucetBalance] = useState<string | null>(null);
   const [userLabsBalance, setUserLabsBalance] = useState<string | null>(null);
+  const [showConfetti, setShowConfetti] = useState(false);
   
   // Progress tracking
   const [completedSteps, setCompletedSteps] = useState({
@@ -282,25 +286,30 @@ export default function Prototype() {
       addLog('success', 'Stage 1: Stake $LABS', `✅ Approval confirmed! ${stakeAmount} LABS authorized`, approvalTx.hash);
       setStakeSteps(prev => ({ ...prev, approve: 'confirmed' }));
 
-      // 5) Re-check allowance after approval
+      // 5) Re-check allowance after approval (with small delay for RPC sync)
+      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s for RPC to sync
       try {
         const newAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
         addLog('info', 'Diagnostics', `✅ New allowance: ${ethers.formatEther(newAllowance)}`);
         if (newAllowance < stakeAmountBN) {
-          addLog('error', 'Diagnostics', `❌ Approval issue: Allowance is still insufficient after approval transaction. Expected ${ethers.formatEther(stakeAmountBN)}, but got ${ethers.formatEther(newAllowance)}. Attempting to re-approve...`);
+          addLog('info', 'Diagnostics', `⏳ RPC still syncing... Requesting approval confirmation`);
           try {
+            // Reset allowance to 0 first (some tokens require this)
             const zeroTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
               CONTRACTS.H1Diamond,
               0n
             );
             await zeroTx.wait();
+            // Then approve the amount again
             const reapproveTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
               CONTRACTS.H1Diamond,
               stakeAmountBN
             );
             await reapproveTx.wait();
+            // Wait for RPC sync again
+            await new Promise(resolve => setTimeout(resolve, 1000));
             const finalAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
-            addLog('info', 'Diagnostics', `✅ Final allowance after re-approval: ${ethers.formatEther(finalAllowance)}`);
+            addLog('success', 'Diagnostics', `✅ Approval confirmed! Final allowance: ${ethers.formatEther(finalAllowance)}`);
             if (finalAllowance < stakeAmountBN) {
               toast.error('Allowance remained insufficient after re-approval');
               setLoading(null);
@@ -343,8 +352,12 @@ export default function Prototype() {
       await stakeTx.wait();
 
       addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! To create a lab, you need 100,000 LABS staked.`, stakeTx.hash);
+      setShowConfetti(true);
       toast.success('LABS staked successfully!');
       setStakeSteps(prev => ({ ...prev, stake: 'confirmed' }));
+      
+      // Auto-hide confetti after 5 seconds
+      setTimeout(() => setShowConfetti(false), 5000);
 
       // Reload balances
       await loadUserLabsBalance();
@@ -1430,6 +1443,17 @@ export default function Prototype() {
           </div>
         </div>
       </div>
+      {showConfetti && (
+        <Confetti
+          width={width}
+          height={height}
+          recycle={false}
+          numberOfPieces={100}
+          gravity={0.2}
+          wind={0.01}
+          colors={['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']}
+        />
+      )}
     </div>
   );
 }

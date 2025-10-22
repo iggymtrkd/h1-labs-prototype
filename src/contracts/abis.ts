@@ -45,6 +45,13 @@ export const RevenueFacet_ABI = [
 
 // Optional (may not be deployed): Testing/Config facet used for diagnostics
 export const TestingFacet_ABI = [
-  "function getProtocolParams() external view returns (address labsToken, address protocolTreasury, uint64 defaultCooldown, uint16 defaultExitCapBps, uint16 depositFeeLabOwnerBps, uint16 depositFeeTreasuryBps, uint16 redemptionFeeLabOwnerBps, uint16 redemptionFeeTreasuryBps, uint16 curveFeeBps, uint16 curvePolBps)",
+  "function initializeDefaults(address treasury) external",
+  "function getProtocolParams() external view returns (address labsToken, address protocolTreasury, uint64 defaultCooldown, uint16 defaultExitCapBps, uint16 curveFeeBps, uint16 curvePolBps, bool defaultsInitialized)",
+  "function getDefaultConfiguration() external view returns (uint64 defaultCooldown, uint16 defaultExitCapBps, uint16 curveFeeBps, uint16 curvePolBps)",
+  "function setDefaultCooldown(uint64 seconds_) external",
+  "function setDefaultExitCap(uint16 bps) external",
+  "function setCurveFeeBps(uint16 feeBps) external",
+  "function setCurvePolBps(uint16 polBps) external",
+  "function setProtocolTreasury(address treasury) external",
   "function getStakedBalance(address user) external view returns (uint256)"
 ];
