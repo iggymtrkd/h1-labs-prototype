@@ -148,6 +148,11 @@ export default function MedTagger() {
       return;
     }
 
+    // Remove any existing tags that overlap with the selected text
+    const filteredTags = tags.filter(tag => {
+      return tag.endIdx <= selectedText.start || tag.startIdx >= selectedText.end;
+    });
+
     const newTag: TagInstance = {
       id: String(Date.now()),
       type,
@@ -157,7 +162,7 @@ export default function MedTagger() {
       addedBy: 'You'
     };
 
-    setTags([...tags, newTag]);
+    setTags([...filteredTags, newTag]);
     setSelectedText(null);
     window.getSelection()?.removeAllRanges();
     toast.success(`Tagged as ${tagLabels[type]}`);
