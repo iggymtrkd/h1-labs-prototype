@@ -707,17 +707,36 @@ export default function Prototype() {
       
       console.log(`🔍 Searching for labs created by ${address}...`);
       
-      // Query LabCreated events for this user
-      const filter = diamond.filters.LabCreated(null, address);
-      const events = await diamond.queryFilter(filter, 0, 'latest');
+      // Get current block number
+      const currentBlock = await provider.getBlockNumber();
+      const CHUNK_SIZE = 50000; // Max block range per query
       
-      console.log(`🔍 Found ${events.length} LabCreated event(s) for user`);
+      // Query events in chunks to avoid RPC limits
+      const filter = diamond.filters.LabCreated(null, address);
+      let allEvents = [];
+      
+      // Start from recent blocks (last 500k blocks should cover several months)
+      const startBlock = Math.max(0, currentBlock - 500000);
+      
+      for (let fromBlock = startBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
+        const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
+        console.log(`📡 Querying blocks ${fromBlock} to ${toBlock}...`);
+        
+        try {
+          const events = await diamond.queryFilter(filter, fromBlock, toBlock);
+          allEvents.push(...events);
+        } catch (chunkError) {
+          console.warn(`⚠️ Failed to query blocks ${fromBlock}-${toBlock}:`, chunkError);
+        }
+      }
+      
+      console.log(`🔍 Found ${allEvents.length} LabCreated event(s) for user`);
       
       const labs = [];
       let activeLabCount = 0;
       
       // Load details for each lab from events
-      for (const event of events) {
+      for (const event of allEvents) {
         try {
           // Type guard for EventLog
           if (!('args' in event)) {
