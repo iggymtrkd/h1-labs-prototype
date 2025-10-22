@@ -99,7 +99,29 @@ export default function Prototype() {
   // Step 4: Purchase Dataset (AI Companies)
   const [purchaseDatasetId, setPurchaseDatasetId] = useState('1');
   const [purchaseLabId, setPurchaseLabId] = useState('1');
-  const [purchaseAmount, setPurchaseAmount] = useState('1');
+  const [purchaseAmount, setPurchaseAmount] = useState('0.1');
+
+  // Multi-wallet distribution tracking
+  const [revenueDistribution, setRevenueDistribution] = useState<{
+    buyback: string;
+    developer: string;
+    creator: string;
+    scholar: string;
+    treasury: string;
+  } | null>(null);
+
+  // H1 Marketplace state
+  const [allLabsForMarketplace, setAllLabsForMarketplace] = useState<Array<{
+    labId: number;
+    name: string;
+    symbol: string;
+    domain: string;
+    h1Price: string;
+    tvl: string;
+  }>>([]);
+  const [marketplaceAction, setMarketplaceAction] = useState<'buy' | 'sell'>('buy');
+  const [selectedLabForTrade, setSelectedLabForTrade] = useState<number | null>(null);
+  const [tradeAmount, setTradeAmount] = useState('1');
 
   // Step 5: User's Created Labs
   interface CreatedLab {
@@ -767,9 +789,19 @@ export default function Prototype() {
       const amountWei = ethers.parseEther(purchaseAmount);
       const breakdown = await diamond.getRevenueBreakdown(amountWei);
       
-      addLog('info', 'Stage 4: Purchase Dataset', `📊 Revenue split: Buyback=${ethers.formatEther(breakdown[0])} ETH, Dev=${ethers.formatEther(breakdown[1])} ETH, Creator=${ethers.formatEther(breakdown[2])} ETH, Scholar=${ethers.formatEther(breakdown[3])} ETH, Treasury=${ethers.formatEther(breakdown[4])} ETH`);
+      // Store revenue distribution for UI display
+      const distribution = {
+        buyback: ethers.formatEther(breakdown[0]),
+        developer: ethers.formatEther(breakdown[1]),
+        creator: ethers.formatEther(breakdown[2]),
+        scholar: ethers.formatEther(breakdown[3]),
+        treasury: ethers.formatEther(breakdown[4]),
+      };
+      setRevenueDistribution(distribution);
+      
+      addLog('info', 'Stage 4: Purchase Dataset', `📊 Revenue split: Buyback=${distribution.buyback} ETH, Dev=${distribution.developer} ETH, Creator=${distribution.creator} ETH, Scholar=${distribution.scholar} ETH, Treasury=${distribution.treasury} ETH`);
 
-      addLog('info', 'Stage 4: Purchase Dataset', '📡 Broadcasting purchase to RevenueFacet...');
+      addLog('info', 'Stage 4: Purchase Dataset', '📡 Broadcasting purchase to RevenueFacet with MULTI-WALLET distribution...');
       const purchaseTx = await diamond.batchDistributeRevenue(
         [purchaseDatasetId],
         [purchaseLabId],
@@ -780,8 +812,14 @@ export default function Prototype() {
       addLog('info', 'Stage 4: Purchase Dataset', '⏳ Mining transaction & distributing revenue to all stakeholders...');
       await purchaseTx.wait();
 
-      addLog('success', 'Stage 4: Purchase Dataset', `✅ STEP 4 COMPLETE: Dataset purchased! Revenue distributed + H1 buyback executed!`, purchaseTx.hash);
-      toast.success('Step 4 Complete! All stakeholders paid!');
+      addLog('success', 'Stage 4: Purchase Dataset', `✅ STEP 4 COMPLETE: Dataset purchased! Revenue distributed to all wallets!`, purchaseTx.hash);
+      addLog('info', 'Stage 4: Purchase Dataset', `💼 Distribution:
+        • Buyback Wallet: ${distribution.buyback} ETH (40%)
+        • Developer Wallet: ${distribution.developer} ETH (15%)
+        • Creator Pool: ${distribution.creator} ETH (20%)
+        • Scholar Pool: ${distribution.scholar} ETH (20%)
+        • H1 Treasury: ${distribution.treasury} ETH (5%)`);
+      toast.success('Step 4 Complete! Multi-wallet distribution executed!');
       setCompletedSteps(prev => ({ ...prev, step4: true }));
     } catch (error: any) {
       console.error('Purchase error:', error);
@@ -1248,57 +1286,133 @@ export default function Prototype() {
 
             {/* Stage 4: AI Companies */}
             <Card className="p-6 bg-gradient-card border-primary/20">
-              <div className="flex items-start gap-4 mb-4">
+              <div className="flex items-start gap-4 mb-6">
                 <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl font-bold text-primary">4</span>
                 </div>
                 <div>
                   <h2 className="text-xl font-bold mb-1">AI Companies</h2>
-                  <p className="text-sm text-muted-foreground">RevenueFacet.sol</p>
-                  <Badge className="mt-2 bg-primary/20 text-primary">Purchase Datasets (Buyback H1)</Badge>
+                  <p className="text-sm text-muted-foreground">RevenueFacet.sol - Multi-Wallet Distribution</p>
+                  <Badge className="mt-2 bg-primary/20 text-primary">🏦 Purchase Datasets (Multi-Wallet Revenue Flow)</Badge>
                 </div>
               </div>
 
-              <div className="space-y-4">
-                <div>
-                  <Label htmlFor="purchaseDatasetId">Dataset ID</Label>
-                  <Input
-                    id="purchaseDatasetId"
-                    type="number"
-                    value={purchaseDatasetId}
-                    onChange={(e) => setPurchaseDatasetId(e.target.value)}
-                    placeholder="1"
-                  />
+              <div className="grid gap-6">
+                {/* Input Section */}
+                <div className="space-y-4">
+                  <div>
+                    <Label htmlFor="purchaseDatasetId">Dataset ID</Label>
+                    <Input
+                      id="purchaseDatasetId"
+                      type="number"
+                      value={purchaseDatasetId}
+                      onChange={(e) => setPurchaseDatasetId(e.target.value)}
+                      placeholder="1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="purchaseLabId">Lab ID</Label>
+                    <Input
+                      id="purchaseLabId"
+                      type="number"
+                      value={purchaseLabId}
+                      onChange={(e) => setPurchaseLabId(e.target.value)}
+                      placeholder="1"
+                    />
+                  </div>
+                  <div>
+                    <Label htmlFor="purchaseAmount">Amount (ETH)</Label>
+                    <Input
+                      id="purchaseAmount"
+                      type="number"
+                      step="0.01"
+                      value={purchaseAmount}
+                      onChange={(e) => {
+                        setPurchaseAmount(e.target.value);
+                        // Reset distribution display when amount changes
+                        if (e.target.value !== purchaseAmount) {
+                          setRevenueDistribution(null);
+                        }
+                      }}
+                      placeholder="0.1"
+                    />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      💡 Tip: This amount will be distributed across 5 different wallets by role
+                    </p>
+                  </div>
+                  <Button
+                    onClick={handlePurchaseDataset}
+                    disabled={loading === 'purchase'}
+                    className="w-full bg-gradient-to-r from-primary to-secondary hover:shadow-lg"
+                  >
+                    {loading === 'purchase' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                    {loading === 'purchase' ? 'Processing...' : 'Purchase Dataset & Distribute Revenue'}
+                  </Button>
                 </div>
-                <div>
-                  <Label htmlFor="purchaseLabId">Lab ID</Label>
-                  <Input
-                    id="purchaseLabId"
-                    type="number"
-                    value={purchaseLabId}
-                    onChange={(e) => setPurchaseLabId(e.target.value)}
-                    placeholder="1"
-                  />
-                </div>
-                <div>
-                  <Label htmlFor="purchaseAmount">Amount (ETH)</Label>
-                  <Input
-                    id="purchaseAmount"
-                    type="number"
-                    step="0.01"
-                    value={purchaseAmount}
-                    onChange={(e) => setPurchaseAmount(e.target.value)}
-                    placeholder="1.0"
-                  />
-                </div>
-                <Button
-                  onClick={handlePurchaseDataset}
-                  disabled={loading === 'purchase'}
-                  className="w-full"
-                >
-                  {loading === 'purchase' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                  Purchase Dataset
-                </Button>
+
+                {/* Multi-Wallet Distribution Visualization */}
+                {revenueDistribution && (
+                  <div className="bg-slate-900/50 rounded-lg p-4 border border-primary/20">
+                    <p className="text-sm font-semibold text-primary mb-4">📊 Multi-Wallet Distribution Flow</p>
+                    
+                    <div className="space-y-3">
+                      {/* Total */}
+                      <div className="text-center mb-4 pb-4 border-b border-slate-700">
+                        <p className="text-xs text-muted-foreground">Total Purchase Amount</p>
+                        <p className="text-2xl font-bold text-primary">{purchaseAmount} ETH</p>
+                      </div>
+
+                      {/* Distribution Breakdown */}
+                      <div className="grid grid-cols-2 md:grid-cols-3 gap-3">
+                        {/* Buyback Wallet */}
+                        <div className="bg-gradient-to-br from-blue-500/10 to-blue-600/5 p-3 rounded border border-blue-500/20">
+                          <p className="text-xs text-muted-foreground mb-1">Buyback Reserve</p>
+                          <p className="font-mono font-bold text-blue-400 text-sm">{revenueDistribution.buyback}</p>
+                          <p className="text-xs text-blue-400/70 mt-1">40% • H1 Holders</p>
+                          <p className="text-xs text-muted-foreground mt-2 truncate">{CONTRACTS.RevenueDemonstration.buybackWallet}</p>
+                        </div>
+
+                        {/* Developer Wallet */}
+                        <div className="bg-gradient-to-br from-purple-500/10 to-purple-600/5 p-3 rounded border border-purple-500/20">
+                          <p className="text-xs text-muted-foreground mb-1">Developer Incentive</p>
+                          <p className="font-mono font-bold text-purple-400 text-sm">{revenueDistribution.developer}</p>
+                          <p className="text-xs text-purple-400/70 mt-1">15% • App Builder</p>
+                          <p className="text-xs text-muted-foreground mt-2 truncate">{CONTRACTS.RevenueDemonstration.developerWallet}</p>
+                        </div>
+
+                        {/* Creator Pool */}
+                        <div className="bg-gradient-to-br from-green-500/10 to-green-600/5 p-3 rounded border border-green-500/20">
+                          <p className="text-xs text-muted-foreground mb-1">Creator Pool</p>
+                          <p className="font-mono font-bold text-green-400 text-sm">{revenueDistribution.creator}</p>
+                          <p className="text-xs text-green-400/70 mt-1">20% • Data Creator</p>
+                          <p className="text-xs text-muted-foreground mt-2 truncate">{CONTRACTS.RevenueDemonstration.creatorPoolWallet}</p>
+                        </div>
+
+                        {/* Scholar Pool */}
+                        <div className="bg-gradient-to-br from-amber-500/10 to-amber-600/5 p-3 rounded border border-amber-500/20">
+                          <p className="text-xs text-muted-foreground mb-1">Scholar Pool</p>
+                          <p className="font-mono font-bold text-amber-400 text-sm">{revenueDistribution.scholar}</p>
+                          <p className="text-xs text-amber-400/70 mt-1">20% • Validator</p>
+                          <p className="text-xs text-muted-foreground mt-2 truncate">{CONTRACTS.RevenueDemonstration.scholarPoolWallet}</p>
+                        </div>
+
+                        {/* Treasury */}
+                        <div className="bg-gradient-to-br from-red-500/10 to-red-600/5 p-3 rounded border border-red-500/20">
+                          <p className="text-xs text-muted-foreground mb-1">H1 Treasury</p>
+                          <p className="font-mono font-bold text-red-400 text-sm">{revenueDistribution.treasury}</p>
+                          <p className="text-xs text-red-400/70 mt-1">5% • Protocol Ops</p>
+                          <p className="text-xs text-muted-foreground mt-2 truncate">{CONTRACTS.RevenueDemonstration.h1TreasuryWallet}</p>
+                        </div>
+                      </div>
+
+                      {/* Distribution Info */}
+                      <div className="mt-4 pt-3 border-t border-slate-700 text-xs text-muted-foreground space-y-2">
+                        <p>✅ <strong>Onchain Flow:</strong> Each wallet receives ETH directly on-chain. Track transactions on Base Sepolia!</p>
+                        <p>🔗 <strong>Provenance Trail:</strong> All distributions linked to dataset, lab, and role</p>
+                      </div>
+                    </div>
+                  </div>
+                )}
               </div>
             </Card>
           </div>
@@ -1362,6 +1476,213 @@ export default function Prototype() {
               </ScrollArea>
             </Card>
           </div>
+        </div>
+
+        {/* H1 Lab Marketplace Section */}
+        <div className="mt-8 mb-8">
+          <Card className="p-6 bg-gradient-card border-secondary/20">
+            <div className="mb-6">
+              <div className="flex items-center gap-3 mb-2">
+                <Rocket className="h-6 w-6 text-secondary" />
+                <h3 className="text-2xl font-bold">🏪 H1 Lab Marketplace</h3>
+              </div>
+              <p className="text-sm text-muted-foreground">Buy & Sell H1 tokens from any lab. Powered by Bonding Curves.</p>
+            </div>
+
+            <div className="space-y-6">
+              {/* Demo Labs */}
+              <div>
+                <p className="text-sm font-semibold text-primary mb-4">Available Labs for Trading</p>
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {/* Lab 1: Healthcare */}
+                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-secondary">Healthcare Lab</h4>
+                        <p className="text-sm text-muted-foreground">Domain: healthcare</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">H1 Price</p>
+                          <p className="font-mono font-bold">0.05 ETH</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Lab ID</p>
+                          <p className="font-mono font-bold">#1</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-2">
+                        <Select value={marketplaceAction} onValueChange={(v) => setMarketplaceAction(v as 'buy' | 'sell')}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Buy / Sell" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input
+                          type="number"
+                          placeholder="0.1"
+                          step="0.01"
+                          value={marketplaceAction === 'buy' && selectedLabForTrade === 1 ? tradeAmount : ''}
+                          onChange={(e) => {
+                            setSelectedLabForTrade(1);
+                            setTradeAmount(e.target.value);
+                          }}
+                          className="text-sm"
+                        />
+
+                        <Button
+                          size="sm"
+                          className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                          disabled={loading === 'marketplace' || !tradeAmount}
+                        >
+                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Try buying H1 tokens to participate in lab governance
+                      </p>
+                    </div>
+                  </Card>
+
+                  {/* Lab 2: Biotech */}
+                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-secondary">Biotech Lab</h4>
+                        <p className="text-sm text-muted-foreground">Domain: biotech</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">H1 Price</p>
+                          <p className="font-mono font-bold">0.08 ETH</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Lab ID</p>
+                          <p className="font-mono font-bold">#2</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-2">
+                        <Select value={marketplaceAction} onValueChange={(v) => setMarketplaceAction(v as 'buy' | 'sell')}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Buy / Sell" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input
+                          type="number"
+                          placeholder="0.1"
+                          step="0.01"
+                          value={marketplaceAction === 'buy' && selectedLabForTrade === 2 ? tradeAmount : ''}
+                          onChange={(e) => {
+                            setSelectedLabForTrade(2);
+                            setTradeAmount(e.target.value);
+                          }}
+                          className="text-sm"
+                        />
+
+                        <Button
+                          size="sm"
+                          className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                          disabled={loading === 'marketplace' || !tradeAmount}
+                        >
+                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Higher TVL = higher H1 price (bonding curve)
+                      </p>
+                    </div>
+                  </Card>
+
+                  {/* Lab 3: Finance */}
+                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-secondary">Finance Lab</h4>
+                        <p className="text-sm text-muted-foreground">Domain: finance</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">H1 Price</p>
+                          <p className="font-mono font-bold">0.03 ETH</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Lab ID</p>
+                          <p className="font-mono font-bold">#3</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-2">
+                        <Select value={marketplaceAction} onValueChange={(v) => setMarketplaceAction(v as 'buy' | 'sell')}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Buy / Sell" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input
+                          type="number"
+                          placeholder="0.1"
+                          step="0.01"
+                          value={marketplaceAction === 'buy' && selectedLabForTrade === 3 ? tradeAmount : ''}
+                          onChange={(e) => {
+                            setSelectedLabForTrade(3);
+                            setTradeAmount(e.target.value);
+                          }}
+                          className="text-sm"
+                        />
+
+                        <Button
+                          size="sm"
+                          className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
+                          disabled={loading === 'marketplace' || !tradeAmount}
+                        >
+                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Early adopter advantage on new labs
+                      </p>
+                    </div>
+                  </Card>
+                </div>
+              </div>
+
+              {/* Marketplace Info */}
+              <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
+                <p className="text-sm text-muted-foreground space-y-2">
+                  <span className="block"><strong>📊 How It Works:</strong> H1 tokens are minted via bonding curves. Price increases with TVL.</span>
+                  <span className="block"><strong>💰 Revenue Share:</strong> H1 holders earn % of dataset sale revenue via buybacks.</span>
+                  <span className="block"><strong>🎯 Early Advantage:</strong> First buyers get lowest prices. Prices increase as TVL grows.</span>
+                </p>
+              </div>
+            </div>
+          </Card>
         </div>
 
         {/* User's Created Labs Section */}

@@ -35,6 +35,16 @@ export const CONTRACTS = {
   ProtocolTreasury: "0x0000000000000000000000000000000000000001", // TODO: Set to actual treasury address
   DefaultCooldown: 604800, // 7 days in seconds
   DefaultExitCap: 2000, // 20% in basis points
+  
+  // Multi-Wallet Distribution Configuration (DEMO WALLETS)
+  // These represent different roles in the H1 ecosystem
+  RevenueDemonstration: {
+    buybackWallet: "0x1111111111111111111111111111111111111111",        // H1 Buyback Reserve
+    developerWallet: "0x2222222222222222222222222222222222222222",     // App Developer Incentive
+    creatorPoolWallet: "0x3333333333333333333333333333333333333333",   // Data Creator Pool
+    scholarPoolWallet: "0x4444444444444444444444444444444444444444",   // Scholar/Validator Pool
+    h1TreasuryWallet: "0x5555555555555555555555555555555555555555",   // H1 Protocol Treasury
+  },
 } as const;
 
 // API Configuration
@@ -50,6 +60,7 @@ export const FEATURES = {
   UNISWAP_POOL: false, // Not deployed yet
   FAUCET: true,
   ADMIN_TESTING: true, // Set to false in production
+  MULTI_WALLET_REVENUE: true, // Enable multi-wallet distribution
 } as const;
 
 // Contract Event Topics (for filtering)
