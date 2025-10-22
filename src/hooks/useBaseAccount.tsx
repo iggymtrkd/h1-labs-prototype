@@ -37,7 +37,7 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
   // Initialize Base Account SDK
   const [sdk] = useState(() => createBaseAccountSDK({
     appName: 'H1 Labs',
-    appLogoUrl: 'https://base.org/logo.png',
+    appLogoUrl: window.location.origin + '/favicon.png',
   }));
 
   const connectWallet = async () => {
