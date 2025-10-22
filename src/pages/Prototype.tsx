@@ -324,8 +324,13 @@ export default function Prototype() {
       const labsToken = new ethers.Contract(labsTokenAddr, LABSToken_ABI, rpc);
       const [bal, allowance] = await Promise.all([labsToken.balanceOf(address), labsToken.allowance(address, CONTRACTS.H1Diamond)]);
       addLog('info', 'Diagnostics', `💰 LABS balance: ${ethers.formatEther(bal)} | allowance: ${ethers.formatEther(allowance)}`);
-      if (bal < stakeAmountBN) {
-        toast.error('Insufficient LABS balance for stake amount');
+      
+      // Use <= comparison to handle exact balance staking
+      // If user wants to stake more than they have, reject
+      if (stakeAmountBN > bal) {
+        const actualBalance = ethers.formatEther(bal);
+        toast.error(`Insufficient LABS balance. You have ${actualBalance} LABS but tried to stake ${stakeAmount} LABS`);
+        addLog('error', 'Stage 1: Stake $LABS', `❌ Insufficient balance: ${actualBalance} LABS available, ${stakeAmount} LABS requested`);
         setLoading(null);
         return;
       }
