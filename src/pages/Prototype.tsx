@@ -1109,10 +1109,14 @@ export default function Prototype() {
   };
 
   useEffect(() => {
+    console.log('🔌 Prototype useEffect - isConnected:', isConnected, 'address:', address);
     if (isConnected && address) {
+      console.log('✅ Loading blockchain data for:', address);
       loadFaucetBalance();
       loadUserLabsBalance();
       loadUserLabsFromEvents();
+    } else {
+      console.log('❌ Not loading data - missing connection or address');
     }
   }, [isConnected, address]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
