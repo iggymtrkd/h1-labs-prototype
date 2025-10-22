@@ -1192,7 +1192,8 @@ export default function Prototype() {
     if (status === 'error') return <XCircle className="h-3 w-3 text-destructive" />;
     return <div className="h-3 w-3 rounded-full border border-muted-foreground" />;
   };
-  return <div className="min-h-screen bg-background">
+  return <TooltipProvider>
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
         {/* Back Button */}
         <Button variant="ghost" onClick={() => navigate('/get-started')} className="mb-6">
@@ -1306,24 +1307,22 @@ export default function Prototype() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-bold mb-1">Stake $LABS</h2>
-                    <TooltipProvider>
-                      <Tooltip>
-                        <TooltipTrigger asChild>
-                          <button aria-label="Staking info" className="text-muted-foreground hover:text-foreground">
-                            <CircleHelp className="h-4 w-4" />
-                          </button>
-                        </TooltipTrigger>
-                        <TooltipContent className="max-w-sm">
-                          <div className="space-y-1 text-xs">
-                            <p><strong>What happens on-chain:</strong></p>
-                            <p>1) Approve LABS: LABSToken.approve(diamond, amount)</p>
-                            <p>2) Stake LABS: H1Diamond → LABSCoreFacet.stakeLABS(amount)</p>
-                            <p>• Funds move from your wallet to the diamond for eligibility staking.</p>
-                            <p>• This does not mint H1; deposits into a LabVault mint H1 shares.</p>
-                          </div>
-                        </TooltipContent>
-                      </Tooltip>
-                    </TooltipProvider>
+                    <Tooltip>
+                      <TooltipTrigger asChild>
+                        <button aria-label="Staking info" className="text-muted-foreground hover:text-foreground">
+                          <CircleHelp className="h-4 w-4" />
+                        </button>
+                      </TooltipTrigger>
+                      <TooltipContent className="max-w-sm">
+                        <div className="space-y-1 text-xs">
+                          <p><strong>What happens on-chain:</strong></p>
+                          <p>1) Approve LABS: LABSToken.approve(diamond, amount)</p>
+                          <p>2) Stake LABS: H1Diamond → LABSCoreFacet.stakeLABS(amount)</p>
+                          <p>• Funds move from your wallet to the diamond for eligibility staking.</p>
+                          <p>• This does not mint H1; deposits into a LabVault mint H1 shares.</p>
+                        </div>
+                      </TooltipContent>
+                    </Tooltip>
                   </div>
                   <p className="text-sm text-muted-foreground">LABSToken.sol & LABSCoreFacet.sol</p>
                   <Badge className="mt-2 bg-primary/20 text-primary">Create Data Labs / H1 Tokens</Badge>
@@ -2463,5 +2462,6 @@ export default function Prototype() {
         </div>
       </div>
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={100} gravity={0.2} wind={0.01} colors={['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']} />}
-    </div>;
+    </div>
+  </TooltipProvider>;
 }
