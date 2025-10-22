@@ -692,7 +692,7 @@ export default function Prototype() {
         // Format amount from Wei to LABS (divide by 10^18)
         const formattedAmount = ethers.formatEther(result.amount);
         const friendlyAmount = parseFloat(formattedAmount).toLocaleString('en-US', { maximumFractionDigits: 2 });
-        addLog('success', 'Testing: Receive LABS', `💰 Faucet claim successful! ${friendlyAmount} LABS transferred to your wallet`, result.txHash);
+        addLog('success', 'Testing: Receive LABS', `💰 Faucet claim successful! ${friendlyAmount} LABS transferred to your wallet on TESTNET.`, result.txHash);
         toast.success(`✨ Claimed ${friendlyAmount} LABS tokens!`);
         await loadFaucetBalance(); // Refresh balance
         await loadUserLabsBalance(); // Refresh user balance
