@@ -1,5 +1,5 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.30;
 
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
 import { LibDiamond } from "../diamond-standard/libraries/LibDiamond.sol";

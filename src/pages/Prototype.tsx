@@ -16,7 +16,7 @@ import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
-import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI } from '@/contracts/abis';
+import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 // Available domains for lab creation
@@ -208,8 +208,20 @@ export default function Prototype() {
         return;
       }
 
-      // 3) Verify LABS balance and allowance (use RPC for reads)
-      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, rpc);
+      // 3) Resolve LABS token address from on-chain params if available
+      let labsTokenAddr = CONTRACTS.LABSToken as string;
+      try {
+        const testing = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, rpc);
+        const params = await testing.getProtocolParams();
+        if (params && params[0] && params[0] !== ethers.ZeroAddress) {
+          labsTokenAddr = params[0];
+          addLog('info', 'Diagnostics', `🔧 labsToken from protocol params: ${labsTokenAddr}`);
+        }
+      } catch {}
+
+      // Verify LABS balance and allowance (use RPC for reads)
+      addLog('info', 'Diagnostics', `🧩 Using LABS token: ${labsTokenAddr}`);
+      const labsToken = new ethers.Contract(labsTokenAddr, LABSToken_ABI, rpc);
       const [bal, allowance] = await Promise.all([
         labsToken.balanceOf(address),
         labsToken.allowance(address, CONTRACTS.H1Diamond)
@@ -223,9 +235,9 @@ export default function Prototype() {
 
       // 4) Approve Diamond to spend LABS (before simulation)
       addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
-      const approvalTx = await new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer).approve(
+      const approvalTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
         CONTRACTS.H1Diamond,
-        stakeAmountBN,
+        ethers.MaxUint256,
         { gasLimit: 80000 }
       );
 
@@ -233,17 +245,41 @@ export default function Prototype() {
       await approvalTx.wait();
       addLog('success', 'Stage 1: Stake $LABS', `✅ Approval confirmed! ${stakeAmount} LABS authorized`, approvalTx.hash);
 
-      // 5) Simulate stake after approval to catch any other reverts
+      // 5) Re-check allowance after approval
       try {
-        const iface = new ethers.Interface(LABSCoreFacet_ABI);
-        const data = iface.encodeFunctionData('stakeLABS', [stakeAmountBN]);
-        await rpc.call({ to: CONTRACTS.H1Diamond, from: address, data });
-      } catch (simErr: any) {
-        addLog('error', 'Diagnostics', `❌ Simulation revert after approval: ${simErr?.shortMessage || simErr?.message || String(simErr)}`);
-        toast.error('Stake simulation reverted. Check logs for details.');
-        setLoading(null);
-        return;
-      }
+        const newAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
+        addLog('info', 'Diagnostics', `✅ New allowance: ${ethers.formatEther(newAllowance)}`);
+        if (newAllowance < stakeAmountBN) {
+          addLog('error', 'Diagnostics', '❌ Allowance still insufficient after approval. Attempting reset to 0 then re-approve...');
+          try {
+            const zeroTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
+              CONTRACTS.H1Diamond,
+              0n
+            );
+            await zeroTx.wait();
+            const reapproveTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
+              CONTRACTS.H1Diamond,
+              ethers.MaxUint256
+            );
+            await reapproveTx.wait();
+            const finalAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
+            addLog('info', 'Diagnostics', `✅ Final allowance after reset: ${ethers.formatEther(finalAllowance)}`);
+            if (finalAllowance < stakeAmountBN) {
+              toast.error('Allowance remained insufficient after reset');
+              setLoading(null);
+              return;
+            }
+          } catch (resetErr: any) {
+            addLog('error', 'Diagnostics', `❌ Failed allowance reset flow: ${resetErr?.message || String(resetErr)}`);
+            toast.error('Approval reset failed');
+            setLoading(null);
+            return;
+          }
+        }
+      } catch {}
+
+      // 6) Small delay to allow RPCs to index the new allowance
+      await new Promise((resolve) => setTimeout(resolve, 1500));
 
       // Log balances for reference
       const balance = await provider.getBalance(address);
@@ -254,7 +290,15 @@ export default function Prototype() {
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
       addLog('info', 'Stage 1: Stake $LABS', '📡 Broadcasting stake transaction to LABSCoreFacet...');
-      const stakeTx = await diamond.stakeLABS(stakeAmountBN, { gasLimit: 180000 });
+      let stakeTx;
+      try {
+        stakeTx = await diamond.stakeLABS(stakeAmountBN, { gasLimit: 180000 });
+      } catch (sendErr: any) {
+        addLog('error', 'Stage 1: Stake $LABS', `❌ Failed to send stake tx: ${sendErr?.shortMessage || sendErr?.message || String(sendErr)}`);
+        toast.error('Failed to send stake transaction');
+        setLoading(null);
+        return;
+      }
 
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();

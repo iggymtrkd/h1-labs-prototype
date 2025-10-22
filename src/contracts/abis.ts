@@ -40,3 +40,8 @@ export const RevenueFacet_ABI = [
   "function getLabTotalRevenue(uint256 labId) external view returns (uint256)",
   "function getRevenueBreakdown(uint256 amount) external pure returns (uint256 buyback, uint256 developer, uint256 creator, uint256 scholar, uint256 treasury)"
 ];
+
+// Optional (may not be deployed): Testing/Config facet used for diagnostics
+export const TestingFacet_ABI = [
+  "function getProtocolParams() external view returns (address labsToken, address protocolTreasury, uint64 defaultCooldown, uint16 defaultExitCapBps, uint16 depositFeeLabOwnerBps, uint16 depositFeeTreasuryBps, uint16 redemptionFeeLabOwnerBps, uint16 redemptionFeeTreasuryBps, uint16 curveFeeBps, uint16 curvePolBps)"
+];
