@@ -14,8 +14,7 @@ export const LABSCoreFacet_ABI = [
   "function getStakedBalance(address user) external view returns (uint256)",
   "function getLabLevel(uint256 labId) external view returns (uint8)",
   "function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level)",
-  "function getUserLabCount(address user) external view returns (uint256)",
-  "function getUserLabs(address user) external view returns (uint256[] memory)"
+  "event LabCreated(uint256 indexed labId, address indexed owner, string name, string symbol, string domain, address h1Token, uint8 level)"
 ];
 
 export const DiamondLoupeFacet_ABI = [

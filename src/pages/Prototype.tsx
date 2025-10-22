@@ -591,8 +591,7 @@ export default function Prototype() {
       setLabDomain('healthcare');
 
       // Refresh lab count and marketplace
-      await loadUserLabCount();
-      await loadAllLabsForMarketplace();
+      await loadUserLabsFromEvents();
     } catch (error: any) {
       console.error('Create lab error:', error);
       addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
@@ -688,24 +687,8 @@ export default function Prototype() {
     }
   };
 
-  // Load user's lab ownership count
-  const loadUserLabCount = async () => {
-    if (!address) return;
-    try {
-      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
-      
-      const count = await diamond.getUserLabCount(address);
-      setLabsOwned(Number(count));
-      console.log(`🏭 User owns ${count} lab(s)`);
-    } catch (error) {
-      console.error('❌ Failed to load lab count:', error);
-      setLabsOwned(0);
-    }
-  };
-
-  // Load all labs for the marketplace
-  const loadAllLabsForMarketplace = async () => {
+  // Load user's lab ownership count and marketplace data from blockchain events
+  const loadUserLabsFromEvents = async () => {
     if (!address) return;
     
     setLoadingMarketplace(true);
@@ -713,22 +696,33 @@ export default function Prototype() {
       const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], provider);
       
-      // Get user's labs
-      const userLabIds = await diamond.getUserLabs(address);
-      console.log(`🔍 Found ${userLabIds.length} user lab(s):`, userLabIds);
+      console.log(`🔍 Searching for labs created by ${address}...`);
+      
+      // Query LabCreated events for this user
+      const filter = diamond.filters.LabCreated(null, address);
+      const events = await diamond.queryFilter(filter, 0, 'latest');
+      
+      console.log(`🔍 Found ${events.length} LabCreated event(s) for user`);
+      
+      // Update lab count
+      setLabsOwned(events.length);
       
       const labs = [];
       
-      // Load details for each lab
-      for (const labId of userLabIds) {
+      // Load details for each lab from events
+      for (const event of events) {
         try {
-          const labIdNum = Number(labId);
+          const labId = Number(event.args?.labId);
+          console.log(`📋 Loading lab #${labId}...`);
           
-          // Get lab details
-          const details = await diamond.getLabDetails(labIdNum);
+          // Get current lab details to check if still active
+          const details = await diamond.getLabDetails(labId);
           const [owner, h1Token, domain, active, level] = details;
           
-          if (!active) continue;
+          if (!active) {
+            console.log(`⚠️ Lab #${labId} is inactive, skipping`);
+            continue;
+          }
           
           // Get vault details (H1 token is the vault)
           const vault = new ethers.Contract(h1Token, LabVault_ABI, provider);
@@ -740,7 +734,7 @@ export default function Prototype() {
           ]);
           
           // Get bonding curve address
-          const curveAddress = await diamond.getBondingCurve(labIdNum);
+          const curveAddress = await diamond.getBondingCurve(labId);
           
           // Get H1 price from bonding curve if it exists
           let h1Price = '0';
@@ -749,13 +743,14 @@ export default function Prototype() {
               const curve = new ethers.Contract(curveAddress, BondingCurveSale_ABI, provider);
               const priceWei = await curve.price();
               h1Price = ethers.formatEther(priceWei);
+              console.log(`💰 Lab #${labId} H1 price: ${h1Price} LABS`);
             } catch (error) {
-              console.log(`⚠️ Could not load price for lab ${labIdNum}, curve not deployed yet`);
+              console.log(`⚠️ Lab #${labId}: Bonding curve not deployed yet`);
             }
           }
           
           labs.push({
-            labId: labIdNum,
+            labId,
             name,
             symbol,
             domain,
@@ -766,16 +761,18 @@ export default function Prototype() {
             userH1Balance: ethers.formatEther(userBalance)
           });
           
-          console.log(`✅ Loaded lab #${labIdNum}: ${name} (${symbol})`);
+          console.log(`✅ Loaded lab #${labId}: ${name} (${symbol}), H1 balance: ${ethers.formatEther(userBalance)}`);
         } catch (error) {
-          console.error(`❌ Failed to load lab ${labId}:`, error);
+          console.error(`❌ Failed to load lab from event:`, error);
         }
       }
       
       setAllLabsForMarketplace(labs);
       console.log(`🏪 Loaded ${labs.length} lab(s) for marketplace`);
     } catch (error) {
-      console.error('❌ Failed to load marketplace labs:', error);
+      console.error('❌ Failed to load labs from events:', error);
+      setLabsOwned(0);
+      setAllLabsForMarketplace([]);
     } finally {
       setLoadingMarketplace(false);
     }
@@ -1081,7 +1078,7 @@ export default function Prototype() {
         
         // Refresh balances and marketplace
         await loadUserLabsBalance();
-        await loadAllLabsForMarketplace();
+        await loadUserLabsFromEvents();
         
         setTradeAmount('1');
       } else {
@@ -1102,8 +1099,7 @@ export default function Prototype() {
     if (isConnected && address) {
       loadFaucetBalance();
       loadUserLabsBalance();
-      loadUserLabCount();
-      loadAllLabsForMarketplace();
+      loadUserLabsFromEvents();
     }
   }, [isConnected, address]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
