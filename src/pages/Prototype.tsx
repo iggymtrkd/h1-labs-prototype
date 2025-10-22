@@ -1344,10 +1344,9 @@ export default function Prototype() {
                   <Badge className="mt-2 bg-primary/20 text-primary">🏦 Purchase Datasets (Multi-Wallet Revenue Flow)</Badge>
                 </div>
                 {/* Enriched Dataset Icon */}
-                {completedCount > 0 && (
-                  <Dialog>
-                    <DialogTrigger asChild>
-                      <button className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group">
+                <Dialog>
+                  <DialogTrigger asChild>
+                    <button className="flex flex-col items-center gap-1 hover:opacity-80 transition-opacity group">
                         <div className="w-12 h-12 rounded-lg bg-secondary/20 flex items-center justify-center group-hover:bg-secondary/30 transition-colors">
                           <FileStack className="h-6 w-6 text-secondary" />
                         </div>
@@ -1577,7 +1576,6 @@ export default function Prototype() {
                       </div>
                     </DialogContent>
                   </Dialog>
-                )}
               </div>
 
               <div className="grid gap-6">
