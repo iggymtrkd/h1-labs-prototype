@@ -167,6 +167,41 @@ export default function Profile({ address: walletAddress, labsBalance: userLabsB
       }
       
       setProfileData(data);
+      
+      // If basename is null, try to fetch it
+      if (data && !data.basename) {
+        fetchAndUpdateBasename(connectedAddress);
+      }
+    };
+    
+    const fetchAndUpdateBasename = async (address: string) => {
+      try {
+        // Try Base Name API
+        const response = await fetch(`https://api.basename.app/v1/name/${address}`);
+        
+        if (response.ok) {
+          const data = await response.json();
+          if (data.name) {
+            // Update profile with basename
+            await supabase
+              .from('profiles')
+              .update({ 
+                basename: data.name,
+                avatar_url: data.avatar || profileData?.avatar_url,
+              })
+              .eq('wallet_address', address.toLowerCase());
+            
+            // Update local state
+            setProfileData(prev => prev ? {
+              ...prev,
+              basename: data.name,
+              avatar_url: data.avatar || prev.avatar_url,
+            } : null);
+          }
+        }
+      } catch (error) {
+        console.log('Could not fetch basename:', error);
+      }
     };
     
     fetchProfile();
