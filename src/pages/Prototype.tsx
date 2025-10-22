@@ -21,6 +21,8 @@ import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
+import medatlasIcon from '@/assets/medatlas-icon.png';
+import medtaggerIcon from '@/assets/medtagger-icon.png';
 
 // Available domains for lab creation
 const AVAILABLE_DOMAINS = [
@@ -1114,15 +1116,18 @@ export default function Prototype() {
 
             {/* Stage 2: Devs */}
             <Card className="p-6 bg-gradient-card border-secondary/20">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-lg bg-secondary/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl font-bold text-secondary">2</span>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-secondary/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-bold text-secondary">2</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">Devs</h2>
+                    <p className="text-sm text-muted-foreground">DataValidationFacet.sol</p>
+                    <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold mb-1">Devs</h2>
-                  <p className="text-sm text-muted-foreground">DataValidationFacet.sol</p>
-                  <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
-                </div>
+                <img src={medatlasIcon} alt="MedAtlas" className="w-16 h-16 rounded-2xl" />
               </div>
 
               <div className="space-y-4">
@@ -1173,15 +1178,18 @@ export default function Prototype() {
 
             {/* Stage 3: Scholars */}
             <Card className="p-6 bg-gradient-card border-accent/20">
-              <div className="flex items-start gap-4 mb-4">
-                <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
-                  <span className="text-2xl font-bold text-accent">3</span>
+              <div className="flex items-start justify-between gap-4 mb-4">
+                <div className="flex items-start gap-4">
+                  <div className="w-12 h-12 rounded-lg bg-accent/20 flex items-center justify-center flex-shrink-0">
+                    <span className="text-2xl font-bold text-accent">3</span>
+                  </div>
+                  <div>
+                    <h2 className="text-xl font-bold mb-1">Scholars</h2>
+                    <p className="text-sm text-muted-foreground">CredentialFacet.sol</p>
+                    <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
+                  </div>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold mb-1">Scholars</h2>
-                  <p className="text-sm text-muted-foreground">CredentialFacet.sol</p>
-                  <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
-                </div>
+                <img src={medtaggerIcon} alt="MedTagger" className="w-16 h-16 rounded-2xl" />
               </div>
 
               <div className="space-y-4">
