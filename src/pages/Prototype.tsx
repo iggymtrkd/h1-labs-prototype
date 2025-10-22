@@ -1122,7 +1122,7 @@ export default function Prototype() {
                   <div>
                     <h2 className="text-xl font-bold mb-1">Devs</h2>
                     <p className="text-sm text-muted-foreground">DataValidationFacet.sol</p>
-                    <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
+                    <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data (De-identify & Upload Medical Records)</Badge>
                   </div>
                 </div>
                 <Link to="/medatlas" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
@@ -1150,7 +1150,7 @@ export default function Prototype() {
                     id="dataContent"
                     value={dataContent}
                     onChange={(e) => setDataContent(e.target.value)}
-                    placeholder="Patient X-ray scan data..."
+                    placeholder="De-identified patient record (PII removed)"
                   />
                 </div>
                 <div>
@@ -1167,6 +1167,11 @@ export default function Prototype() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="rounded-lg bg-secondary/10 border border-secondary/20 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-secondary">💡 MedAtlas Workflow:</span> Upload de-identified medical records (from MedAtlas app). This calls <span className="font-mono text-xs">uploadDataset()</span> on DataValidationFacet, storing the record hash with metadata. Clinicians enrich these records on MedTagger, and you receive revenue share when datasets are sold.
+                  </p>
                 </div>
                 <Button
                   onClick={handleCreateData}
@@ -1189,7 +1194,7 @@ export default function Prototype() {
                   <div>
                     <h2 className="text-xl font-bold mb-1">Scholars</h2>
                     <p className="text-sm text-muted-foreground">CredentialFacet.sol</p>
-                    <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
+                    <Badge className="mt-2 bg-accent/20 text-accent">Issue Credentials & Verify Enrichment</Badge>
                   </div>
                 </div>
                 <Link to="/medtag" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
@@ -1207,7 +1212,7 @@ export default function Prototype() {
                     id="credentialType"
                     value={credentialType}
                     onChange={(e) => setCredentialType(e.target.value)}
-                    placeholder="Medical Degree"
+                    placeholder="Validated Credentials (Medical Record Enrichment, Clinical Experience, etc)"
                   />
                 </div>
                 <div>
@@ -1224,6 +1229,11 @@ export default function Prototype() {
                       ))}
                     </SelectContent>
                   </Select>
+                </div>
+                <div className="rounded-lg bg-accent/10 border border-accent/20 p-3">
+                  <p className="text-xs text-muted-foreground">
+                    <span className="font-semibold text-accent">💡 MedTagger Workflow:</span> Issue credentials to clinicians who complete enrichment work on MedTagger. This calls <span className="font-mono text-xs">issueCredential()</span> on CredentialFacet, verifying their contributions and building onchain reputation. Approved enrichments trigger revenue distribution via RevenueFacet.
+                  </p>
                 </div>
                 <Button
                   onClick={handleCreateCredential}
