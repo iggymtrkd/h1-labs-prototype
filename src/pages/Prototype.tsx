@@ -8,6 +8,7 @@ import { ScrollArea } from '@/components/ui/scroll-area';
 import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
@@ -1357,7 +1358,124 @@ export default function Prototype() {
                       <DialogHeader>
                         <DialogTitle>Dataset Metadata Report</DialogTitle>
                       </DialogHeader>
-                      <div className="space-y-6">
+                      <Tabs defaultValue="dataset" className="w-full">
+                        <TabsList className="grid w-full grid-cols-2">
+                          <TabsTrigger value="dataset">Dataset Summary</TabsTrigger>
+                          <TabsTrigger value="transactions">Transaction Details</TabsTrigger>
+                        </TabsList>
+                        
+                        {/* Dataset Summary Tab - Condensed */}
+                        <TabsContent value="dataset" className="space-y-4 mt-4">
+                          <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                            <h3 className="font-bold text-lg mb-4">Dataset Overview</h3>
+                            <div className="space-y-3 text-sm">
+                              {/* Data ID, Timestamp, Hash */}
+                              <div className="grid grid-cols-2 gap-4">
+                                <div>
+                                  <span className="text-muted-foreground font-semibold">Data ID:</span>
+                                  <p className="font-mono text-primary">
+                                    {datasetMetadata.step2 ? `#${datasetMetadata.step2.dataId}` : 'Not created yet'}
+                                  </p>
+                                  <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
+                                </div>
+                                <div>
+                                  <span className="text-muted-foreground font-semibold">Created:</span>
+                                  <p className="font-mono text-xs">
+                                    {datasetMetadata.step2 ? datasetMetadata.step2.timestamp.toLocaleString() : 'Not created yet'}
+                                  </p>
+                                  <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real' : ''}</p>
+                                </div>
+                              </div>
+                              
+                              <div>
+                                <span className="text-muted-foreground font-semibold">Data Hash:</span>
+                                <p className="font-mono text-xs break-all">
+                                  {datasetMetadata.step2 ? datasetMetadata.step2.dataHash : 'Not created yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
+                              </div>
+
+                              <Separator />
+
+                              {/* Author Info */}
+                              <div>
+                                <span className="text-muted-foreground font-semibold">Author ID & Wallet:</span>
+                                <p className="font-mono text-xs break-all">
+                                  {datasetMetadata.step2 ? datasetMetadata.step2.creator : 'Not created yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
+                              </div>
+
+                              {/* Lab */}
+                              <div>
+                                <span className="text-muted-foreground font-semibold">Lab:</span>
+                                <p className="font-mono">
+                                  {datasetMetadata.step2 ? `Lab #${datasetMetadata.step2.labId}` : datasetMetadata.step1 ? `Lab #${datasetMetadata.step1.labId}` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{(datasetMetadata.step2 || datasetMetadata.step1) ? '✓ Real (onchain)' : ''}</p>
+                              </div>
+
+                              <Separator />
+
+                              {/* App Used */}
+                              <div>
+                                <span className="text-muted-foreground font-semibold">App Used:</span>
+                                <p className="font-mono text-xs">MedTagger</p>
+                                <p className="text-xs text-yellow-500">⚠ Placeholder</p>
+                              </div>
+
+                              <div>
+                                <span className="text-muted-foreground font-semibold">App Developer Wallet:</span>
+                                <p className="font-mono text-xs break-all">0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb</p>
+                                <p className="text-xs text-yellow-500">⚠ Placeholder</p>
+                              </div>
+
+                              <Separator />
+
+                              {/* Scholar/Enricher */}
+                              <div>
+                                <span className="text-muted-foreground font-semibold">Enriched by (Scholar):</span>
+                                <div className="mt-1">
+                                  <p className="font-mono text-xs">
+                                    {datasetMetadata.step3 ? `Credential ID: #${datasetMetadata.step3.credentialId}` : 'Not enriched yet'}
+                                  </p>
+                                  <p className="font-mono text-xs break-all">
+                                    {datasetMetadata.step3 ? `Wallet: ${datasetMetadata.step3.walletAddress}` : ''}
+                                  </p>
+                                  <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real (onchain)' : ''}</p>
+                                </div>
+                              </div>
+
+                              <Separator />
+
+                              {/* Purchase Info */}
+                              <div>
+                                <span className="text-muted-foreground font-semibold">Purchased by:</span>
+                                <div className="mt-1">
+                                  <p className="font-mono text-xs break-all">
+                                    {datasetMetadata.step4 ? datasetMetadata.step4.buyer : 'Not purchased yet'}
+                                  </p>
+                                  <p className="font-mono text-xs">
+                                    {datasetMetadata.step4 ? `Amount: ${datasetMetadata.step4.amount} ETH` : ''}
+                                  </p>
+                                  <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real (onchain)' : ''}</p>
+                                </div>
+                              </div>
+                            </div>
+
+                            {/* Legend */}
+                            <div className="mt-4 pt-4 border-t border-border">
+                              <p className="text-xs text-muted-foreground mb-2 font-semibold">Data Status:</p>
+                              <div className="space-y-1 text-xs">
+                                <p className="text-green-500">✓ Real (onchain) - Data from blockchain transactions</p>
+                                <p className="text-yellow-500">⚠ Placeholder - Will be populated from contract events</p>
+                              </div>
+                            </div>
+                          </div>
+                        </TabsContent>
+
+                        {/* Transaction Details Tab - Full Details */}
+                        <TabsContent value="transactions" className="space-y-6 mt-4">
                         {/* Step 1: Lab Creation */}
                         <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
                           <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
@@ -1615,7 +1733,8 @@ export default function Prototype() {
                             <p className="text-yellow-500">⚠ Placeholder - This field will be populated from contract events in production</p>
                           </div>
                         </div>
-                      </div>
+                        </TabsContent>
+                      </Tabs>
                     </DialogContent>
                   </Dialog>
               </div>
