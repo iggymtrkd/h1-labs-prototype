@@ -116,6 +116,12 @@ export default function Prototype() {
       return;
     }
 
+    // Basic input validation before proceeding
+    if (!stakeAmount || isNaN(Number(stakeAmount)) || Number(stakeAmount) <= 0) {
+      toast.error('Enter a positive stake amount');
+      return;
+    }
+
     setLoading('stake');
     addLog('info', 'Stage 1: Stake $LABS', `🎯 STARTING: Stake ${stakeAmount} LABS tokens to unlock Lab creation`);
 
@@ -123,39 +129,45 @@ export default function Prototype() {
       // Get provider from Base Account SDK
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
+      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
       const signer = await provider.getSigner();
+
+      // Ensure wallet is on the expected network (Base Sepolia)
+      const net = await provider.getNetwork();
+      if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
+        toast.error('Wrong network. Please switch to Base Sepolia.');
+        setLoading(null);
+        return;
+      }
 
       // Preflight diagnostics: verify routing, balances, allowance, and simulate
       const stakeAmountBN = ethers.parseEther(stakeAmount);
 
-      // 1) Verify Diamond routes stakeLABS selector to the expected facet
+      // 1) Verify Diamond routes stakeLABS selector (warn only if mismatch)
       try {
-        const loupe = new ethers.Contract(CONTRACTS.H1Diamond, DiamondLoupeFacet_ABI, provider);
+        const loupe = new ethers.Contract(CONTRACTS.H1Diamond, DiamondLoupeFacet_ABI, rpc);
         const selector = ethers.id('stakeLABS(uint256)').slice(0, 10);
         const routedFacet: string = await loupe.facetAddress(selector);
         addLog('info', 'Diagnostics', `🔎 stakeLABS selector routed to: ${routedFacet}`);
         if (routedFacet.toLowerCase() !== (CONTRACTS.LABSCoreFacet as string).toLowerCase()) {
-          toast.error('Diamond is not routing stakeLABS to the new LABSCoreFacet');
-          addLog('error', 'Diagnostics', '❌ Selector not routed to new LABSCoreFacet. Please run diamondCut REPLACE for stakeLABS');
-          setLoading(null);
-          return;
+          addLog('error', 'Diagnostics', '⚠ Selector routed to a different facet than configured. Proceeding anyway.');
         }
       } catch (e: any) {
         addLog('error', 'Diagnostics', `❌ Failed loupe check: ${e?.message || String(e)}`);
       }
 
-      // 2) Verify contracts exist on chain
-      const codeLABS = await provider.send('eth_getCode', [CONTRACTS.LABSToken, 'latest']);
-      const codeDiamond = await provider.send('eth_getCode', [CONTRACTS.H1Diamond, 'latest']);
+      // 2) Verify contracts exist on chain (via RPC)
+      const codeLABS = await rpc.getCode(CONTRACTS.LABSToken);
+      const codeDiamond = await rpc.getCode(CONTRACTS.H1Diamond);
       if (codeLABS === '0x' || codeDiamond === '0x') {
-        toast.error('Contract code missing on chain (LABS or Diamond)');
+        toast.error('Contract code missing on Base Sepolia (LABS or Diamond)');
         addLog('error', 'Diagnostics', `❌ Code missing. LABS=${codeLABS !== '0x'}, DIAMOND=${codeDiamond !== '0x'}`);
         setLoading(null);
         return;
       }
 
-      // 3) Verify LABS balance and allowance
-      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
+      // 3) Verify LABS balance and allowance (use RPC for reads)
+      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, rpc);
       const [bal, allowance] = await Promise.all([
         labsToken.balanceOf(address),
         labsToken.allowance(address, CONTRACTS.H1Diamond)
@@ -167,24 +179,7 @@ export default function Prototype() {
         return;
       }
 
-      // 4) Simulate stake to capture revert reason before sending tx
-      try {
-        const iface = new ethers.Interface(LABSCoreFacet_ABI);
-        const data = iface.encodeFunctionData('stakeLABS', [stakeAmountBN]);
-        await provider.call({ to: CONTRACTS.H1Diamond, from: address, data });
-      } catch (simErr: any) {
-        addLog('error', 'Diagnostics', `❌ Simulation revert: ${simErr?.shortMessage || simErr?.message || String(simErr)}`);
-        toast.error('Stake simulation reverted. Check logs for details.');
-        setLoading(null);
-        return;
-      }
-
-      // Log balances for reference
-      const balance = await provider.getBalance(address);
-      const balanceInEth = ethers.formatEther(balance);
-      addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
-
-      // Approve Diamond to spend LABS
+      // 4) Approve Diamond to spend LABS (before simulation)
       addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
       const approvalTx = await new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer).approve(
         CONTRACTS.H1Diamond,
@@ -195,6 +190,23 @@ export default function Prototype() {
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Waiting for approval confirmation...');
       await approvalTx.wait();
       addLog('success', 'Stage 1: Stake $LABS', `✅ Approval confirmed! ${stakeAmount} LABS authorized`, approvalTx.hash);
+
+      // 5) Simulate stake after approval to catch any other reverts
+      try {
+        const iface = new ethers.Interface(LABSCoreFacet_ABI);
+        const data = iface.encodeFunctionData('stakeLABS', [stakeAmountBN]);
+        await rpc.call({ to: CONTRACTS.H1Diamond, from: address, data });
+      } catch (simErr: any) {
+        addLog('error', 'Diagnostics', `❌ Simulation revert after approval: ${simErr?.shortMessage || simErr?.message || String(simErr)}`);
+        toast.error('Stake simulation reverted. Check logs for details.');
+        setLoading(null);
+        return;
+      }
+
+      // Log balances for reference
+      const balance = await provider.getBalance(address);
+      const balanceInEth = ethers.formatEther(balance);
+      addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
 
       // Stake LABS via LABSCoreFacet
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
@@ -252,7 +264,7 @@ export default function Prototype() {
       const receipt = await createTx.wait();
 
       // Parse events to get lab ID
-      const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string)"));
+      const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string,address)"));
       const labId = labCreatedEvent ? ethers.toNumber(labCreatedEvent.topics[1]) : "unknown";
 
       addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}) with vault deployed!`, createTx.hash);
