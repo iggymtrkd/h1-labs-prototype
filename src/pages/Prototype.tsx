@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
-import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI } from '@/contracts/abis';
+import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 // Available domains for lab creation
@@ -153,10 +153,14 @@ export default function Prototype() {
     domain: string;
     h1Price: string;
     tvl: string;
+    curveAddress: string;
+    vaultAddress: string;
+    userH1Balance: string; // User's H1 token balance for this lab
   }>>([]);
   const [marketplaceAction, setMarketplaceAction] = useState<'buy' | 'sell'>('buy');
   const [selectedLabForTrade, setSelectedLabForTrade] = useState<number | null>(null);
   const [tradeAmount, setTradeAmount] = useState('1');
+  const [loadingMarketplace, setLoadingMarketplace] = useState(false);
 
   // Step 5: User's Created Labs
   interface CreatedLab {
@@ -585,6 +589,10 @@ export default function Prototype() {
       setLabName('');
       setLabSymbol('');
       setLabDomain('healthcare');
+
+      // Refresh lab count and marketplace
+      await loadUserLabCount();
+      await loadAllLabsForMarketplace();
     } catch (error: any) {
       console.error('Create lab error:', error);
       addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
@@ -679,6 +687,100 @@ export default function Prototype() {
       console.error('❌ Failed to load balances:', error);
     }
   };
+
+  // Load user's lab ownership count
+  const loadUserLabCount = async () => {
+    if (!address) return;
+    try {
+      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
+      
+      const count = await diamond.getUserLabCount(address);
+      setLabsOwned(Number(count));
+      console.log(`🏭 User owns ${count} lab(s)`);
+    } catch (error) {
+      console.error('❌ Failed to load lab count:', error);
+      setLabsOwned(0);
+    }
+  };
+
+  // Load all labs for the marketplace
+  const loadAllLabsForMarketplace = async () => {
+    if (!address) return;
+    
+    setLoadingMarketplace(true);
+    try {
+      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], provider);
+      
+      // Get user's labs
+      const userLabIds = await diamond.getUserLabs(address);
+      console.log(`🔍 Found ${userLabIds.length} user lab(s):`, userLabIds);
+      
+      const labs = [];
+      
+      // Load details for each lab
+      for (const labId of userLabIds) {
+        try {
+          const labIdNum = Number(labId);
+          
+          // Get lab details
+          const details = await diamond.getLabDetails(labIdNum);
+          const [owner, h1Token, domain, active, level] = details;
+          
+          if (!active) continue;
+          
+          // Get vault details (H1 token is the vault)
+          const vault = new ethers.Contract(h1Token, LabVault_ABI, provider);
+          const [name, symbol, totalAssets, userBalance] = await Promise.all([
+            vault.name(),
+            vault.symbol(),
+            vault.totalAssets(),
+            vault.balanceOf(address)
+          ]);
+          
+          // Get bonding curve address
+          const curveAddress = await diamond.getBondingCurve(labIdNum);
+          
+          // Get H1 price from bonding curve if it exists
+          let h1Price = '0';
+          if (curveAddress && curveAddress !== ethers.ZeroAddress) {
+            try {
+              const curve = new ethers.Contract(curveAddress, BondingCurveSale_ABI, provider);
+              const priceWei = await curve.price();
+              h1Price = ethers.formatEther(priceWei);
+            } catch (error) {
+              console.log(`⚠️ Could not load price for lab ${labIdNum}, curve not deployed yet`);
+            }
+          }
+          
+          labs.push({
+            labId: labIdNum,
+            name,
+            symbol,
+            domain,
+            h1Price,
+            tvl: ethers.formatEther(totalAssets),
+            curveAddress,
+            vaultAddress: h1Token,
+            userH1Balance: ethers.formatEther(userBalance)
+          });
+          
+          console.log(`✅ Loaded lab #${labIdNum}: ${name} (${symbol})`);
+        } catch (error) {
+          console.error(`❌ Failed to load lab ${labId}:`, error);
+        }
+      }
+      
+      setAllLabsForMarketplace(labs);
+      console.log(`🏪 Loaded ${labs.length} lab(s) for marketplace`);
+    } catch (error) {
+      console.error('❌ Failed to load marketplace labs:', error);
+    } finally {
+      setLoadingMarketplace(false);
+    }
+  };
+
   const handleMintTestLabs = async () => {
     if (!address) {
       toast.error('Wallet not connected');
@@ -919,10 +1021,89 @@ export default function Prototype() {
       setLoading(null);
     }
   };
+  // Handle buying/selling H1 tokens with LABS
+  const handleTradeH1 = async (labId: number, action: 'buy' | 'sell') => {
+    if (!isConnected || !sdk || !address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!tradeAmount || isNaN(Number(tradeAmount)) || Number(tradeAmount) <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+
+    const lab = allLabsForMarketplace.find(l => l.labId === labId);
+    if (!lab) {
+      toast.error('Lab not found');
+      return;
+    }
+
+    if (!lab.curveAddress || lab.curveAddress === ethers.ZeroAddress) {
+      toast.error('Bonding curve not deployed for this lab yet. Please deploy it first.');
+      return;
+    }
+
+    setLoading('marketplace');
+    
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      const signer = await provider.getSigner(address);
+
+      if (action === 'buy') {
+        // Buy H1 tokens with LABS
+        addLog('info', 'H1 Marketplace', `🎯 STARTING: Buy ${tradeAmount} H1 ${lab.symbol} with LABS`);
+
+        // Get LABS token contract
+        const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
+        
+        // Amount in wei
+        const amountWei = ethers.parseEther(tradeAmount);
+
+        // Step 1: Approve LABS spending
+        addLog('info', 'H1 Marketplace', '📝 Step 1/2: Requesting approval to spend LABS tokens...');
+        const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
+        addLog('info', 'H1 Marketplace', '⏳ Mining approval transaction...');
+        await approveTx.wait();
+        addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
+
+        // Step 2: Buy H1 tokens via bonding curve
+        addLog('info', 'H1 Marketplace', `📝 Step 2/2: Buying H1 ${lab.symbol} tokens...`);
+        const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
+        const minSharesOut = 0; // Could add slippage protection here
+        const buyTx = await curve.buy(amountWei, address, minSharesOut);
+        addLog('info', 'H1 Marketplace', '⏳ Mining buy transaction...');
+        const receipt = await buyTx.wait();
+        
+        addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`, buyTx.hash);
+        toast.success(`Successfully bought H1 ${lab.symbol}!`);
+        
+        // Refresh balances and marketplace
+        await loadUserLabsBalance();
+        await loadAllLabsForMarketplace();
+        
+        setTradeAmount('1');
+      } else {
+        // Sell functionality could be added here
+        // For now, show message that it's the same as redeeming from the vault
+        toast.info('To sell H1 tokens, use the vault redemption flow (coming soon in UI)');
+      }
+    } catch (error: any) {
+      console.error('Trade error:', error);
+      addLog('error', 'H1 Marketplace', `❌ ${error.message || 'Failed to trade H1 tokens'}`);
+      toast.error('Failed to trade H1 tokens');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   useEffect(() => {
     if (isConnected && address) {
       loadFaucetBalance();
       loadUserLabsBalance();
+      loadUserLabCount();
+      loadAllLabsForMarketplace();
     }
   }, [isConnected, address]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
@@ -1808,162 +1989,130 @@ export default function Prototype() {
             </div>
 
             <div className="space-y-6">
-              {/* Demo Labs */}
+              {/* Your Labs */}
               <div>
-                <p className="text-sm font-semibold text-primary mb-4">Available Labs for Trading</p>
-                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                  {/* Lab 1: Healthcare */}
-                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-bold text-lg text-secondary">Healthcare Lab</h4>
-                        <p className="text-sm text-muted-foreground">Domain: healthcare</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground text-xs">H1 Price</p>
-                          <p className="font-mono font-bold">0.05 ETH</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Lab ID</p>
-                          <p className="font-mono font-bold">#1</p>
-                        </div>
-                      </div>
-
-                      <Separator className="my-2" />
-
-                      <div className="space-y-2">
-                        <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
-                          <SelectTrigger className="text-sm">
-                            <SelectValue placeholder="Buy / Sell" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background">
-                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
-                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <Input type="number" placeholder="0.1" step="0.01" value={marketplaceAction === 'buy' && selectedLabForTrade === 1 ? tradeAmount : ''} onChange={e => {
-                        setSelectedLabForTrade(1);
-                        setTradeAmount(e.target.value);
-                      }} className="text-sm" />
-
-                        <Button size="sm" className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} disabled={loading === 'marketplace' || !tradeAmount}>
-                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
-                        </Button>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground text-center">
-                        💡 Try buying H1 tokens to participate in lab governance
+                <p className="text-sm font-semibold text-primary mb-4">
+                  {loadingMarketplace ? 'Loading labs...' : allLabsForMarketplace.length > 0 ? 'Your Labs (Available for Trading)' : 'No labs created yet'}
+                </p>
+                
+                {loadingMarketplace ? (
+                  <div className="flex items-center justify-center py-12">
+                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
+                  </div>
+                ) : allLabsForMarketplace.length === 0 ? (
+                  <Card className="p-8 bg-slate-800/50 border-secondary/20">
+                    <div className="text-center space-y-3">
+                      <Beaker className="h-12 w-12 mx-auto text-muted-foreground" />
+                      <p className="text-sm text-muted-foreground">
+                        Create your first lab to see it here!
+                      </p>
+                      <p className="text-xs text-muted-foreground">
+                        Labs you create will appear here for buying/selling H1 tokens
                       </p>
                     </div>
                   </Card>
+                ) : (
+                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                    {allLabsForMarketplace.map((lab) => (
+                      <Card key={lab.labId} className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                        <div className="space-y-3">
+                          <div>
+                            <h4 className="font-bold text-lg text-secondary">{lab.name}</h4>
+                            <p className="text-sm text-muted-foreground capitalize">Domain: {lab.domain}</p>
+                          </div>
 
-                  {/* Lab 2: Biotech */}
-                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-bold text-lg text-secondary">Biotech Lab</h4>
-                        <p className="text-sm text-muted-foreground">Domain: biotech</p>
-                      </div>
+                          <div className="grid grid-cols-2 gap-2 text-sm">
+                            <div>
+                              <p className="text-muted-foreground text-xs">H1 Price (LABS)</p>
+                              <p className="font-mono font-bold">
+                                {parseFloat(lab.h1Price) > 0 ? parseFloat(lab.h1Price).toFixed(6) : 'N/A'}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Lab ID</p>
+                              <p className="font-mono font-bold">#{lab.labId}</p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">TVL (LABS)</p>
+                              <p className="font-mono font-bold">
+                                {parseFloat(lab.tvl).toFixed(2)}
+                              </p>
+                            </div>
+                            <div>
+                              <p className="text-muted-foreground text-xs">Your H1</p>
+                              <p className="font-mono font-bold text-primary">
+                                {parseFloat(lab.userH1Balance).toFixed(4)}
+                              </p>
+                            </div>
+                          </div>
 
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground text-xs">H1 Price</p>
-                          <p className="font-mono font-bold">0.08 ETH</p>
+                          <Separator className="my-2" />
+
+                          {lab.curveAddress && lab.curveAddress !== ethers.ZeroAddress ? (
+                            <div className="space-y-2">
+                              <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
+                                <SelectTrigger className="text-sm">
+                                  <SelectValue placeholder="Buy / Sell" />
+                                </SelectTrigger>
+                                <SelectContent className="bg-background">
+                                  <SelectItem value="buy">🟢 Buy with LABS</SelectItem>
+                                  <SelectItem value="sell">🔴 Redeem H1</SelectItem>
+                                </SelectContent>
+                              </Select>
+
+                              <Input 
+                                type="number" 
+                                placeholder="Amount in LABS" 
+                                step="0.01" 
+                                value={selectedLabForTrade === lab.labId ? tradeAmount : ''} 
+                                onChange={e => {
+                                  setSelectedLabForTrade(lab.labId);
+                                  setTradeAmount(e.target.value);
+                                }} 
+                                className="text-sm" 
+                              />
+
+                              <Button 
+                                size="sm" 
+                                className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} 
+                                disabled={loading === 'marketplace' || !tradeAmount || selectedLabForTrade !== lab.labId}
+                                onClick={() => handleTradeH1(lab.labId, marketplaceAction)}
+                              >
+                                {loading === 'marketplace' && selectedLabForTrade === lab.labId ? (
+                                  <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : (
+                                  marketplaceAction === 'buy' ? '🟢 Buy H1 with LABS' : '🔴 Redeem H1'
+                                )}
+                              </Button>
+                            </div>
+                          ) : (
+                            <div className="text-center py-2">
+                              <p className="text-xs text-muted-foreground">
+                                ⚠️ Bonding curve not deployed yet
+                              </p>
+                              <p className="text-xs text-muted-foreground mt-1">
+                                Deploy it to enable H1 trading
+                              </p>
+                            </div>
+                          )}
+
+                          <p className="text-xs text-muted-foreground text-center">
+                            💡 Stake LABS to get H1 tokens for governance
+                          </p>
                         </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Lab ID</p>
-                          <p className="font-mono font-bold">#2</p>
-                        </div>
-                      </div>
-
-                      <Separator className="my-2" />
-
-                      <div className="space-y-2">
-                        <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
-                          <SelectTrigger className="text-sm">
-                            <SelectValue placeholder="Buy / Sell" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background">
-                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
-                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <Input type="number" placeholder="0.1" step="0.01" value={marketplaceAction === 'buy' && selectedLabForTrade === 2 ? tradeAmount : ''} onChange={e => {
-                        setSelectedLabForTrade(2);
-                        setTradeAmount(e.target.value);
-                      }} className="text-sm" />
-
-                        <Button size="sm" className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} disabled={loading === 'marketplace' || !tradeAmount}>
-                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
-                        </Button>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground text-center">
-                        💡 Higher TVL = higher H1 price (bonding curve)
-                      </p>
-                    </div>
-                  </Card>
-
-                  {/* Lab 3: Finance */}
-                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
-                    <div className="space-y-3">
-                      <div>
-                        <h4 className="font-bold text-lg text-secondary">Finance Lab</h4>
-                        <p className="text-sm text-muted-foreground">Domain: finance</p>
-                      </div>
-
-                      <div className="grid grid-cols-2 gap-2 text-sm">
-                        <div>
-                          <p className="text-muted-foreground text-xs">H1 Price</p>
-                          <p className="font-mono font-bold">0.03 ETH</p>
-                        </div>
-                        <div>
-                          <p className="text-muted-foreground text-xs">Lab ID</p>
-                          <p className="font-mono font-bold">#3</p>
-                        </div>
-                      </div>
-
-                      <Separator className="my-2" />
-
-                      <div className="space-y-2">
-                        <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
-                          <SelectTrigger className="text-sm">
-                            <SelectValue placeholder="Buy / Sell" />
-                          </SelectTrigger>
-                          <SelectContent className="bg-background">
-                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
-                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
-                          </SelectContent>
-                        </Select>
-
-                        <Input type="number" placeholder="0.1" step="0.01" value={marketplaceAction === 'buy' && selectedLabForTrade === 3 ? tradeAmount : ''} onChange={e => {
-                        setSelectedLabForTrade(3);
-                        setTradeAmount(e.target.value);
-                      }} className="text-sm" />
-
-                        <Button size="sm" className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} disabled={loading === 'marketplace' || !tradeAmount}>
-                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
-                        </Button>
-                      </div>
-
-                      <p className="text-xs text-muted-foreground text-center">
-                        💡 Early adopter advantage on new labs
-                      </p>
-                    </div>
-                  </Card>
-                </div>
+                      </Card>
+                    ))}
+                  </div>
+                )}
               </div>
 
               {/* Marketplace Info */}
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <p className="text-sm text-muted-foreground space-y-2">
-                  <span className="block"><strong>📊 How It Works:</strong> H1 tokens are minted via bonding curves. Price increases with TVL.</span>
+                  <span className="block"><strong>📊 How It Works:</strong> Stake LABS tokens to get H1 tokens via bonding curves. H1 price increases with TVL.</span>
                   <span className="block"><strong>💰 Revenue Share:</strong> H1 holders earn % of dataset sale revenue via buybacks.</span>
-                  <span className="block"><strong>🎯 Early Advantage:</strong> First buyers get lowest prices. Prices increase as TVL grows.</span>
+                  <span className="block"><strong>🎯 Early Advantage:</strong> First stakers get lowest prices. Prices increase as more LABS are staked.</span>
+                  <span className="block"><strong>🏦 Bonding Curve:</strong> Deploy a bonding curve for your lab to enable H1 trading (requires vault to be deployed first).</span>
                 </p>
               </div>
             </div>

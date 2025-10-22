@@ -55,3 +55,31 @@ export const TestingFacet_ABI = [
   "function setProtocolTreasury(address treasury) external",
   "function getStakedBalance(address user) external view returns (uint256)"
 ];
+
+export const BondingCurveFacet_ABI = [
+  "function deployBondingCurve(uint256 labId) external returns (address curve)",
+  "function getBondingCurve(uint256 labId) external view returns (address)"
+];
+
+export const BondingCurveSale_ABI = [
+  "function buy(uint256 labsAmount, address receiver, uint256 minSharesOut) external returns (uint256 sharesOut)",
+  "function price() external view returns (uint256)",
+  "function labsToken() external view returns (address)",
+  "function vault() external view returns (address)",
+  "function treasury() external view returns (address)",
+  "function feeBps() external view returns (uint256)",
+  "function polBps() external view returns (uint256)",
+  "function paused() external view returns (bool)"
+];
+
+export const LabVault_ABI = [
+  "function balanceOf(address account) external view returns (uint256)",
+  "function totalSupply() external view returns (uint256)",
+  "function totalAssets() external view returns (uint256)",
+  "function name() external view returns (string memory)",
+  "function symbol() external view returns (string memory)",
+  "function assetsPerShare() external view returns (uint256)",
+  "function depositLABS(uint256 assets, address receiver) external returns (uint256 shares)",
+  "function requestRedeem(uint256 shares) external returns (uint256 requestId)",
+  "function getLevel() external view returns (uint8)"
+];
