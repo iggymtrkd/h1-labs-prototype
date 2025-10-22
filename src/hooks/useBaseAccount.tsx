@@ -42,30 +42,7 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
 
   const connectWallet = async () => {
     try {
-      // Check if we're in an iframe environment
-      if (isInIframe()) {
-        // Use mock connection for iframe/preview environments
-        const mockAddress = "0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb";
-        const balance = "8,320";
-        
-        setAddress(mockAddress);
-        setIsConnected(true);
-        setLabsBalance(balance);
-        
-        localStorage.setItem("wallet_connected", "true");
-        localStorage.setItem("wallet_address", mockAddress);
-        localStorage.setItem("labs_balance", balance);
-
-        // Create or fetch user profile
-        await createOrFetchUserProfile(mockAddress);
-        
-        toast.success("Wallet Connected!", {
-          description: "Connected to Base Sepolia testnet",
-        });
-        return;
-      }
-
-      // Real wallet connection for production
+      // Real wallet connection
       const provider = sdk.getProvider();
       
       // Request wallet connection
@@ -205,11 +182,6 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
       const storedAddress = localStorage.getItem("wallet_address");
       
       if (storedConnected && storedAddress) {
-        // Skip provider check in iframe environments
-        if (isInIframe()) {
-          return;
-        }
-
         try {
           const provider = sdk.getProvider();
           const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
@@ -219,8 +191,7 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
             disconnectWallet();
           }
         } catch (error) {
-          // Silently handle errors in development/preview
-          console.log("Connection check skipped in iframe environment");
+          console.log("Connection check error:", error);
         }
       }
     };
