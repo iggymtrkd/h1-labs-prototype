@@ -341,7 +341,7 @@ export default function MedAtlas() {
                       <Tooltip 
                         contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
                         labelStyle={{ color: '#e2e8f0' }}
-                        formatter={(value) => `${(value / 1000000).toFixed(2)}M LABS`}
+                        formatter={(value) => `${(Number(value) / 1000000).toFixed(2)}M LABS`}
                       />
                     </PieChart>
                   </ResponsiveContainer>

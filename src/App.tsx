@@ -30,7 +30,7 @@ import CheckoutCart from "./pages/CheckoutCart";
 import Prototype from "./pages/Prototype";
 import GetStarted from "./pages/GetStarted";
 import MedAtlas from "./pages/MedAtlas";
-import MedTag from "./pages/MedTag";
+import MedTagger from "./pages/MedTagger";
 
 const queryClient = new QueryClient();
 
@@ -155,7 +155,7 @@ const AppContent = () => {
           />
           <Route 
             path="/medtag" 
-            element={isConnected ? <MedTag /> : <Home onConnect={handleConnectWallet} />} 
+            element={isConnected ? <MedTagger /> : <Home onConnect={handleConnectWallet} />} 
           />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
