@@ -530,19 +530,26 @@ export default function Prototype() {
       const receipt = await createTx.wait();
 
       // Parse events to get lab ID, vault address, and level
-      // ✅ UPDATED: New event signature includes level parameter
-      const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)"));
-      const labId = labCreatedEvent ? ethers.toNumber(labCreatedEvent.topics[1]) : "unknown";
-
-      // Extract vault address and level from event data
+      const iface = new ethers.Interface(LABSCoreFacet_ABI);
+      let labId: number | string = "unknown";
       let vaultAddress = '';
-      let eventLevel = 0; // ✅ NEW: Extract level from event
-      if (labCreatedEvent) {
-        const iface = new ethers.Interface(LABSCoreFacet_ABI);
-        const decoded = iface.parseLog(labCreatedEvent);
-        if (decoded && decoded.args) {
-          vaultAddress = decoded.args[5]; // vault address (6th parameter)
-          eventLevel = decoded.args[6]; // ✅ NEW: level (7th parameter)
+      let eventLevel = 0;
+      
+      // Try to find and parse LabCreated event from logs
+      for (const log of receipt.logs) {
+        try {
+          const decoded = iface.parseLog(log);
+          if (decoded && decoded.name === "LabCreated") {
+            // Successfully decoded the event
+            labId = ethers.toNumber(decoded.args[0]); // First arg is labId
+            vaultAddress = decoded.args[5]; // 6th arg is vault address
+            eventLevel = Number(decoded.args[6]); // 7th arg is level
+            console.log('✅ LabCreated event decoded:', { labId, vaultAddress, eventLevel });
+            break;
+          }
+        } catch (e) {
+          // This log isn't a LabCreated event, try next one
+          continue;
         }
       }
 

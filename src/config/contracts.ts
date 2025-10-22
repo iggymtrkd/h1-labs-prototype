@@ -32,7 +32,7 @@ export const CONTRACTS = {
   UniswapV3PositionManager: "0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2",
   
   // Protocol Configuration (⚠️ SET THESE VALUES)
-  ProtocolTreasury: "0x0000000000000000000000000000000000000001", // TODO: Set to actual treasury address
+  ProtocolTreasury: "0x189549dB56DB7cB4e34fb1Ea96674873fDcfAEB4", // H1 Protocol Treasury
   DefaultCooldown: 604800, // 7 days in seconds
   DefaultExitCap: 2000, // 20% in basis points
   
@@ -43,7 +43,7 @@ export const CONTRACTS = {
     developerWallet: "0x2222222222222222222222222222222222222222",     // App Developer Incentive
     creatorPoolWallet: "0x3333333333333333333333333333333333333333",   // Data Creator Pool
     scholarPoolWallet: "0x4444444444444444444444444444444444444444",   // Scholar/Validator Pool
-    h1TreasuryWallet: "0x5555555555555555555555555555555555555555",   // H1 Protocol Treasury
+    h1TreasuryWallet: "0x189549dB56DB7cB4e34fb1Ea96674873fDcfAEB4",   // H1 Protocol Treasury
   },
 } as const;
 
