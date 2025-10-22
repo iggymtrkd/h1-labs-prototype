@@ -3,7 +3,7 @@
 ## Overview
 Two demonstrator apps showcasing onchain medical data marketplace:
 1. **MedAtlas** - De-identifies and monetizes medical records
-2. **MedTag** - Enriches and validates de-identified records through clinical collaboration
+2. **MedTagger** - Enriches and validates de-identified records through clinical collaboration
 
 ---
 
@@ -56,7 +56,7 @@ Upload raw patient records → Remove PII → Prepare for enrichment marketplace
 
 ---
 
-## App 2: MedTag (Medical Record Enrichment)
+## App 2: MedTagger (Medical Record Enrichment)
 
 ### Purpose
 Collaborate to enrich records with clinical tags → Unlock revenue → Build credentials
@@ -191,7 +191,7 @@ Record: MED-2025-10-22-001
 5. Watches revenue dashboard as it's enriched
 6. Receives H1 tokens when dataset is sold
 
-### MedTag Flow
+### MedTagger Flow
 1. Clinician views available enrichment bounties
 2. Selects record to enrich
 3. Reads de-identified medical record
@@ -210,7 +210,7 @@ Record: MED-2025-10-22-001
 2. `updateRecordStatus(recordId, 'ready_for_enrichment')` → DataValidationFacet
 3. Revenue split updated when sold
 
-### MedTag Transactions
+### MedTagger Transactions
 1. `issueCredential(reviewerWallet, recordId, credentialType)` → CredentialFacet
 2. `recordEnrichmentContribution(reviewerWallet, recordId, tags)` → DataValidationFacet
 3. `deductTokens(userWallet, 0.5)` → LABSToken on AI assist

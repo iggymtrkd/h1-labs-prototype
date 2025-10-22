@@ -8,6 +8,7 @@ import { Separator } from '@/components/ui/separator';
 import { Upload, Shield, FileText, DollarSign, TrendingUp, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
+import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Mock data
 const MOCK_ORIGINAL_RECORD = `Patient Name: John Michael Patterson
@@ -44,19 +45,88 @@ interface UploadedRecord {
   estimatedRevenue: number;
 }
 
+// Mock records with various statuses and dates
+const MOCK_RECORDS: UploadedRecord[] = [
+  // Recently uploaded
+  {
+    id: 'MED-2025-10-22-001',
+    uploadedAt: new Date('2025-10-22T14:32:00'),
+    fileName: 'patient_record_001.pdf',
+    status: 'completed',
+    estimatedRevenue: 2.5
+  },
+  {
+    id: 'MED-2025-10-22-002',
+    uploadedAt: new Date('2025-10-22T13:15:00'),
+    fileName: 'patient_intake_cardio.pdf',
+    status: 'completed',
+    estimatedRevenue: 2.8
+  },
+  {
+    id: 'MED-2025-10-22-003',
+    uploadedAt: new Date('2025-10-22T11:45:00'),
+    fileName: 'lab_results_batch.pdf',
+    status: 'enriching',
+    estimatedRevenue: 3.2
+  },
+  // Yesterday
+  {
+    id: 'MED-2025-10-21-001',
+    uploadedAt: new Date('2025-10-21T16:20:00'),
+    fileName: 'patient_record_oncology.pdf',
+    status: 'sold',
+    estimatedRevenue: 2.9
+  },
+  {
+    id: 'MED-2025-10-21-002',
+    uploadedAt: new Date('2025-10-21T14:00:00'),
+    fileName: 'diagnosis_report.pdf',
+    status: 'enriching',
+    estimatedRevenue: 2.6
+  },
+  {
+    id: 'MED-2025-10-21-003',
+    uploadedAt: new Date('2025-10-21T10:30:00'),
+    fileName: 'patient_history.pdf',
+    status: 'sold',
+    estimatedRevenue: 3.1
+  },
+  // Earlier this week
+  {
+    id: 'MED-2025-10-20-001',
+    uploadedAt: new Date('2025-10-20T15:45:00'),
+    fileName: 'imaging_report.pdf',
+    status: 'sold',
+    estimatedRevenue: 3.5
+  },
+  {
+    id: 'MED-2025-10-20-002',
+    uploadedAt: new Date('2025-10-20T12:30:00'),
+    fileName: 'pathology_results.pdf',
+    status: 'sold',
+    estimatedRevenue: 2.7
+  },
+  {
+    id: 'MED-2025-10-19-001',
+    uploadedAt: new Date('2025-10-19T09:15:00'),
+    fileName: 'medication_list.pdf',
+    status: 'sold',
+    estimatedRevenue: 2.4
+  },
+  {
+    id: 'MED-2025-10-19-002',
+    uploadedAt: new Date('2025-10-19T08:00:00'),
+    fileName: 'clinical_notes.pdf',
+    status: 'sold',
+    estimatedRevenue: 2.8
+  },
+];
+
 export default function MedAtlas() {
   const navigate = useNavigate();
-  const [records, setRecords] = useState<UploadedRecord[]>([
-    {
-      id: 'MED-2025-10-22-001',
-      uploadedAt: new Date('2025-10-22'),
-      fileName: 'patient_record_001.pdf',
-      status: 'completed',
-      estimatedRevenue: 2.5
-    }
-  ]);
+  const [records, setRecords] = useState<UploadedRecord[]>(MOCK_RECORDS);
 
-  const [selectedRecord, setSelectedRecord] = useState<UploadedRecord | null>(records[0]);
+  const [selectedRecord, setSelectedRecord] = useState<UploadedRecord | null>(MOCK_RECORDS[0]);
   const [uploading, setUploading] = useState(false);
 
   const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -71,19 +141,29 @@ export default function MedAtlas() {
         uploadedAt: new Date(),
         fileName: file.name,
         status: 'completed',
-        estimatedRevenue: 2.5
+        estimatedRevenue: 2.5 + Math.random() * 1.5
       };
-      setRecords([...records, newRecord]);
+      setRecords([newRecord, ...records]);
       setSelectedRecord(newRecord);
       setUploading(false);
       toast.success('Record de-identified successfully');
     }, 2000);
   };
 
-  const totalRecords = records.length;
-  const enrichedCount = records.filter(r => r.status === 'enriching' || r.status === 'sold').length;
-  const totalRevenue = records.filter(r => r.status === 'sold').reduce((sum, r) => sum + r.estimatedRevenue, 0);
-  const estimatedRevenue = records.reduce((sum, r) => sum + r.estimatedRevenue, 0);
+  // Calculate metrics based on mock data scale
+  const totalRecords = 2600;
+  const enrichedCount = 750;
+  const totalRevenue = 1320000; // LABS tokens (realized from sold records)
+  const estimatedRevenue = totalRevenue * 0.20; // 20% of generated revenue (Data Creator share)
+
+  // Revenue distribution breakdown
+  const revenueDistribution = [
+    { name: 'Labs Owners (H1 Holders)', value: totalRevenue * 0.40, percentage: 40, color: '#3b82f6' },
+    { name: 'Devs', value: totalRevenue * 0.15, percentage: 15, color: '#8b5cf6' },
+    { name: 'Data Creator', value: totalRevenue * 0.20, percentage: 20, color: '#10b981' },
+    { name: 'Enrichers (Scholars)', value: totalRevenue * 0.20, percentage: 20, color: '#f59e0b' },
+    { name: 'H1 DAO', value: totalRevenue * 0.05, percentage: 5, color: '#ef4444' }
+  ];
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
@@ -132,9 +212,9 @@ export default function MedAtlas() {
 
             {/* Records List */}
             <Card className="p-4 bg-slate-800 border-slate-700 max-h-64 overflow-y-auto">
-              <Label className="text-white font-semibold mb-3 block text-sm">Uploaded Records</Label>
+              <Label className="text-white font-semibold mb-3 block text-sm">Recent Records</Label>
               <div className="space-y-2">
-                {records.map(record => (
+                {records.slice(0, 10).map(record => (
                   <div
                     key={record.id}
                     onClick={() => setSelectedRecord(record)}
@@ -219,34 +299,84 @@ export default function MedAtlas() {
                 {/* Total Records */}
                 <div className="bg-slate-800/50 rounded-lg p-4">
                   <p className="text-sm text-slate-400 mb-1">Records Uploaded</p>
-                  <p className="text-3xl font-bold text-white">{totalRecords}</p>
+                  <p className="text-3xl font-bold text-white">{totalRecords.toLocaleString()}</p>
                 </div>
 
                 {/* Enriched */}
                 <div className="bg-slate-800/50 rounded-lg p-4">
                   <p className="text-sm text-slate-400 mb-1">Enriched Records</p>
-                  <p className="text-3xl font-bold text-emerald-400">{enrichedCount}</p>
+                  <p className="text-3xl font-bold text-emerald-400">{enrichedCount.toLocaleString()}</p>
+                  <p className="text-xs text-slate-500 mt-1">{((enrichedCount / totalRecords) * 100).toFixed(1)}% enrichment rate</p>
                 </div>
 
                 {/* Realized Revenue */}
                 <div className="bg-slate-800/50 rounded-lg p-4">
-                  <p className="text-sm text-slate-400 mb-1">Revenue Generated</p>
+                  <p className="text-sm text-slate-400 mb-1">Total Revenue Generated</p>
                   <div className="flex items-baseline gap-2">
-                    <p className="text-3xl font-bold text-white">{totalRevenue.toFixed(2)}</p>
-                    <span className="text-sm text-emerald-400">H1</span>
+                    <p className="text-3xl font-bold text-white">{(totalRevenue / 1000000).toFixed(2)}M</p>
+                    <span className="text-sm text-emerald-400">LABS</span>
+                  </div>
+                  <p className="text-xs text-slate-500 mt-1">From sold datasets</p>
+                </div>
+
+                {/* Revenue Distribution Pie Chart */}
+                <div className="bg-slate-800/50 rounded-lg p-4">
+                  <p className="text-sm text-slate-400 mb-3">Revenue Distribution</p>
+                  <ResponsiveContainer width="100%" height={250}>
+                    <PieChart>
+                      <Pie
+                        data={revenueDistribution}
+                        cx="50%"
+                        cy="50%"
+                        labelLine={false}
+                        label={({ percentage }) => `${percentage}%`}
+                        outerRadius={80}
+                        fill="#8884d8"
+                        dataKey="value"
+                      >
+                        {revenueDistribution.map((entry, index) => (
+                          <Cell key={`cell-${index}`} fill={entry.color} />
+                        ))}
+                      </Pie>
+                      <Tooltip 
+                        contentStyle={{ backgroundColor: '#1e293b', border: '1px solid #475569', borderRadius: '8px' }}
+                        labelStyle={{ color: '#e2e8f0' }}
+                        formatter={(value) => `${(value / 1000000).toFixed(2)}M LABS`}
+                      />
+                    </PieChart>
+                  </ResponsiveContainer>
+
+                  {/* Legend with amounts */}
+                  <div className="space-y-2 mt-4">
+                    {revenueDistribution.map((item) => (
+                      <div key={item.name} className="flex items-center justify-between text-xs">
+                        <div className="flex items-center gap-2">
+                          <div 
+                            className="w-3 h-3 rounded-full" 
+                            style={{ backgroundColor: item.color }}
+                          />
+                          <span className="text-slate-300">{item.name}</span>
+                        </div>
+                        <div className="text-right">
+                          <p className="font-semibold text-slate-100">{item.percentage}%</p>
+                          <p className="text-slate-500">{(item.value / 1000000).toFixed(2)}M</p>
+                        </div>
+                      </div>
+                    ))}
                   </div>
                 </div>
 
-                {/* Estimated Revenue */}
+                {/* Your Revenue Share */}
                 <div className="bg-emerald-500/20 border border-emerald-500/50 rounded-lg p-4">
                   <div className="flex items-center justify-between">
-                    <p className="text-sm text-slate-300">Estimated Revenue</p>
+                    <p className="text-sm text-slate-300">Your Revenue Share (20%)</p>
                     <TrendingUp className="w-4 h-4 text-emerald-400" />
                   </div>
                   <div className="flex items-baseline gap-2 mt-2">
-                    <p className="text-2xl font-bold text-emerald-400">{estimatedRevenue.toFixed(2)}</p>
-                    <span className="text-xs text-emerald-400">H1</span>
+                    <p className="text-2xl font-bold text-emerald-400">{(estimatedRevenue / 1000000).toFixed(2)}M</p>
+                    <span className="text-xs text-emerald-400">LABS</span>
                   </div>
+                  <p className="text-xs text-emerald-300 mt-2">Estimated earnings from your uploads</p>
                 </div>
               </div>
             </Card>
@@ -254,7 +384,7 @@ export default function MedAtlas() {
             {/* Info Card */}
             <Card className="p-4 bg-slate-800 border-slate-700">
               <p className="text-xs text-slate-400 leading-relaxed">
-                <span className="text-emerald-400 font-semibold">MedAtlas</span> removes PII from medical records and prepares them for enrichment. Your records will be enriched by clinical professionals on MedTag, and you'll receive revenue share.
+                <span className="text-emerald-400 font-semibold">MedAtlas</span> removes PII from medical records and prepares them for enrichment. Your records will be enriched by clinical professionals on MedTagger, and you'll receive revenue share from every dataset sold.
               </p>
             </Card>
           </div>
