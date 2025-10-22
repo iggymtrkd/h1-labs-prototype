@@ -689,8 +689,11 @@ export default function Prototype() {
       addLog('info', 'Testing: Receive LABS', '⏳ Waiting for faucet to process claim...');
       const result = await claimFromFaucet(address);
       if (result.success) {
-        addLog('success', 'Testing: Receive LABS', `💰 Faucet claim successful! ${result.amount} LABS transferred to your wallet`, result.txHash);
-        toast.success(`Claimed ${result.amount} LABS tokens!`);
+        // Format amount from Wei to LABS (divide by 10^18)
+        const formattedAmount = ethers.formatEther(result.amount);
+        const friendlyAmount = parseFloat(formattedAmount).toLocaleString('en-US', { maximumFractionDigits: 2 });
+        addLog('success', 'Testing: Receive LABS', `💰 Faucet claim successful! ${friendlyAmount} LABS transferred to your wallet`, result.txHash);
+        toast.success(`✨ Claimed ${friendlyAmount} LABS tokens!`);
         await loadFaucetBalance(); // Refresh balance
         await loadUserLabsBalance(); // Refresh user balance
       } else {
