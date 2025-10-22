@@ -69,19 +69,11 @@ interface TagInstance {
 
 export default function MedTagger() {
   const navigate = useNavigate();
-  const [tags, setTags] = useState<TagInstance[]>([
-    {
-      id: '1',
-      type: 'REASONING',
-      startIdx: 250,
-      endIdx: 320,
-      text: 'upper respiratory infection',
-      addedBy: 'Dr. Sarah Chen'
-    }
-  ]);
+  const [tags, setTags] = useState<TagInstance[]>([]);
 
-  const [selectedText, setSelectedText] = useState<{ start: number; end: number } | null>(null);
+  const [selectedText, setSelectedText] = useState<{ start: number; end: number; text: string } | null>(null);
   const [activeTagType, setActiveTagType] = useState<TagInstance['type'] | null>(null);
+  const recordRef = useState<HTMLDivElement | null>(null)[0];
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([
     {
       id: '1',
@@ -117,20 +109,36 @@ export default function MedTagger() {
     { id: '4', name: 'You', avatar: '👤', completed: false }
   ];
 
-  const tagColors: Record<TagInstance['type'], { bg: string; text: string; border: string }> = {
-    REASONING: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30' },
-    HALLUCINATION: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30' },
-    PRESCRIPTION: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30' },
-    PATHOLOGY: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30' },
-    MEDICINE_DOMAIN: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30' }
+  const tagColors: Record<TagInstance['type'], { bg: string; text: string; border: string; highlight: string }> = {
+    REASONING: { bg: 'bg-yellow-500/20', text: 'text-yellow-400', border: 'border-yellow-500/30', highlight: '#eab308' },
+    HALLUCINATION: { bg: 'bg-red-500/20', text: 'text-red-400', border: 'border-red-500/30', highlight: '#ef4444' },
+    PRESCRIPTION: { bg: 'bg-blue-500/20', text: 'text-blue-400', border: 'border-blue-500/30', highlight: '#3b82f6' },
+    PATHOLOGY: { bg: 'bg-purple-500/20', text: 'text-purple-400', border: 'border-purple-500/30', highlight: '#a855f7' },
+    MEDICINE_DOMAIN: { bg: 'bg-green-500/20', text: 'text-green-400', border: 'border-green-500/30', highlight: '#10b981' }
+  };
+
+  const tagLabels: Record<TagInstance['type'], string> = {
+    REASONING: 'Reasoning',
+    HALLUCINATION: 'Hallucination',
+    PRESCRIPTION: 'Prescription',
+    PATHOLOGY: 'Pathology',
+    MEDICINE_DOMAIN: 'Domain-specific'
   };
 
   const handleTextSelection = () => {
     const selection = window.getSelection();
     if (selection && selection.toString().length > 0) {
-      const range = selection.getRangeAt(0);
-      // Simplified: just set a flag that we have selection
-      setSelectedText({ start: 0, end: selection.toString().length });
+      const selectedString = selection.toString();
+      const fullText = MOCK_RECORD;
+      const startIdx = fullText.indexOf(selectedString);
+      
+      if (startIdx !== -1) {
+        setSelectedText({ 
+          start: startIdx, 
+          end: startIdx + selectedString.length,
+          text: selectedString 
+        });
+      }
     }
   };
 
@@ -141,18 +149,71 @@ export default function MedTagger() {
     }
 
     const newTag: TagInstance = {
-      id: String(tags.length + 1),
+      id: String(Date.now()),
       type,
       startIdx: selectedText.start,
       endIdx: selectedText.end,
-      text: 'selected text',
+      text: selectedText.text,
       addedBy: 'You'
     };
 
     setTags([...tags, newTag]);
     setSelectedText(null);
-    setActiveTagType(null);
-    toast.success(`Tagged as ${type}`);
+    window.getSelection()?.removeAllRanges();
+    toast.success(`Tagged as ${tagLabels[type]}`);
+  };
+
+  const clearTags = () => {
+    setTags([]);
+    setSelectedText(null);
+    window.getSelection()?.removeAllRanges();
+    toast.success('All tags cleared');
+  };
+
+  const renderHighlightedText = () => {
+    if (tags.length === 0) {
+      return <span>{MOCK_RECORD}</span>;
+    }
+
+    const sortedTags = [...tags].sort((a, b) => a.startIdx - b.startIdx);
+    const segments: JSX.Element[] = [];
+    let lastIndex = 0;
+
+    sortedTags.forEach((tag, idx) => {
+      if (tag.startIdx > lastIndex) {
+        segments.push(
+          <span key={`text-${idx}`}>
+            {MOCK_RECORD.slice(lastIndex, tag.startIdx)}
+          </span>
+        );
+      }
+
+      segments.push(
+        <span
+          key={`tag-${tag.id}`}
+          style={{
+            backgroundColor: `${tagColors[tag.type].highlight}40`,
+            color: tagColors[tag.type].highlight,
+            fontWeight: 600,
+            padding: '2px 0',
+            borderRadius: '2px'
+          }}
+          title={`${tagLabels[tag.type]} - ${tag.addedBy}`}
+        >
+          {MOCK_RECORD.slice(tag.startIdx, tag.endIdx)}
+        </span>
+      );
+
+      lastIndex = tag.endIdx;
+    });
+
+    if (lastIndex < MOCK_RECORD.length) {
+      segments.push(
+        <span key="text-end">{MOCK_RECORD.slice(lastIndex)}</span>
+      );
+    }
+
+    return <>{segments}</>;
   };
 
   const handleSendMessage = () => {
@@ -304,11 +365,23 @@ export default function MedTagger() {
               </Label>
               <div
                 onMouseUp={handleTextSelection}
-                className="bg-slate-900/50 rounded-lg p-4 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto font-mono border border-slate-700 cursor-text"
+                className="bg-slate-900/50 rounded-lg p-4 text-xs text-slate-300 leading-relaxed whitespace-pre-wrap max-h-96 overflow-y-auto font-mono border border-slate-700 cursor-text select-text"
               >
-                {MOCK_RECORD}
+                {renderHighlightedText()}
               </div>
-              <p className="text-xs text-slate-500 mt-2">💡 Highlight text to tag it</p>
+              <div className="flex items-center justify-between mt-2">
+                <p className="text-xs text-slate-500">💡 Highlight text to tag it</p>
+                {tags.length > 0 && (
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={clearTags}
+                    className="text-xs text-slate-400 hover:text-white"
+                  >
+                    Clear All Tags
+                  </Button>
+                )}
+              </div>
             </Card>
 
             {/* Tagging Interface */}
@@ -326,15 +399,21 @@ export default function MedTagger() {
                         setActiveTagType(type);
                         addTag(type);
                       }}
+                      disabled={!selectedText}
                       variant="outline"
-                      className={`${colors.bg} ${colors.text} border ${colors.border} hover:opacity-80 text-xs h-auto py-2`}
+                      className={`${colors.bg} ${colors.text} border ${colors.border} hover:opacity-80 text-xs h-auto py-2 disabled:opacity-30 disabled:cursor-not-allowed`}
                     >
                       <Tag className="w-3 h-3 mr-1" />
-                      {type.replace('_', ' ')}
+                      {tagLabels[type]}
                     </Button>
                   );
                 })}
               </div>
+              {selectedText && (
+                <p className="text-xs text-emerald-400 mt-2">
+                  ✓ Selected: "{selectedText.text.slice(0, 30)}{selectedText.text.length > 30 ? '...' : ''}"
+                </p>
+              )}
             </Card>
 
             {/* Added Tags Display */}
@@ -345,26 +424,26 @@ export default function MedTagger() {
                   {tags.map(tag => {
                     const colors = tagColors[tag.type];
                     return (
-                      <div
-                        key={tag.id}
-                        className={`p-3 rounded-lg ${colors.bg} border ${colors.border}`}
-                      >
-                        <div className="flex items-start justify-between">
-                          <div>
-                            <p className={`text-xs font-semibold ${colors.text}`}>{tag.type}</p>
-                            <p className="text-xs text-slate-300 mt-1">"{tag.text}"</p>
-                            <p className="text-xs text-slate-500 mt-1">Added by {tag.addedBy}</p>
+                        <div
+                          key={tag.id}
+                          className={`p-3 rounded-lg ${colors.bg} border ${colors.border}`}
+                        >
+                          <div className="flex items-start justify-between">
+                            <div className="flex-1">
+                              <p className={`text-xs font-semibold ${colors.text}`}>{tagLabels[tag.type]}</p>
+                              <p className="text-xs text-slate-300 mt-1">"{tag.text.slice(0, 40)}{tag.text.length > 40 ? '...' : ''}"</p>
+                              <p className="text-xs text-slate-500 mt-1">Added by {tag.addedBy}</p>
+                            </div>
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              onClick={() => setTags(tags.filter(t => t.id !== tag.id))}
+                              className="text-slate-500 hover:text-slate-300 ml-2"
+                            >
+                              ✕
+                            </Button>
                           </div>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => setTags(tags.filter(t => t.id !== tag.id))}
-                            className="text-slate-500 hover:text-slate-300"
-                          >
-                            ✕
-                          </Button>
                         </div>
-                      </div>
                     );
                   })}
                 </div>
