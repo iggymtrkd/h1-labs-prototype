@@ -693,7 +693,16 @@ export default function Prototype() {
     
     setLoadingMarketplace(true);
     try {
-      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      // Try primary RPC, fallback to others if it fails
+      let provider;
+      try {
+        provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+        await provider.getBlockNumber(); // Test connection
+      } catch (rpcError) {
+        console.warn('⚠️ Primary RPC failed, trying fallback...');
+        provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_FALLBACKS[0]);
+      }
+      
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], provider);
       
       console.log(`🔍 Searching for labs created by ${address}...`);

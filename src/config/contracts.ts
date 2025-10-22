@@ -4,7 +4,12 @@
 export const CONTRACTS = {
   // Network Configuration
   CHAIN_ID: 84532, // Base Sepolia
-  RPC_URL: "https://sepolia.base.org",
+  RPC_URL: "https://base-sepolia-rpc.publicnode.com",
+  RPC_FALLBACKS: [
+    "https://sepolia.base.org",
+    "https://base-sepolia.blockpi.network/v1/rpc/public",
+    "https://public.stackup.sh/api/v1/node/base-sepolia"
+  ],
   BLOCK_EXPLORER: "https://sepolia.basescan.org",
   
   // Core Contracts (✅ DEPLOYED)
