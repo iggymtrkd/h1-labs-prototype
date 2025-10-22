@@ -196,6 +196,43 @@ export default function Prototype() {
     };
     setLogs(prev => [log, ...prev]);
   };
+  
+  // Set max stake amount from available balance
+  const handleSetMaxStake = async () => {
+    if (!isConnected || !sdk || !address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      
+      // Get LABS token address
+      let labsTokenAddr = CONTRACTS.LABSToken;
+      try {
+        const testing = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, rpc);
+        const params = await testing.getProtocolParams();
+        if (params && params[0] && params[0] !== ethers.ZeroAddress) {
+          labsTokenAddr = params[0];
+        }
+      } catch {}
+      
+      // Get LABS balance
+      const labsToken = new ethers.Contract(labsTokenAddr, LABSToken_ABI, rpc);
+      const balance = await labsToken.balanceOf(address);
+      const balanceFormatted = ethers.formatEther(balance);
+      
+      // Set the stake amount to the max balance
+      setStakeAmount(balanceFormatted);
+      toast.success(`Max balance set: ${parseFloat(balanceFormatted).toLocaleString()} LABS`);
+    } catch (error: any) {
+      console.error('Error getting max balance:', error);
+      toast.error('Failed to get balance');
+    }
+  };
+  
   const handleStakeLabs = async () => {
     if (!isConnected) {
       toast.error('Please connect your wallet first');
@@ -1055,7 +1092,12 @@ export default function Prototype() {
               <div className="space-y-4">
                 <div>
                   <Label htmlFor="stakeAmount">Stake Amount</Label>
-                  <Input id="stakeAmount" type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} placeholder="1000" />
+                  <div className="flex gap-2">
+                    <Input id="stakeAmount" type="number" value={stakeAmount} onChange={e => setStakeAmount(e.target.value)} placeholder="1000" className="flex-1" />
+                    <Button type="button" variant="outline" onClick={handleSetMaxStake} disabled={loading === 'stake'} className="shrink-0">
+                      Max
+                    </Button>
+                  </div>
                 </div>
 
                 {/* Current Staked Balance & Lab Level */}
