@@ -29,6 +29,8 @@ import DatasetDetails from "./pages/DatasetDetails";
 import CheckoutCart from "./pages/CheckoutCart";
 import Prototype from "./pages/Prototype";
 import GetStarted from "./pages/GetStarted";
+import MedAtlas from "./pages/MedAtlas";
+import MedTag from "./pages/MedTag";
 
 const queryClient = new QueryClient();
 
@@ -146,6 +148,14 @@ const AppContent = () => {
           <Route 
             path="/prototype" 
             element={isConnected ? <Prototype /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/medatlas" 
+            element={isConnected ? <MedAtlas /> : <Home onConnect={handleConnectWallet} />} 
+          />
+          <Route 
+            path="/medtag" 
+            element={isConnected ? <MedTag /> : <Home onConnect={handleConnectWallet} />} 
           />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />

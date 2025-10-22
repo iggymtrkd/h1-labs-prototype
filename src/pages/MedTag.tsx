@@ -8,9 +8,10 @@ import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
   Stethoscope, MessageCircle, Send, Zap, Tag, CheckCircle2, 
-  AlertCircle, Pill, Heart, Brain, Award, User, Bot
+  AlertCircle, Pill, Heart, Brain, Award, User, Bot, ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data
 const MOCK_RECORD = `Chief Complaint: Persistent cough and chest discomfort for 3 weeks
@@ -67,6 +68,7 @@ interface TagInstance {
 }
 
 export default function MedTag() {
+  const navigate = useNavigate();
   const [tags, setTags] = useState<TagInstance[]>([
     {
       id: '1',
@@ -196,8 +198,16 @@ export default function MedTag() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/prototype')}
+            className="mb-4 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Prototype
+          </Button>
           <div className="flex items-center gap-3 mb-2">
             <Stethoscope className="w-8 h-8 text-blue-500" />
             <h1 className="text-4xl font-bold text-white">MedTag</h1>

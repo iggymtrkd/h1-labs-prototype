@@ -5,8 +5,9 @@ import { Badge } from '@/components/ui/badge';
 import { Input } from '@/components/ui/input';
 import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
-import { Upload, Shield, FileText, DollarSign, TrendingUp, CheckCircle2 } from 'lucide-react';
+import { Upload, Shield, FileText, DollarSign, TrendingUp, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
+import { useNavigate } from 'react-router-dom';
 
 // Mock data
 const MOCK_ORIGINAL_RECORD = `Patient Name: John Michael Patterson
@@ -44,6 +45,7 @@ interface UploadedRecord {
 }
 
 export default function MedAtlas() {
+  const navigate = useNavigate();
   const [records, setRecords] = useState<UploadedRecord[]>([
     {
       id: 'MED-2025-10-22-001',
@@ -86,8 +88,16 @@ export default function MedAtlas() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header */}
+        {/* Header with Back Button */}
         <div className="mb-8">
+          <Button
+            variant="ghost"
+            onClick={() => navigate('/prototype')}
+            className="mb-4 text-slate-400 hover:text-white"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Prototype
+          </Button>
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-8 h-8 text-emerald-500" />
             <h1 className="text-4xl font-bold text-white">MedAtlas</h1>

@@ -16,7 +16,7 @@ import { useWindowSize } from '@/hooks/use-window-size';
 import Confetti from 'react-confetti';
 import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp, FileStack, PenTool } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI } from '@/contracts/abis';
@@ -1125,12 +1125,12 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
                   </div>
                 </div>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                <Link to="/medatlas" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg">
                     <FileStack className="w-8 h-8 text-white" />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground">MedAtlas</span>
-                </div>
+                  <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedAtlas</span>
+                </Link>
               </div>
 
               <div className="space-y-4">
@@ -1192,12 +1192,12 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
                   </div>
                 </div>
-                <div className="flex flex-col items-center gap-1">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                <Link to="/medtag" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg">
                     <PenTool className="w-8 h-8 text-white" />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground">MedTagger</span>
-                </div>
+                  <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedTagger</span>
+                </Link>
               </div>
 
               <div className="space-y-4">
