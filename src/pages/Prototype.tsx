@@ -1125,8 +1125,11 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
                   </div>
                 </div>
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
-                  <FileStack className="w-8 h-8 text-white" />
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                    <FileStack className="w-8 h-8 text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground">MedAtlas</span>
                 </div>
               </div>
 
@@ -1189,8 +1192,11 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
                   </div>
                 </div>
-                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
-                  <PenTool className="w-8 h-8 text-white" />
+                <div className="flex flex-col items-center gap-1">
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                    <PenTool className="w-8 h-8 text-white" />
+                  </div>
+                  <span className="text-xs font-medium text-muted-foreground">MedTagger</span>
                 </div>
               </div>
 
