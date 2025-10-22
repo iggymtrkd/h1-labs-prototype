@@ -130,14 +130,56 @@ export default function Prototype() {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-      const signer = await provider.getSigner();
+      let signer = await provider.getSigner(address);
+      // Ensure signer corresponds to connected wallet address
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
 
       // Ensure wallet is on the expected network (Base Sepolia)
-      const net = await provider.getNetwork();
+      let net = await provider.getNetwork();
       if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
-        toast.error('Wrong network. Please switch to Base Sepolia.');
-        setLoading(null);
-        return;
+        const chainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
+        addLog('info', 'Diagnostics', '🌐 Attempting to switch wallet to Base Sepolia...');
+        try {
+          await provider.send('wallet_switchEthereumChain', [{ chainId: chainIdHex }]);
+        } catch (switchErr: any) {
+          // 4902 = chain not added to MetaMask
+          if (switchErr?.code === 4902) {
+            try {
+              await provider.send('wallet_addEthereumChain', [{
+                chainId: chainIdHex,
+                chainName: 'Base Sepolia',
+                nativeCurrency: { name: 'Ether', symbol: 'ETH', decimals: 18 },
+                rpcUrls: [CONTRACTS.RPC_URL],
+                blockExplorerUrls: [CONTRACTS.BLOCK_EXPLORER],
+              }]);
+              await provider.send('wallet_switchEthereumChain', [{ chainId: chainIdHex }]);
+            } catch (addErr: any) {
+              addLog('error', 'Diagnostics', `❌ Failed to add/switch Base Sepolia: ${addErr?.message || String(addErr)}`);
+              toast.error('Could not switch to Base Sepolia in wallet');
+              setLoading(null);
+              return;
+            }
+          } else {
+            addLog('error', 'Diagnostics', `❌ Failed to switch network: ${switchErr?.message || String(switchErr)}`);
+            toast.error('Wrong network. Please switch to Base Sepolia.');
+            setLoading(null);
+            return;
+          }
+        }
+
+        // Re-check network after switch
+        net = await provider.getNetwork();
+        if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
+          toast.error('Wrong network selected. Please switch to Base Sepolia.');
+          setLoading(null);
+          return;
+        }
+        addLog('success', 'Diagnostics', '✅ Wallet switched to Base Sepolia');
       }
 
       // Preflight diagnostics: verify routing, balances, allowance, and simulate
@@ -253,7 +295,13 @@ export default function Prototype() {
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner();
+      let signer = await provider.getSigner(address);
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
 
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
@@ -413,7 +461,13 @@ export default function Prototype() {
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner();
+      let signer = await provider.getSigner(address);
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
 
       // Generate data hash from content
       const dataHash = ethers.keccak256(ethers.toUtf8Bytes(dataContent));
@@ -467,7 +521,13 @@ export default function Prototype() {
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner();
+      let signer = await provider.getSigner(address);
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
       const userAddress = await signer.getAddress();
 
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
@@ -533,7 +593,13 @@ export default function Prototype() {
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner();
+      let signer = await provider.getSigner(address);
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
 
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, RevenueFacet_ABI, signer);
 
