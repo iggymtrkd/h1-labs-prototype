@@ -105,6 +105,7 @@ export default function Prototype() {
     domain: string;
     vaultAddress: string;
     createdAt: Date;
+    level: number;  // ✅ NEW: Store actual level from contract
   }
   const [userCreatedLabs, setUserCreatedLabs] = useState<CreatedLab[]>([]);
   const [loadingLabs, setLoadingLabs] = useState(false);
@@ -411,17 +412,20 @@ export default function Prototype() {
       addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation & auto-deploying LabVault contract...');
       const receipt = await createTx.wait();
 
-      // Parse events to get lab ID and vault address
-      const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string,address)"));
+      // Parse events to get lab ID, vault address, and level
+      // ✅ UPDATED: New event signature includes level parameter
+      const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)"));
       const labId = labCreatedEvent ? ethers.toNumber(labCreatedEvent.topics[1]) : "unknown";
       
-      // Extract vault address from event data (last parameter)
+      // Extract vault address and level from event data
       let vaultAddress = '';
+      let eventLevel = 0;  // ✅ NEW: Extract level from event
       if (labCreatedEvent) {
         const iface = new ethers.Interface(LABSCoreFacet_ABI);
         const decoded = iface.parseLog(labCreatedEvent);
-        if (decoded && decoded.args && decoded.args[5]) {
-          vaultAddress = decoded.args[5];
+        if (decoded && decoded.args) {
+          vaultAddress = decoded.args[5];      // vault address (6th parameter)
+          eventLevel = decoded.args[6];         // ✅ NEW: level (7th parameter)
         }
       }
 
@@ -432,12 +436,13 @@ export default function Prototype() {
         symbol: labSymbol,
         domain: labDomain,
         vaultAddress: vaultAddress,
-        createdAt: new Date()
+        createdAt: new Date(),
+        level: eventLevel  // ✅ NEW: Use actual level from contract event
       };
       setUserCreatedLabs(prev => [newLab, ...prev]);
 
-      addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${labLevel}) with vault deployed!`, createTx.hash);
-      toast.success(`Step 1 Complete! Lab created with ID: ${labId} (Level ${labLevel})`);
+      addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, createTx.hash);
+      toast.success(`Step 1 Complete! Lab created with ID: ${labId} (Level ${eventLevel})`);
       setCompletedSteps(prev => ({ ...prev, step1: true }));
       
       // Reset form
@@ -1342,7 +1347,7 @@ export default function Prototype() {
                             <p className="text-sm text-muted-foreground">({lab.symbol})</p>
                           </div>
                           <Badge className="bg-primary text-primary-foreground">
-                            Level {labLevel}
+                            Level {lab.level}
                           </Badge>
                         </div>
 

@@ -16,6 +16,7 @@ library LibH1Storage {
     bool active;            // slot 2: 1 byte (packed with totalStaked) - 11 bytes padding
     uint256 totalRevenue;   // slot 3: 32 bytes
     string domain;          // slot 4+: dynamic
+    uint8 level;            // Level 1-3 based on staked amount (0 = no level)
   }
 
   /// @notice Data record with provenance and human supervision metadata

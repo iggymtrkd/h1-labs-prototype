@@ -12,6 +12,8 @@ export const LABSCoreFacet_ABI = [
   "function createLab(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId)",
   "function isDomainAvailable(string calldata domain) external view returns (bool)",
   "function getStakedBalance(address user) external view returns (uint256)",
+  "function getLabLevel(uint256 labId) external view returns (uint8)",
+  "function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level)",
   "function getUserLabCount(address user) external view returns (uint256)",
   "function getUserLabs(address user) external view returns (uint256[] memory)"
 ];
