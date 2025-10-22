@@ -616,7 +616,7 @@ export default function Prototype() {
     }
 
     setLoading('createData');
-    addLog('info', 'Stage 2: Create Data', `📊 STARTING: Create dataset for Lab ID ${dataLabId} in ${dataDomain}`);
+    addLog('info', 'Stage 2: Create Data', `📊 STARTING: Upload de-identified dataset for Lab ID ${dataLabId} in ${dataDomain} domain`);
 
     try {
       const walletProvider = sdk.getProvider();
@@ -634,7 +634,7 @@ export default function Prototype() {
       
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
 
-      addLog('info', 'Stage 2: Create Data', '📡 Broadcasting data creation to DataValidationFacet...');
+      addLog('info', 'Stage 2: Create Data', '📡 Broadcasting data creation to DataValidationFacet (with PII-removed verification)...');
       const createTx = await diamond.createData(
         dataLabId,
         dataHash,
@@ -643,14 +643,14 @@ export default function Prototype() {
         0 // creatorCredentialId (0 = none)
       );
       
-      addLog('info', 'Stage 2: Create Data', '⏳ Mining transaction & recording data provenance onchain...');
+      addLog('info', 'Stage 2: Create Data', '⏳ Mining transaction & recording de-identified record hash to blockchain...');
       const receipt = await createTx.wait();
 
       // Parse DataCreated event
       const dataCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("DataCreated(uint256,uint256,bytes32,string,address)"));
       const dataId = dataCreatedEvent ? ethers.toNumber(dataCreatedEvent.topics[1]) : "unknown";
 
-      addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: Dataset created (ID: ${dataId}) and recorded onchain!`, createTx.hash);
+      addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedTagger.`, createTx.hash);
       toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
       setCompletedSteps(prev => ({ ...prev, step2: true }));
       
@@ -676,7 +676,7 @@ export default function Prototype() {
     }
 
     setLoading('createCredential');
-    addLog('info', 'Stage 3: Credentials', `🎓 STARTING: Issue "${credentialType}" credential in ${credentialDomain}`);
+    addLog('info', 'Stage 3: Credentials', `🎓 STARTING: Issue "${credentialType}" credential for enrichment verification in ${credentialDomain} domain`);
 
     try {
       const walletProvider = sdk.getProvider();
@@ -693,17 +693,17 @@ export default function Prototype() {
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
 
       // Check if user already has an ID
-      addLog('info', 'Stage 3: Credentials', '🔍 Checking for existing user ID...');
+      addLog('info', 'Stage 3: Credentials', '🔍 Checking for existing clinician registration...');
       let userId = await diamond.getUserId(userAddress);
 
       if (userId === 0n) {
-        addLog('info', 'Stage 3: Credentials', '📡 Creating new user ID...');
+        addLog('info', 'Stage 3: Credentials', '📝 Registering clinician to MedTagger and creating user ID...');
         const createUserTx = await diamond.createUserId(userAddress, credentialDomain);
         await createUserTx.wait();
         userId = await diamond.getUserId(userAddress);
-        addLog('success', 'Stage 3: Credentials', `✅ User ID created: ${userId}`, createUserTx.hash);
+        addLog('success', 'Stage 3: Credentials', `✅ Clinician registered! User ID: ${userId}`, createUserTx.hash);
       } else {
-        addLog('info', 'Stage 3: Credentials', `📋 Existing user ID found: ${userId}`);
+        addLog('info', 'Stage 3: Credentials', `📋 Clinician already registered. User ID: ${userId}`);
       }
 
       // Generate verification hash
@@ -717,14 +717,14 @@ export default function Prototype() {
         verificationHash
       );
 
-      addLog('info', 'Stage 3: Credentials', '⏳ Mining transaction & recording credential onchain...');
+      addLog('info', 'Stage 3: Credentials', '⏳ Mining transaction & recording enrichment verification to blockchain...');
       const receipt = await issueTx.wait();
 
       // Parse CredentialIssued event
       const credIssuedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("CredentialIssued(uint256,uint256,string,string)"));
       const credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[2]) : "unknown";
 
-      addLog('success', 'Stage 3: Credentials', `✅ STEP 3 COMPLETE: Credential issued (ID: ${credentialId}) - Scholar verified!`, issueTx.hash);
+      addLog('success', 'Stage 3: Credentials', `✅ STEP 3 COMPLETE: Enrichment verified! Credential issued (ID: ${credentialId}). Scholar reputation recorded onchain + revenue distribution triggered.`, issueTx.hash);
       toast.success(`Step 3 Complete! Credential ID: ${credentialId}`);
       setCompletedSteps(prev => ({ ...prev, step3: true }));
     } catch (error: any) {
@@ -1170,7 +1170,7 @@ export default function Prototype() {
                 </div>
                 <div className="rounded-lg bg-secondary/10 border border-secondary/20 p-3">
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-semibold text-secondary">💡 MedAtlas Workflow:</span> Upload de-identified medical records (from MedAtlas app). This calls <span className="font-mono text-xs">uploadDataset()</span> on DataValidationFacet, storing the record hash with metadata. Clinicians enrich these records on MedTagger, and you receive revenue share when datasets are sold.
+                    <span className="font-semibold text-secondary">💡 MedAtlas Workflow:</span> Upload de-identified medical records (from MedAtlas app). This calls <span className="font-mono text-xs">createData()</span> on DataValidationFacet, storing the record hash with metadata. Clinicians enrich these records on MedTagger, and you receive revenue share when datasets are sold.
                   </p>
                 </div>
                 <Button
