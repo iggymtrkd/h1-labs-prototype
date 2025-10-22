@@ -7,6 +7,14 @@ pragma solidity ^0.8.20;
 library LibH1Storage {
   bytes32 internal constant H1_STORAGE_POSITION = keccak256("h1.labs.storage.v1");
 
+  // ============================================
+  // DEFAULT CONFIGURATION CONSTANTS
+  // ============================================
+  uint64 internal constant DEFAULT_COOLDOWN = 1 days;
+  uint16 internal constant DEFAULT_EXIT_CAP_BPS = 2000; // 20%
+  uint16 internal constant DEFAULT_CURVE_FEE_BPS = 500; // 5%
+  uint16 internal constant DEFAULT_CURVE_POL_BPS = 500; // 5%
+
   /// @notice Lab metadata and state (optimized struct packing: 5 slots)
   /// @dev Packed to minimize storage slots from 6 to 5 slots
   struct Lab {
@@ -114,6 +122,7 @@ library LibH1Storage {
     mapping(uint256 => Credential) credentials;     // credentialId → record
     mapping(uint256 => uint256[]) userCredentials;  // userId → [credentialIds]
     uint256 nextCredentialId;                       // credentialId counter
+    bool defaultsInitialized;
   }
 
   function h1Storage() internal pure returns (H1Storage storage hs) {

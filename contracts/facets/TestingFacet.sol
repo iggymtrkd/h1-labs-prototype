@@ -17,6 +17,8 @@ contract TestingFacet {
   event VaultLevelOverridden(address indexed vault, uint8 level);
   event VaultTestModeChanged(address indexed vault, bool enabled);
   event EpochForceReset(address indexed vault, uint64 newEpochStart);
+  event DefaultsInitialized(uint64 cooldown, uint16 exitCapBps, uint16 curveFeeBps, uint16 curvePolBps);
+  event ProtocolConfigurationUpdated(string indexed parameter, uint256 value);
   
   error Unauthorized();
   error InvalidAddress();
@@ -26,6 +28,34 @@ contract TestingFacet {
   modifier onlyOwner() {
     LibDiamond.enforceIsContractOwner();
     _;
+  }
+  
+  // ============================================
+  // INITIALIZATION & CONFIGURATION
+  // ============================================
+  
+  /// @notice Initialize protocol with default values (can only be called once)
+  /// @dev Sets default cooldown, exit cap, curve fees, and POL allocation
+  /// @param treasury Protocol treasury address
+  function initializeDefaults(address treasury) external onlyOwner {
+    if (treasury == address(0)) revert InvalidAddress();
+    
+    LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+    require(!hs.defaultsInitialized, "Defaults already initialized");
+    
+    hs.defaultCooldown = LibH1Storage.DEFAULT_COOLDOWN;
+    hs.defaultExitCapBps = LibH1Storage.DEFAULT_EXIT_CAP_BPS;
+    hs.curveFeeBps = LibH1Storage.DEFAULT_CURVE_FEE_BPS;
+    hs.curvePolBps = LibH1Storage.DEFAULT_CURVE_POL_BPS;
+    hs.protocolTreasury = treasury;
+    hs.defaultsInitialized = true;
+    
+    emit DefaultsInitialized(
+      LibH1Storage.DEFAULT_COOLDOWN,
+      LibH1Storage.DEFAULT_EXIT_CAP_BPS,
+      LibH1Storage.DEFAULT_CURVE_FEE_BPS,
+      LibH1Storage.DEFAULT_CURVE_POL_BPS
+    );
   }
   
   // ============================================
@@ -152,56 +182,74 @@ contract TestingFacet {
   }
   
   // ============================================
-  // PROTOCOL CONFIGURATION TESTING
+  // PROTOCOL CONFIGURATION WITH DEFAULTS
   // ============================================
   
-  /// @notice Set default cooldown for new vaults
+  /// @notice Override default cooldown for new vaults
   /// @dev Affects only vaults created after this call
   /// @param seconds_ Default cooldown in seconds
   function setDefaultCooldown(uint64 seconds_) external onlyOwner {
     if (seconds_ > 30 days) revert InvalidParameter();
     LibH1Storage.h1Storage().defaultCooldown = seconds_;
-    emit TestingParameterUpdated("defaultCooldown", seconds_, address(0));
+    emit ProtocolConfigurationUpdated("defaultCooldown", seconds_);
   }
   
-  /// @notice Set default exit cap for new vaults
+  /// @notice Override default exit cap for new vaults
   /// @dev Affects only vaults created after this call
   /// @param bps Exit cap in basis points
   function setDefaultExitCap(uint16 bps) external onlyOwner {
     if (bps > 10000) revert InvalidParameter();
     LibH1Storage.h1Storage().defaultExitCapBps = bps;
-    emit TestingParameterUpdated("defaultExitCap", bps, address(0));
+    emit ProtocolConfigurationUpdated("defaultExitCap", bps);
   }
   
-  /// @notice Set bonding curve fee
+  /// @notice Override bonding curve fee
   /// @dev Affects only curves created after this call
   /// @param feeBps Fee in basis points (max 1000 = 10%)
   function setCurveFeeBps(uint16 feeBps) external onlyOwner {
     if (feeBps > 1000) revert InvalidParameter();
     LibH1Storage.h1Storage().curveFeeBps = feeBps;
-    emit TestingParameterUpdated("curveFeeBps", feeBps, address(0));
+    emit ProtocolConfigurationUpdated("curveFeeBps", feeBps);
   }
   
-  /// @notice Set bonding curve POL allocation
+  /// @notice Override bonding curve POL allocation
   /// @dev Affects only curves created after this call
   /// @param polBps POL in basis points (max 1000 = 10%)
   function setCurvePolBps(uint16 polBps) external onlyOwner {
     if (polBps > 1000) revert InvalidParameter();
     LibH1Storage.h1Storage().curvePolBps = polBps;
-    emit TestingParameterUpdated("curvePolBps", polBps, address(0));
+    emit ProtocolConfigurationUpdated("curvePolBps", polBps);
   }
   
-  /// @notice Set protocol treasury address
+  /// @notice Override protocol treasury address
   /// @param treasury New treasury address
   function setProtocolTreasury(address treasury) external onlyOwner {
     if (treasury == address(0)) revert InvalidAddress();
     LibH1Storage.h1Storage().protocolTreasury = treasury;
-    emit TestingParameterUpdated("protocolTreasury", uint256(uint160(treasury)), treasury);
+    emit ProtocolConfigurationUpdated("protocolTreasury", uint256(uint160(treasury)));
   }
   
   // ============================================
   // QUERY FUNCTIONS
   // ============================================
+  
+  /// @notice Get all default configuration values
+  /// @return defaultCooldown Default cooldown for new vaults
+  /// @return defaultExitCapBps Default exit cap for new vaults
+  /// @return curveFeeBps Default curve fee
+  /// @return curvePolBps Default curve POL allocation
+  function getDefaultConfiguration() external view returns (
+    uint64 defaultCooldown,
+    uint16 defaultExitCapBps,
+    uint16 curveFeeBps,
+    uint16 curvePolBps
+  ) {
+    LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+    defaultCooldown = hs.defaultCooldown;
+    defaultExitCapBps = hs.defaultExitCapBps;
+    curveFeeBps = hs.curveFeeBps;
+    curvePolBps = hs.curvePolBps;
+  }
   
   /// @notice Get all testing-related parameters for a vault
   /// @param vault Address of LabVault
@@ -222,20 +270,22 @@ contract TestingFacet {
     timeOffset = v.testTimeOffset();
   }
   
-  /// @notice Get global protocol parameters
+  /// @notice Get all global protocol parameters
   /// @return labsToken LABS token address
   /// @return protocolTreasury Treasury address
   /// @return defaultCooldown Default cooldown for new vaults
   /// @return defaultExitCapBps Default exit cap for new vaults
   /// @return curveFeeBps Curve fee for new curves
   /// @return curvePolBps Curve POL for new curves
+  /// @return defaultsInitialized Whether defaults have been initialized
   function getProtocolParams() external view returns (
     address labsToken,
     address protocolTreasury,
     uint64 defaultCooldown,
     uint16 defaultExitCapBps,
     uint16 curveFeeBps,
-    uint16 curvePolBps
+    uint16 curvePolBps,
+    bool defaultsInitialized
   ) {
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     labsToken = hs.labsToken;
@@ -244,6 +294,7 @@ contract TestingFacet {
     defaultExitCapBps = hs.defaultExitCapBps;
     curveFeeBps = hs.curveFeeBps;
     curvePolBps = hs.curvePolBps;
+    defaultsInitialized = hs.defaultsInitialized;
   }
 
   /// @notice Get total LABS staked by a user (protocol-level eligibility stake)
