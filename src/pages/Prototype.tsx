@@ -233,6 +233,12 @@ export default function Prototype() {
     }
   };
   
+  // Helper to reset staking state on error
+  const resetStakingState = () => {
+    setStakeSteps({ approve: 'idle', stake: 'idle' });
+    setLoading(null);
+  };
+
   const handleStakeLabs = async () => {
     if (!isConnected) {
       toast.error('Please connect your wallet first');
@@ -298,13 +304,13 @@ export default function Prototype() {
             } catch (addErr: any) {
               addLog('error', 'Diagnostics', `❌ Failed to add/switch Base Sepolia: ${addErr?.message || String(addErr)}`);
               toast.error('Could not switch to Base Sepolia in wallet');
-              setLoading(null);
+              resetStakingState();
               return;
             }
           } else {
             addLog('error', 'Diagnostics', `❌ Failed to switch network: ${switchErr?.message || String(switchErr)}`);
             toast.error('Wrong network. Please switch to Base Sepolia.');
-            setLoading(null);
+            resetStakingState();
             return;
           }
         }
@@ -313,7 +319,7 @@ export default function Prototype() {
         net = await provider.getNetwork();
         if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
           toast.error('Wrong network selected. Please switch to Base Sepolia.');
-          setLoading(null);
+          resetStakingState();
           return;
         }
         addLog('success', 'Diagnostics', '✅ Wallet switched to Base Sepolia');
@@ -341,7 +347,7 @@ export default function Prototype() {
       if (codeLABS === '0x' || codeDiamond === '0x') {
         toast.error('Contract code missing on Base Sepolia (LABS or Diamond)');
         addLog('error', 'Diagnostics', `❌ Code missing. LABS=${codeLABS !== '0x'}, DIAMOND=${codeDiamond !== '0x'}`);
-        setLoading(null);
+        resetStakingState();
         return;
       }
 
@@ -368,7 +374,7 @@ export default function Prototype() {
         const actualBalance = ethers.formatEther(bal);
         toast.error(`Insufficient LABS balance. You have ${actualBalance} LABS but tried to stake ${stakeAmount} LABS`);
         addLog('error', 'Stage 1: Stake $LABS', `❌ Insufficient balance: ${actualBalance} LABS available, ${stakeAmount} LABS requested`);
-        setLoading(null);
+        resetStakingState();
         return;
       }
 
@@ -413,13 +419,13 @@ export default function Prototype() {
             addLog('success', 'Diagnostics', `✅ Approval confirmed! Final allowance: ${ethers.formatEther(finalAllowance)}`);
             if (finalAllowance < stakeAmountBN) {
               toast.error('Allowance remained insufficient after re-approval');
-              setLoading(null);
+              resetStakingState();
               return;
             }
           } catch (resetErr: any) {
             addLog('error', 'Diagnostics', `❌ Failed to re-approve: ${resetErr?.message || String(resetErr)}`);
             toast.error('Approval reset failed');
-            setLoading(null);
+            resetStakingState();
             return;
           }
         }
@@ -448,11 +454,7 @@ export default function Prototype() {
       } catch (sendErr: any) {
         addLog('error', 'Stage 1: Stake $LABS', `❌ Failed to send stake tx: ${sendErr?.shortMessage || sendErr?.message || String(sendErr)}`);
         toast.error('Failed to send stake transaction');
-        setStakeSteps(prev => ({
-          ...prev,
-          stake: 'error'
-        }));
-        setLoading(null);
+        resetStakingState();
         return;
       }
       setStakeSteps(prev => ({
@@ -484,8 +486,7 @@ export default function Prototype() {
       console.error('❌ Stake error:', error);
       addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
       toast.error('Failed to stake LABS');
-    } finally {
-      setLoading(null);
+      resetStakingState();
     }
   };
   const handleCreateLab = async () => {
