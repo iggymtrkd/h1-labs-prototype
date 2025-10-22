@@ -237,7 +237,7 @@ export default function Prototype() {
       addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
       const approvalTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
         CONTRACTS.H1Diamond,
-        ethers.MaxUint256,
+        stakeAmountBN,
         { gasLimit: 80000 }
       );
 
@@ -259,7 +259,7 @@ export default function Prototype() {
             await zeroTx.wait();
             const reapproveTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
               CONTRACTS.H1Diamond,
-              ethers.MaxUint256
+              stakeAmountBN
             );
             await reapproveTx.wait();
             const finalAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
@@ -308,6 +308,25 @@ export default function Prototype() {
 
       // Reload balances
       await loadUserLabsBalance();
+      // Optimistically update staked balance in UI
+      try {
+        const current = parseFloat(stakedLabs || '0');
+        const delta = parseFloat(ethers.formatEther(stakeAmountBN));
+        setStakedLabs((current + delta).toString());
+      } catch {}
+
+      // Optional: Revoke approval back to 0 to reduce wallet risk surface
+      try {
+        addLog('info', 'Stage 1: Stake $LABS', '🔐 Revoking LABS allowance (set to 0)...');
+        const revokeTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
+          CONTRACTS.H1Diamond,
+          0n
+        );
+        await revokeTx.wait();
+        addLog('success', 'Stage 1: Stake $LABS', `✅ Allowance revoked`, revokeTx.hash);
+      } catch (revokeErr: any) {
+        addLog('error', 'Stage 1: Stake $LABS', `⚠ Skipped allowance revoke: ${revokeErr?.shortMessage || revokeErr?.message || String(revokeErr)}`);
+      }
     } catch (error: any) {
       console.error('❌ Stake error:', error);
       addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
@@ -427,11 +446,18 @@ export default function Prototype() {
       console.log('🔍 Raw ETH balance:', ethBalanceRaw.toString());
       setEthBalance(ethers.formatEther(ethBalanceRaw));
       
-      // Get staked LABS and labs owned (using LABSCoreFacet)
+      // Get staked LABS and labs owned
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
+      const testing = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, provider);
       
       try {
-        const stakedBalance = await diamond.getStakedBalance(address);
+        // Prefer TestingFacet getter if available
+        let stakedBalance;
+        try {
+          stakedBalance = await testing.getStakedBalance(address);
+        } catch {
+          stakedBalance = await diamond.getStakedBalance(address);
+        }
         console.log('🔍 Staked LABS:', stakedBalance.toString());
         setStakedLabs(ethers.formatEther(stakedBalance));
       } catch (error) {

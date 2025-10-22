@@ -245,5 +245,12 @@ contract TestingFacet {
     curveFeeBps = hs.curveFeeBps;
     curvePolBps = hs.curvePolBps;
   }
+
+  /// @notice Get total LABS staked by a user (protocol-level eligibility stake)
+  /// @param user Address to query
+  /// @return amount Amount of LABS staked by the user
+  function getStakedBalance(address user) external view returns (uint256 amount) {
+    amount = LibH1Storage.h1Storage().stakedBalances[user];
+  }
 }
 
