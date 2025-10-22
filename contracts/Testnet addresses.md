@@ -13,14 +13,26 @@ TreasuryFacet at 0x65c38321d60b3e2fdbf30a474ff7063eadc9f509
 DataValidationFacet at 0xb607b954ed414bcdba321a02f487991518a795c0
 CredentialFacet at 0x3ffab9fa9568c68bf60c88891f238556f8d99387
 
-TestingFacet at 0xc0ea00f649ab62c57d46d79d48b4fd0fe8362c67
+TestingFacet at 0xb44e262cb6039689873e9a721c1495fa1028cbbb (✅ UPDATED: With defaults + init function)
+ConfigurationFacet at TBD (ready to deploy for mainnet)
 
 LABSToken at 0xcbdc032c9525b307d3c2b4b8e099feedbd9024fd
 
 FAUCET wallet 
 
-PENDING DEPLOYMENT:
-TestingFacet - NOT YET DEPLOYED (optional but recommended)
+CONFIGURATION NEEDED:
+- setLABSToken() in TreasuryFacet ✅ NOT YET CALLED
+- initializeDefaults(treasury) ✅ READY - call this once to set all defaults
+- setDefaultCooldown() ✅ NOW OPTIONAL - use initializeDefaults() instead
+- setDefaultExitCap() ✅ NOW OPTIONAL - use initializeDefaults() instead
+- setProtocolTreasury() ✅ NOW OPTIONAL - set in initializeDefaults()
+- setCurveFeeBps() ✅ NOW OPTIONAL - use initializeDefaults() instead
+- setCurvePolBps() ✅ NOW OPTIONAL - use initializeDefaults() instead
+
+New Defaults System Deployed:
+✅ Hardcoded defaults (1 day cooldown, 20% exit cap, 5% fees)
+✅ initializeDefaults(treasury) - One call to set all defaults
+✅ Override functions available: setCooldown(), setExitCap(), etc.
 
 UNISWAP V3 (Base Sepolia):
 WETH: 0x4200000000000000000000000000000000000006
@@ -28,15 +40,7 @@ Factory: 0x4752ba5DBc23f44D87826276BF6Fd6b1C372aD24
 Position Manager: 0x27F971cb582BF9E50F397e4d29a5C7A34f11faA2
 LABS/WETH Pool: TBD (need to create)
 
-CONFIGURATION NEEDED:
-- setLABSToken() in TreasuryFacet ✅ NOT YET CALLED
-- setDefaultCooldown() ❌ NOT YET SET
-- setDefaultExitCap() ❌ NOT YET SET
-- setProtocolTreasury() ❌ NOT YET SET
-- setCurveFeeBps() ❌ NOT YET SET (optional)
-- setCurvePolBps() ❌ NOT YET SET (optional)
-
-See DEPLOYMENT_NEXT_STEPS.md for detailed instructions.
+See DEPLOYMENT_WITH_DEFAULTS.md for detailed instructions.
 
 ---
 
