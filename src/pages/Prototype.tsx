@@ -73,6 +73,9 @@ export default function Prototype() {
 
   // Step 1: Stake LABS
   const [stakeAmount, setStakeAmount] = useState('1000');
+  // Step 1: Two-step signing progress (Approve → Stake)
+  type StepStatus = 'idle' | 'awaiting_signature' | 'pending' | 'confirmed' | 'error';
+  const [stakeSteps, setStakeSteps] = useState<{ approve: StepStatus; stake: StepStatus }>({ approve: 'idle', stake: 'idle' });
   
   // Step 2: Create Lab
   const [labName, setLabName] = useState('');
@@ -123,6 +126,7 @@ export default function Prototype() {
     }
 
     setLoading('stake');
+    setStakeSteps({ approve: 'idle', stake: 'idle' });
     addLog('info', 'Stage 1: Stake $LABS', `🎯 STARTING: Stake ${stakeAmount} LABS tokens to unlock Lab creation`);
 
     try {
@@ -235,15 +239,17 @@ export default function Prototype() {
 
       // 4) Approve Diamond to spend LABS (before simulation)
       addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
+      setStakeSteps(prev => ({ ...prev, approve: 'awaiting_signature' }));
       const approvalTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
         CONTRACTS.H1Diamond,
         stakeAmountBN,
         { gasLimit: 80000 }
       );
-
+      setStakeSteps(prev => ({ ...prev, approve: 'pending' }));
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Waiting for approval confirmation...');
       await approvalTx.wait();
       addLog('success', 'Stage 1: Stake $LABS', `✅ Approval confirmed! ${stakeAmount} LABS authorized`, approvalTx.hash);
+      setStakeSteps(prev => ({ ...prev, approve: 'confirmed' }));
 
       // 5) Re-check allowance after approval
       try {
@@ -290,21 +296,24 @@ export default function Prototype() {
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
 
       addLog('info', 'Stage 1: Stake $LABS', '📡 Broadcasting stake transaction to LABSCoreFacet...');
+      setStakeSteps(prev => ({ ...prev, stake: 'awaiting_signature' }));
       let stakeTx;
       try {
         stakeTx = await diamond.stakeLABS(stakeAmountBN, { gasLimit: 180000 });
       } catch (sendErr: any) {
         addLog('error', 'Stage 1: Stake $LABS', `❌ Failed to send stake tx: ${sendErr?.shortMessage || sendErr?.message || String(sendErr)}`);
         toast.error('Failed to send stake transaction');
+        setStakeSteps(prev => ({ ...prev, stake: 'error' }));
         setLoading(null);
         return;
       }
-
+      setStakeSteps(prev => ({ ...prev, stake: 'pending' }));
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();
 
       addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! Now eligible to create Labs`, stakeTx.hash);
       toast.success('LABS staked successfully!');
+      setStakeSteps(prev => ({ ...prev, stake: 'confirmed' }));
 
       // Reload balances
       await loadUserLabsBalance();
@@ -315,18 +324,6 @@ export default function Prototype() {
         setStakedLabs((current + delta).toString());
       } catch {}
 
-      // Optional: Revoke approval back to 0 to reduce wallet risk surface
-      try {
-        addLog('info', 'Stage 1: Stake $LABS', '🔐 Revoking LABS allowance (set to 0)...');
-        const revokeTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
-          CONTRACTS.H1Diamond,
-          0n
-        );
-        await revokeTx.wait();
-        addLog('success', 'Stage 1: Stake $LABS', `✅ Allowance revoked`, revokeTx.hash);
-      } catch (revokeErr: any) {
-        addLog('error', 'Stage 1: Stake $LABS', `⚠ Skipped allowance revoke: ${revokeErr?.shortMessage || revokeErr?.message || String(revokeErr)}`);
-      }
     } catch (error: any) {
       console.error('❌ Stake error:', error);
       addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
@@ -735,6 +732,22 @@ export default function Prototype() {
     }
   };
 
+  const statusText: Record<StepStatus, string> = {
+    idle: 'Idle',
+    awaiting_signature: 'Awaiting signature',
+    pending: 'Pending',
+    confirmed: 'Confirmed',
+    error: 'Error',
+  };
+
+  const statusIcon = (status: StepStatus) => {
+    if (status === 'confirmed') return <CheckCircle2 className="h-3 w-3 text-green-500" />;
+    if (status === 'pending') return <Loader2 className="h-3 w-3 animate-spin text-primary" />;
+    if (status === 'awaiting_signature') return <Info className="h-3 w-3 text-muted-foreground" />;
+    if (status === 'error') return <XCircle className="h-3 w-3 text-destructive" />;
+    return <div className="h-3 w-3 rounded-full border border-muted-foreground" />;
+  };
+
   return (
     <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
@@ -888,6 +901,24 @@ export default function Prototype() {
                   {loading === 'stake' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Stake LABS Tokens
                 </Button>
+
+                {(loading === 'stake' || stakeSteps.approve !== 'idle' || stakeSteps.stake !== 'idle') && (
+                  <div className="rounded-md bg-muted/50 p-3">
+                    <div className="text-xs font-semibold mb-2">Signing Progress</div>
+                    <div className="space-y-2 text-xs">
+                      <div className="flex items-center gap-2">
+                        {statusIcon(stakeSteps.approve)}
+                        <span>Step 1: Approve LABS</span>
+                        <span className="ml-auto text-muted-foreground">{statusText[stakeSteps.approve]}</span>
+                      </div>
+                      <div className="flex items-center gap-2">
+                        {statusIcon(stakeSteps.stake)}
+                        <span>Step 2: Stake LABS</span>
+                        <span className="ml-auto text-muted-foreground">{statusText[stakeSteps.stake]}</span>
+                      </div>
+                    </div>
+                  </div>
+                )}
 
                 <Separator className="my-4" />
 
