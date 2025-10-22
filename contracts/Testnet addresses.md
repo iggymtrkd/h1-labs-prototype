@@ -13,6 +13,8 @@ TreasuryFacet at 0x65c38321d60b3e2fdbf30a474ff7063eadc9f509
 DataValidationFacet at 0xb607b954ed414bcdba321a02f487991518a795c0
 CredentialFacet at 0x3ffab9fa9568c68bf60c88891f238556f8d99387
 
+TestingFacet at 0xc0ea00f649ab62c57d46d79d48b4fd0fe8362c67
+
 LABSToken at 0xcbdc032c9525b307d3c2b4b8e099feedbd9024fd
 
 FAUCET wallet 

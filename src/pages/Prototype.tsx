@@ -9,9 +9,10 @@ import { Separator } from '@/components/ui/separator';
 import { Progress } from '@/components/ui/progress';
 import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogTrigger } from '@/components/ui/dialog';
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from '@/components/ui/select';
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from '@/components/ui/tooltip';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
-import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle } from 'lucide-react';
+import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
@@ -95,6 +96,35 @@ export default function Prototype() {
   const [purchaseDatasetId, setPurchaseDatasetId] = useState('1');
   const [purchaseLabId, setPurchaseLabId] = useState('1');
   const [purchaseAmount, setPurchaseAmount] = useState('1');
+
+  // Step 5: User's Created Labs
+  interface CreatedLab {
+    labId: number;
+    name: string;
+    symbol: string;
+    domain: string;
+    vaultAddress: string;
+    createdAt: Date;
+  }
+  const [userCreatedLabs, setUserCreatedLabs] = useState<CreatedLab[]>([]);
+  const [loadingLabs, setLoadingLabs] = useState(false);
+
+  // Calculate lab level based on staked amount
+  const MIN_STAKE_FOR_LAB = 100_000; // 100k LABS
+  const LEVEL1_THRESHOLD = 100_000;
+  const LEVEL2_THRESHOLD = 250_000;
+  const LEVEL3_THRESHOLD = 500_000;
+
+  const calculateLabLevel = (stakedAmount: number): number => {
+    if (stakedAmount >= LEVEL3_THRESHOLD) return 3;
+    if (stakedAmount >= LEVEL2_THRESHOLD) return 2;
+    if (stakedAmount >= LEVEL1_THRESHOLD) return 1;
+    return 0;
+  };
+
+  const currentStakedAmount = parseFloat(stakedLabs || '0');
+  const projectedLabLevel = calculateLabLevel(currentStakedAmount);
+  const canCreateLab = currentStakedAmount >= MIN_STAKE_FOR_LAB;
 
   const addLog = (type: LogEntry['type'], stage: string, message: string, txHash?: string) => {
     const log: LogEntry = {
@@ -344,13 +374,23 @@ export default function Prototype() {
       return;
     }
 
+    // Check staked balance before attempting to create lab
+    const stakedAmount = parseFloat(stakedLabs || '0');
+    if (stakedAmount < MIN_STAKE_FOR_LAB) {
+      const needed = MIN_STAKE_FOR_LAB - stakedAmount;
+      toast.error(`Insufficient staked LABS. You need at least ${MIN_STAKE_FOR_LAB.toLocaleString()} LABS to create a lab. Please stake ${needed.toLocaleString()} more LABS.`);
+      addLog('error', 'Stage 1: Create Lab', `❌ Cannot create lab - only ${stakedAmount.toLocaleString()} LABS staked. Need at least ${MIN_STAKE_FOR_LAB.toLocaleString()} LABS`);
+      return;
+    }
+
     if (!sdk) {
       toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
 
     setLoading('createLab');
-    addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain`);
+    const labLevel = calculateLabLevel(stakedAmount);
+    addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain - Lab Level ${labLevel}`);
 
     try {
       const walletProvider = sdk.getProvider();
@@ -371,12 +411,33 @@ export default function Prototype() {
       addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation & auto-deploying LabVault contract...');
       const receipt = await createTx.wait();
 
-      // Parse events to get lab ID
+      // Parse events to get lab ID and vault address
       const labCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("LabCreated(uint256,address,string,string,string,address)"));
       const labId = labCreatedEvent ? ethers.toNumber(labCreatedEvent.topics[1]) : "unknown";
+      
+      // Extract vault address from event data (last parameter)
+      let vaultAddress = '';
+      if (labCreatedEvent) {
+        const iface = new ethers.Interface(LABSCoreFacet_ABI);
+        const decoded = iface.parseLog(labCreatedEvent);
+        if (decoded && decoded.args && decoded.args[5]) {
+          vaultAddress = decoded.args[5];
+        }
+      }
 
-      addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}) with vault deployed!`, createTx.hash);
-      toast.success(`Step 1 Complete! Lab created with ID: ${labId}`);
+      // Add to user's created labs
+      const newLab: CreatedLab = {
+        labId: typeof labId === 'number' ? labId : parseInt(labId),
+        name: labName,
+        symbol: labSymbol,
+        domain: labDomain,
+        vaultAddress: vaultAddress,
+        createdAt: new Date()
+      };
+      setUserCreatedLabs(prev => [newLab, ...prev]);
+
+      addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${labLevel}) with vault deployed!`, createTx.hash);
+      toast.success(`Step 1 Complete! Lab created with ID: ${labId} (Level ${labLevel})`);
       setCompletedSteps(prev => ({ ...prev, step1: true }));
       
       // Reset form
@@ -446,6 +507,20 @@ export default function Prototype() {
       // Get staked LABS and labs owned
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
       const testing = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, provider);
+      // Verify selector routing for testing facet helpers (if attached)
+      try {
+        const loupe = new ethers.Contract(CONTRACTS.H1Diamond, DiamondLoupeFacet_ABI, provider);
+        const selParams = ethers.id('getProtocolParams()').slice(0, 10);
+        const selStaked = ethers.id('getStakedBalance(address)').slice(0, 10);
+        const [routeParams, routeStaked] = await Promise.all([
+          loupe.facetAddress(selParams),
+          loupe.facetAddress(selStaked)
+        ]);
+        console.log('🔎 Routing: getProtocolParams ->', routeParams);
+        console.log('🔎 Routing: getStakedBalance ->', routeStaked);
+      } catch (routeErr) {
+        console.log('Loupe routing check failed (ok if loupe missing):', routeErr);
+      }
       
       try {
         // Prefer TestingFacet getter if available
@@ -875,8 +950,28 @@ export default function Prototype() {
                 <div className="w-12 h-12 rounded-lg bg-primary/20 flex items-center justify-center flex-shrink-0">
                   <span className="text-2xl font-bold text-primary">1</span>
                 </div>
-                <div>
-                  <h2 className="text-xl font-bold mb-1">Stake $LABS</h2>
+                <div className="flex-1">
+                  <div className="flex items-center gap-2">
+                    <h2 className="text-xl font-bold mb-1">Stake $LABS</h2>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button aria-label="Staking info" className="text-muted-foreground hover:text-foreground">
+                            <CircleHelp className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          <div className="space-y-1 text-xs">
+                            <p><strong>What happens on-chain:</strong></p>
+                            <p>1) Approve LABS: LABSToken.approve(diamond, amount)</p>
+                            <p>2) Stake LABS: H1Diamond → LABSCoreFacet.stakeLABS(amount)</p>
+                            <p>• Funds move from your wallet to the diamond for eligibility staking.</p>
+                            <p>• This does not mint H1; deposits into a LabVault mint H1 shares.</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
                   <p className="text-sm text-muted-foreground">LABSToken.sol & LABSCoreFacet.sol</p>
                   <Badge className="mt-2 bg-primary/20 text-primary">Create Data Labs / H1 Tokens</Badge>
                 </div>
@@ -893,6 +988,37 @@ export default function Prototype() {
                     placeholder="1000"
                   />
                 </div>
+
+                {/* Current Staked Balance & Lab Level */}
+                <div className="rounded-md bg-muted/50 p-3 space-y-2">
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Current Staked:</span>
+                    <span className="font-semibold">{parseFloat(stakedLabs || '0').toLocaleString()} LABS</span>
+                  </div>
+                  <div className="flex items-center justify-between text-sm">
+                    <span className="text-muted-foreground">Projected Lab Level:</span>
+                    {projectedLabLevel > 0 ? (
+                      <span className="font-semibold text-primary">Level {projectedLabLevel}</span>
+                    ) : (
+                      <span className="text-destructive font-semibold">No Level (need 100k+)</span>
+                    )}
+                  </div>
+                  
+                  {/* Validation Message */}
+                  {!canCreateLab && (
+                    <div className="mt-2 p-2 bg-destructive/10 border border-destructive/30 rounded text-xs text-destructive">
+                      ⚠️ You need at least {MIN_STAKE_FOR_LAB.toLocaleString()} LABS staked to create a lab. Currently have {parseFloat(stakedLabs || '0').toLocaleString()}.
+                    </div>
+                  )}
+                  
+                  {/* Level Thresholds */}
+                  <div className="mt-2 text-xs text-muted-foreground space-y-1">
+                    <div>Level 1: {LEVEL1_THRESHOLD.toLocaleString()} LABS</div>
+                    <div>Level 2: {LEVEL2_THRESHOLD.toLocaleString()} LABS</div>
+                    <div>Level 3: {LEVEL3_THRESHOLD.toLocaleString()} LABS</div>
+                  </div>
+                </div>
+
                 <Button
                   onClick={handleStakeLabs}
                   disabled={loading === 'stake'}
@@ -1193,6 +1319,69 @@ export default function Prototype() {
             </Card>
           </div>
         </div>
+
+        {/* User's Created Labs Section */}
+        {userCreatedLabs.length > 0 && (
+          <div className="mt-8 mb-32">
+            <Card className="p-6 bg-gradient-card border-primary/20">
+              <div className="mb-6">
+                <h3 className="text-2xl font-bold mb-2">Your Created Labs</h3>
+                <p className="text-sm text-muted-foreground">Total: {userCreatedLabs.length} lab{userCreatedLabs.length !== 1 ? 's' : ''} created</p>
+              </div>
+
+              <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                {userCreatedLabs.map((lab) => {
+                  const labLevel = calculateLabLevel(currentStakedAmount);
+                  return (
+                    <Card key={lab.labId} className="p-4 border-secondary/30 bg-secondary/5 hover:bg-secondary/10 transition">
+                      <div className="space-y-3">
+                        {/* Lab Header */}
+                        <div className="flex items-start justify-between">
+                          <div className="flex-1">
+                            <h4 className="font-bold text-lg">{lab.name}</h4>
+                            <p className="text-sm text-muted-foreground">({lab.symbol})</p>
+                          </div>
+                          <Badge className="bg-primary text-primary-foreground">
+                            Level {labLevel}
+                          </Badge>
+                        </div>
+
+                        {/* Lab Details */}
+                        <div className="space-y-2 text-sm">
+                          <div className="flex items-center justify-between py-1 border-t border-border pt-2">
+                            <span className="text-muted-foreground">ID:</span>
+                            <span className="font-mono font-semibold">{lab.labId}</span>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Domain:</span>
+                            <Badge variant="outline" className="capitalize">{lab.domain}</Badge>
+                          </div>
+                          <div className="flex items-center justify-between">
+                            <span className="text-muted-foreground">Created:</span>
+                            <span className="text-xs">{lab.createdAt.toLocaleDateString()} {lab.createdAt.toLocaleTimeString()}</span>
+                          </div>
+                          {lab.vaultAddress && (
+                            <div className="flex items-start justify-between pt-2 border-t border-border">
+                              <span className="text-muted-foreground">Vault:</span>
+                              <a
+                                href={`${CONTRACTS.BLOCK_EXPLORER}/address/${lab.vaultAddress}`}
+                                target="_blank"
+                                rel="noopener noreferrer"
+                                className="text-xs text-primary hover:underline font-mono truncate max-w-[150px]"
+                              >
+                                {lab.vaultAddress.slice(0, 6)}...{lab.vaultAddress.slice(-4)} ↗
+                              </a>
+                            </div>
+                          )}
+                        </div>
+                      </div>
+                    </Card>
+                  );
+                })}
+              </div>
+            </Card>
+          </div>
+        )}
 
         {/* Progress Banner */}
         <div className="fixed bottom-0 left-0 right-0 bg-card border-t border-border shadow-lg z-50">
