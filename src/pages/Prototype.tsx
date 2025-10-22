@@ -287,7 +287,7 @@ export default function Prototype() {
         const newAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
         addLog('info', 'Diagnostics', `✅ New allowance: ${ethers.formatEther(newAllowance)}`);
         if (newAllowance < stakeAmountBN) {
-          addLog('error', 'Diagnostics', '❌ Allowance still insufficient after approval. Attempting reset to 0 then re-approve...');
+          addLog('error', 'Diagnostics', `❌ Approval issue: Allowance is still insufficient after approval transaction. Expected ${ethers.formatEther(stakeAmountBN)}, but got ${ethers.formatEther(newAllowance)}. Attempting to re-approve...`);
           try {
             const zeroTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(
               CONTRACTS.H1Diamond,
@@ -300,14 +300,14 @@ export default function Prototype() {
             );
             await reapproveTx.wait();
             const finalAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
-            addLog('info', 'Diagnostics', `✅ Final allowance after reset: ${ethers.formatEther(finalAllowance)}`);
+            addLog('info', 'Diagnostics', `✅ Final allowance after re-approval: ${ethers.formatEther(finalAllowance)}`);
             if (finalAllowance < stakeAmountBN) {
-              toast.error('Allowance remained insufficient after reset');
+              toast.error('Allowance remained insufficient after re-approval');
               setLoading(null);
               return;
             }
           } catch (resetErr: any) {
-            addLog('error', 'Diagnostics', `❌ Failed allowance reset flow: ${resetErr?.message || String(resetErr)}`);
+            addLog('error', 'Diagnostics', `❌ Failed to re-approve: ${resetErr?.message || String(resetErr)}`);
             toast.error('Approval reset failed');
             setLoading(null);
             return;
@@ -342,7 +342,7 @@ export default function Prototype() {
       addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
       await stakeTx.wait();
 
-      addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! Now eligible to create Labs`, stakeTx.hash);
+      addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! To create a lab, you need 100,000 LABS staked.`, stakeTx.hash);
       toast.success('LABS staked successfully!');
       setStakeSteps(prev => ({ ...prev, stake: 'confirmed' }));
 
