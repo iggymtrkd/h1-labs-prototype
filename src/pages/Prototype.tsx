@@ -705,38 +705,62 @@ export default function Prototype() {
       
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], provider);
       
-      console.log(`🔍 Searching for labs created by ${address}...`);
-      
       // Get current block number
       const currentBlock = await provider.getBlockNumber();
+      
+      console.log(`🔍 Searching for labs created by ${address}...`);
+      console.log(`📊 Current block: ${currentBlock}`);
+      
       const CHUNK_SIZE = 50000; // Max block range per query
       
-      // Query events in chunks to avoid RPC limits
-      const filter = diamond.filters.LabCreated(null, address);
-      let allEvents = [];
+      // First, let's check if there are ANY LabCreated events at all
+      console.log(`🔍 Checking for ANY LabCreated events...`);
+      const allLabsFilter = diamond.filters.LabCreated();
+      let allLabEvents = [];
       
       // Start from recent blocks (last 500k blocks should cover several months)
       const startBlock = Math.max(0, currentBlock - 500000);
       
       for (let fromBlock = startBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
         const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
-        console.log(`📡 Querying blocks ${fromBlock} to ${toBlock}...`);
+        console.log(`📡 Querying blocks ${fromBlock} to ${toBlock} for all labs...`);
         
         try {
-          const events = await diamond.queryFilter(filter, fromBlock, toBlock);
-          allEvents.push(...events);
+          const events = await diamond.queryFilter(allLabsFilter, fromBlock, toBlock);
+          allLabEvents.push(...events);
+          if (events.length > 0) {
+            console.log(`✅ Found ${events.length} labs in blocks ${fromBlock}-${toBlock}`);
+            events.forEach(evt => {
+              if ('args' in evt) {
+                console.log(`  Lab #${evt.args.labId} created by ${evt.args.owner}`);
+              }
+            });
+          }
         } catch (chunkError) {
           console.warn(`⚠️ Failed to query blocks ${fromBlock}-${toBlock}:`, chunkError);
         }
       }
       
-      console.log(`🔍 Found ${allEvents.length} LabCreated event(s) for user`);
+      console.log(`📊 Total labs found on chain: ${allLabEvents.length}`);
+      
+      // Now filter for user's labs
+      console.log(`🔍 Filtering for labs owned by ${address}...`);
+      const userEvents = allLabEvents.filter(evt => {
+        if ('args' in evt) {
+          const isOwner = evt.args.owner.toLowerCase() === address.toLowerCase();
+          console.log(`  Lab #${evt.args.labId}: owner=${evt.args.owner}, match=${isOwner}`);
+          return isOwner;
+        }
+        return false;
+      });
+      
+      console.log(`🔍 Found ${userEvents.length} LabCreated event(s) for user`);
       
       const labs = [];
       let activeLabCount = 0;
       
       // Load details for each lab from events
-      for (const event of allEvents) {
+      for (const event of userEvents) {
         try {
           // Type guard for EventLog
           if (!('args' in event)) {
