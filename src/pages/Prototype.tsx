@@ -486,6 +486,9 @@ export default function Prototype() {
         const delta = parseFloat(ethers.formatEther(stakeAmountBN));
         setStakedLabs((current + delta).toString());
       } catch {}
+      
+      // Reset loading state after successful stake
+      setLoading(null);
     } catch (error: any) {
       console.error('❌ Stake error:', error);
       addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
