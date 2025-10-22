@@ -14,15 +14,13 @@ import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
 import { useWindowSize } from '@/hooks/use-window-size';
 import Confetti from 'react-confetti';
-import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp } from 'lucide-react';
+import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp, FileStack, PenTool } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
-import medatlasIcon from '@/assets/medatlas-icon.png';
-import medtaggerIcon from '@/assets/medtagger-icon.png';
 
 // Available domains for lab creation
 const AVAILABLE_DOMAINS = [
@@ -1127,7 +1125,9 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data</Badge>
                   </div>
                 </div>
-                <img src={medatlasIcon} alt="MedAtlas" className="w-16 h-16 rounded-2xl" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                  <FileStack className="w-8 h-8 text-white" />
+                </div>
               </div>
 
               <div className="space-y-4">
@@ -1189,7 +1189,9 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-accent/20 text-accent">Issue & Verify Credentials</Badge>
                   </div>
                 </div>
-                <img src={medtaggerIcon} alt="MedTagger" className="w-16 h-16 rounded-2xl" />
+                <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0">
+                  <PenTool className="w-8 h-8 text-white" />
+                </div>
               </div>
 
               <div className="space-y-4">
