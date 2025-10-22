@@ -1359,34 +1359,40 @@ export default function Prototype() {
                       </DialogHeader>
                       <div className="space-y-6">
                         {/* Step 1: Lab Creation */}
-                        {datasetMetadata.step1 && (
-                          <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
-                            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                                <span className="text-sm font-bold text-primary">1</span>
-                              </div>
-                              Lab Creation
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <span className="text-muted-foreground">Lab ID:</span>
-                                  <p className="font-mono font-semibold text-primary">#{datasetMetadata.step1.labId}</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Timestamp:</span>
-                                  <p className="font-mono text-xs">{datasetMetadata.step1.timestamp.toLocaleString()}</p>
-                                  <p className="text-xs text-green-500">✓ Real</p>
-                                </div>
+                        <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                          <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                              <span className="text-sm font-bold text-primary">1</span>
+                            </div>
+                            Lab Creation
+                          </h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="text-muted-foreground">Lab ID:</span>
+                                <p className="font-mono font-semibold text-primary">
+                                  {datasetMetadata.step1 ? `#${datasetMetadata.step1.labId}` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step1 ? '✓ Real (onchain)' : ''}</p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Owner Wallet:</span>
-                                <p className="font-mono text-xs break-all">{datasetMetadata.step1.walletAddress}</p>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
+                                <span className="text-muted-foreground">Timestamp:</span>
+                                <p className="font-mono text-xs">
+                                  {datasetMetadata.step1 ? datasetMetadata.step1.timestamp.toLocaleString() : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step1 ? '✓ Real' : ''}</p>
                               </div>
-                              <div>
-                                <span className="text-muted-foreground">Transaction Hash:</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Owner Wallet:</span>
+                              <p className="font-mono text-xs break-all">
+                                {datasetMetadata.step1 ? datasetMetadata.step1.walletAddress : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step1 ? '✓ Real (onchain)' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Transaction Hash:</span>
+                              {datasetMetadata.step1 ? (
                                 <a 
                                   href={`${CONTRACTS.BLOCK_EXPLORER}/tx/${datasetMetadata.step1.txHash}`}
                                   target="_blank"
@@ -1395,61 +1401,73 @@ export default function Prototype() {
                                 >
                                   {datasetMetadata.step1.txHash} ↗
                                 </a>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                              </div>
+                              ) : (
+                                <p className="font-mono text-xs">Not available yet</p>
+                              )}
+                              <p className="text-xs text-green-500">{datasetMetadata.step1 ? '✓ Real (onchain)' : ''}</p>
                             </div>
                           </div>
-                        )}
+                        </div>
 
                         {/* Step 2: Dataset Creation */}
-                        {datasetMetadata.step2 && (
-                          <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
-                            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                                <span className="text-sm font-bold text-primary">2</span>
-                              </div>
-                              Dataset Creation
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <span className="text-muted-foreground">Data ID:</span>
-                                  <p className="font-mono font-semibold text-primary">#{datasetMetadata.step2.dataId}</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Lab ID:</span>
-                                  <p className="font-mono font-semibold">#{datasetMetadata.step2.labId}</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
+                        <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                          <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                              <span className="text-sm font-bold text-primary">2</span>
+                            </div>
+                            Dataset Creation
+                          </h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="text-muted-foreground">Data ID:</span>
+                                <p className="font-mono font-semibold text-primary">
+                                  {datasetMetadata.step2 ? `#${datasetMetadata.step2.dataId}` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Data Hash:</span>
-                                <p className="font-mono text-xs break-all">{datasetMetadata.step2.dataHash}</p>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
+                                <span className="text-muted-foreground">Lab ID:</span>
+                                <p className="font-mono font-semibold">
+                                  {datasetMetadata.step2 ? `#${datasetMetadata.step2.labId}` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
                               </div>
-                              <div>
-                                <span className="text-muted-foreground">Creator Wallet:</span>
-                                <p className="font-mono text-xs break-all">{datasetMetadata.step2.creator}</p>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Timestamp:</span>
-                                <p className="font-mono text-xs">{datasetMetadata.step2.timestamp.toLocaleString()}</p>
-                                <p className="text-xs text-green-500">✓ Real</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">App Used:</span>
-                                <p className="font-mono text-xs">MedTagger (example app)</p>
-                                <p className="text-xs text-yellow-500">⚠ Placeholder</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">App Developer:</span>
-                                <p className="font-mono text-xs">0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb (example)</p>
-                                <p className="text-xs text-yellow-500">⚠ Placeholder</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Transaction Hash:</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Data Hash:</span>
+                              <p className="font-mono text-xs break-all">
+                                {datasetMetadata.step2 ? datasetMetadata.step2.dataHash : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Creator Wallet:</span>
+                              <p className="font-mono text-xs break-all">
+                                {datasetMetadata.step2 ? datasetMetadata.step2.creator : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Timestamp:</span>
+                              <p className="font-mono text-xs">
+                                {datasetMetadata.step2 ? datasetMetadata.step2.timestamp.toLocaleString() : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">App Used:</span>
+                              <p className="font-mono text-xs">MedTagger (example app)</p>
+                              <p className="text-xs text-yellow-500">⚠ Placeholder</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">App Developer:</span>
+                              <p className="font-mono text-xs">0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb (example)</p>
+                              <p className="text-xs text-yellow-500">⚠ Placeholder</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Transaction Hash:</span>
+                              {datasetMetadata.step2 ? (
                                 <a 
                                   href={`${CONTRACTS.BLOCK_EXPLORER}/tx/${datasetMetadata.step2.txHash}`}
                                   target="_blank"
@@ -1458,51 +1476,63 @@ export default function Prototype() {
                                 >
                                   {datasetMetadata.step2.txHash} ↗
                                 </a>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                              </div>
+                              ) : (
+                                <p className="font-mono text-xs">Not available yet</p>
+                              )}
+                              <p className="text-xs text-green-500">{datasetMetadata.step2 ? '✓ Real (onchain)' : ''}</p>
                             </div>
                           </div>
-                        )}
+                        </div>
 
                         {/* Step 3: Credential Issuance */}
-                        {datasetMetadata.step3 && (
-                          <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
-                            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                                <span className="text-sm font-bold text-primary">3</span>
-                              </div>
-                              Credential Issuance (Scholar)
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <span className="text-muted-foreground">Credential ID:</span>
-                                  <p className="font-mono font-semibold text-primary">#{datasetMetadata.step3.credentialId}</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Domain:</span>
-                                  <p className="font-mono font-semibold capitalize">{datasetMetadata.step3.domain}</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
+                        <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                          <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                              <span className="text-sm font-bold text-primary">3</span>
+                            </div>
+                            Credential Issuance (Scholar)
+                          </h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="text-muted-foreground">Credential ID:</span>
+                                <p className="font-mono font-semibold text-primary">
+                                  {datasetMetadata.step3 ? `#${datasetMetadata.step3.credentialId}` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real (onchain)' : ''}</p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Scholar Wallet:</span>
-                                <p className="font-mono text-xs break-all">{datasetMetadata.step3.walletAddress}</p>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
+                                <span className="text-muted-foreground">Domain:</span>
+                                <p className="font-mono font-semibold capitalize">
+                                  {datasetMetadata.step3 ? datasetMetadata.step3.domain : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real (onchain)' : ''}</p>
                               </div>
-                              <div>
-                                <span className="text-muted-foreground">Timestamp:</span>
-                                <p className="font-mono text-xs">{datasetMetadata.step3.timestamp.toLocaleString()}</p>
-                                <p className="text-xs text-green-500">✓ Real</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Enriched Data IDs:</span>
-                                <p className="font-mono text-xs">#{datasetMetadata.step2?.dataId || 'N/A'}</p>
-                                <p className="text-xs text-yellow-500">⚠ Linked from Step 2</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Transaction Hash:</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Scholar Wallet:</span>
+                              <p className="font-mono text-xs break-all">
+                                {datasetMetadata.step3 ? datasetMetadata.step3.walletAddress : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real (onchain)' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Timestamp:</span>
+                              <p className="font-mono text-xs">
+                                {datasetMetadata.step3 ? datasetMetadata.step3.timestamp.toLocaleString() : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Enriched Data IDs:</span>
+                              <p className="font-mono text-xs">
+                                {datasetMetadata.step2?.dataId ? `#${datasetMetadata.step2.dataId}` : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-yellow-500">⚠ Linked from Step 2</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Transaction Hash:</span>
+                              {datasetMetadata.step3 ? (
                                 <a 
                                   href={`${CONTRACTS.BLOCK_EXPLORER}/tx/${datasetMetadata.step3.txHash}`}
                                   target="_blank"
@@ -1511,46 +1541,56 @@ export default function Prototype() {
                                 >
                                   {datasetMetadata.step3.txHash} ↗
                                 </a>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                              </div>
+                              ) : (
+                                <p className="font-mono text-xs">Not available yet</p>
+                              )}
+                              <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real (onchain)' : ''}</p>
                             </div>
                           </div>
-                        )}
+                        </div>
 
                         {/* Step 4: Purchase */}
-                        {datasetMetadata.step4 && (
-                          <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
-                            <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
-                              <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
-                                <span className="text-sm font-bold text-primary">4</span>
-                              </div>
-                              Dataset Purchase
-                            </h3>
-                            <div className="space-y-2 text-sm">
-                              <div className="grid grid-cols-2 gap-2">
-                                <div>
-                                  <span className="text-muted-foreground">Purchased Data ID:</span>
-                                  <p className="font-mono font-semibold text-primary">#{datasetMetadata.step4.dataIds.join(', #')}</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
-                                <div>
-                                  <span className="text-muted-foreground">Purchase Amount:</span>
-                                  <p className="font-mono font-semibold">{datasetMetadata.step4.amount} ETH</p>
-                                  <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                                </div>
+                        <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                          <h3 className="font-bold text-lg mb-3 flex items-center gap-2">
+                            <div className="w-6 h-6 rounded-full bg-primary/20 flex items-center justify-center">
+                              <span className="text-sm font-bold text-primary">4</span>
+                            </div>
+                            Dataset Purchase
+                          </h3>
+                          <div className="space-y-2 text-sm">
+                            <div className="grid grid-cols-2 gap-2">
+                              <div>
+                                <span className="text-muted-foreground">Purchased Data ID:</span>
+                                <p className="font-mono font-semibold text-primary">
+                                  {datasetMetadata.step4 ? `#${datasetMetadata.step4.dataIds.join(', #')}` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real (onchain)' : ''}</p>
                               </div>
                               <div>
-                                <span className="text-muted-foreground">Buyer Wallet:</span>
-                                <p className="font-mono text-xs break-all">{datasetMetadata.step4.buyer}</p>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
+                                <span className="text-muted-foreground">Purchase Amount:</span>
+                                <p className="font-mono font-semibold">
+                                  {datasetMetadata.step4 ? `${datasetMetadata.step4.amount} ETH` : 'Not available yet'}
+                                </p>
+                                <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real (onchain)' : ''}</p>
                               </div>
-                              <div>
-                                <span className="text-muted-foreground">Timestamp:</span>
-                                <p className="font-mono text-xs">{datasetMetadata.step4.purchaseTimestamp.toLocaleString()}</p>
-                                <p className="text-xs text-green-500">✓ Real</p>
-                              </div>
-                              <div>
-                                <span className="text-muted-foreground">Transaction Hash:</span>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Buyer Wallet:</span>
+                              <p className="font-mono text-xs break-all">
+                                {datasetMetadata.step4 ? datasetMetadata.step4.buyer : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real (onchain)' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Timestamp:</span>
+                              <p className="font-mono text-xs">
+                                {datasetMetadata.step4 ? datasetMetadata.step4.purchaseTimestamp.toLocaleString() : 'Not available yet'}
+                              </p>
+                              <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real' : ''}</p>
+                            </div>
+                            <div>
+                              <span className="text-muted-foreground">Transaction Hash:</span>
+                              {datasetMetadata.step4 ? (
                                 <a 
                                   href={`${CONTRACTS.BLOCK_EXPLORER}/tx/${datasetMetadata.step4.txHash}`}
                                   target="_blank"
@@ -1559,11 +1599,13 @@ export default function Prototype() {
                                 >
                                   {datasetMetadata.step4.txHash} ↗
                                 </a>
-                                <p className="text-xs text-green-500">✓ Real (onchain)</p>
-                              </div>
+                              ) : (
+                                <p className="font-mono text-xs">Not available yet</p>
+                              )}
+                              <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real (onchain)' : ''}</p>
                             </div>
                           </div>
-                        )}
+                        </div>
 
                         {/* Summary */}
                         <div className="border border-secondary/20 rounded-lg p-4 bg-secondary/5">
