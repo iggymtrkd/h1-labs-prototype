@@ -704,25 +704,37 @@ export default function Prototype() {
       
       console.log(`🔍 Found ${events.length} LabCreated event(s) for user`);
       
-      // Update lab count
-      setLabsOwned(events.length);
-      
       const labs = [];
+      let activeLabCount = 0;
       
       // Load details for each lab from events
       for (const event of events) {
         try {
-          const labId = Number(event.args?.labId);
+          // Type guard for EventLog
+          if (!('args' in event)) {
+            console.log('⚠️ Event is not an EventLog, skipping');
+            continue;
+          }
+          
+          const labId = Number(event.args.labId);
           console.log(`📋 Loading lab #${labId}...`);
           
           // Get current lab details to check if still active
           const details = await diamond.getLabDetails(labId);
           const [owner, h1Token, domain, active, level] = details;
           
+          // Check if user still owns this lab
+          if (owner.toLowerCase() !== address.toLowerCase()) {
+            console.log(`⚠️ Lab #${labId} is no longer owned by user, skipping`);
+            continue;
+          }
+          
           if (!active) {
             console.log(`⚠️ Lab #${labId} is inactive, skipping`);
             continue;
           }
+          
+          activeLabCount++;
           
           // Get vault details (H1 token is the vault)
           const vault = new ethers.Contract(h1Token, LabVault_ABI, provider);
@@ -768,7 +780,8 @@ export default function Prototype() {
       }
       
       setAllLabsForMarketplace(labs);
-      console.log(`🏪 Loaded ${labs.length} lab(s) for marketplace`);
+      setLabsOwned(activeLabCount);
+      console.log(`🏪 Loaded ${labs.length} lab(s) for marketplace. User owns ${activeLabCount} active lab(s).`);
     } catch (error) {
       console.error('❌ Failed to load labs from events:', error);
       setLabsOwned(0);
