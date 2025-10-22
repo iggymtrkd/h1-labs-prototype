@@ -8,6 +8,10 @@ import {
   ExternalLink, Shield
 } from "lucide-react";
 import { Button } from "@/components/ui/button";
+import { useBaseAccount } from "@/hooks/useBaseAccount";
+import { supabase } from "@/integrations/supabase/client";
+import { useState, useEffect } from "react";
+import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 
 const userAchievements: Achievement[] = [
   {
@@ -123,11 +127,21 @@ interface ProfileProps {
 }
 
 export default function Profile({ address: walletAddress, labsBalance: userLabsBalance }: ProfileProps) {
-  const userAddress = walletAddress || "0x92A...2c9b";
-  const ensName = "drsilva.h1labs";
-  const joinDate = "March 2025";
+  const { address: connectedAddress, labsBalance: connectedLabsBalance } = useBaseAccount();
+  const [profileData, setProfileData] = useState<{
+    username: string | null;
+    basename: string | null;
+    avatar_url: string | null;
+    created_at: string | null;
+  } | null>(null);
+  
+  const userAddress = connectedAddress || walletAddress || "0x92A...2c9b";
+  const displayName = profileData?.basename || profileData?.username || userAddress;
+  const joinDate = profileData?.created_at 
+    ? new Date(profileData.created_at).toLocaleDateString('en-US', { month: 'long', year: 'numeric' })
+    : "March 2025";
   const level = 7;
-  const labsBalance = userLabsBalance || "8,320";
+  const labsBalance = connectedLabsBalance || userLabsBalance || "8,320";
   const labsStaked = "6,000";
   const h1TokensTotal = "12,400";
   const portfolioValue = "$1,450";
@@ -136,6 +150,27 @@ export default function Profile({ address: walletAddress, labsBalance: userLabsB
 
   const earnedAchievements = userAchievements.filter(a => a.earned);
   const nextReward = "Lab Alchemist II";
+
+  useEffect(() => {
+    const fetchProfile = async () => {
+      if (!connectedAddress) return;
+      
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('username, basename, avatar_url, created_at')
+        .eq('wallet_address', connectedAddress.toLowerCase())
+        .maybeSingle();
+      
+      if (error) {
+        console.error('Error fetching profile:', error);
+        return;
+      }
+      
+      setProfileData(data);
+    };
+    
+    fetchProfile();
+  }, [connectedAddress]);
 
   return (
     <div className="min-h-screen pt-8 md:pt-12 pb-12 overflow-x-hidden">
@@ -152,9 +187,12 @@ export default function Profile({ address: walletAddress, labsBalance: userLabsB
           <div className="flex flex-col lg:flex-row gap-6">
             {/* Avatar & Basic Info */}
             <div className="flex-shrink-0">
-              <div className="w-32 h-32 rounded-full bg-gradient-hero flex items-center justify-center text-4xl font-bold mb-4">
-                🧬
-              </div>
+              <Avatar className="w-32 h-32 mb-4">
+                <AvatarImage src={profileData?.avatar_url || undefined} alt={displayName} />
+                <AvatarFallback className="bg-gradient-hero text-4xl font-bold">
+                  {profileData?.avatar_url ? displayName[0].toUpperCase() : "🧬"}
+                </AvatarFallback>
+              </Avatar>
               <div className="text-center">
                 <Badge className="bg-primary/20 text-primary">Level {level}</Badge>
               </div>
@@ -164,9 +202,9 @@ export default function Profile({ address: walletAddress, labsBalance: userLabsB
             <div className="flex-1">
               <div className="flex flex-col lg:flex-row lg:items-center lg:justify-between mb-4">
                 <div>
-                  <h1 className="text-3xl font-bold mb-2">{ensName}</h1>
+                  <h1 className="text-3xl font-bold mb-2">{displayName}</h1>
                   <div className="flex items-center gap-2 text-muted-foreground">
-                    <span className="text-sm">{userAddress}</span>
+                    <span className="text-sm font-mono">{userAddress}</span>
                     <a 
                       href={`https://basescan.org/address/${userAddress}`} 
                       target="_blank" 
