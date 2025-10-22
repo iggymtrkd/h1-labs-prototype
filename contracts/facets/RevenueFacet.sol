@@ -34,6 +34,14 @@ contract RevenueFacet {
     bool useMultiWallet;            // Enable multi-wallet mode
   }
 
+  struct RevenueBreakdown {
+    uint256 buyback;
+    uint256 developer;
+    uint256 creator;
+    uint256 scholar;
+    uint256 treasury;
+  }
+
   event RevenueDistributed(
     uint256 indexed datasetId,
     uint256 indexed labId,
@@ -133,6 +141,48 @@ contract RevenueFacet {
     return revenueConfig().defaultWallets;
   }
 
+  /// @notice Check if multi-wallet distribution mode is enabled
+  /// @return isEnabled True if multi-wallet mode is active, false if legacy mode
+  function isMultiWalletModeEnabled() external view returns (bool) {
+    return revenueConfig().useMultiWallet;
+  }
+
+  /// @notice Get individual wallet address by role
+  /// @param role The role identifier: 0=buyback, 1=developer, 2=creator, 3=scholar, 4=treasury
+  /// @return walletAddress The wallet address for the specified role
+  function getWalletByRole(uint8 role) external view returns (address) {
+    RevenueWallets memory wallets = revenueConfig().defaultWallets;
+    if (role == 0) return wallets.buybackWallet;
+    if (role == 1) return wallets.developerWallet;
+    if (role == 2) return wallets.creatorPoolWallet;
+    if (role == 3) return wallets.scholarPoolWallet;
+    if (role == 4) return wallets.h1TreasuryWallet;
+    revert InvalidWallet();
+  }
+
+  /// @notice Get all wallet addresses with detailed role information
+  /// @return buyback 40% - H1 holder buyback reserve
+  /// @return developer 15% - App developer incentive
+  /// @return creator 20% - Data creator rewards
+  /// @return scholar 20% - Scholar/validator rewards
+  /// @return treasury 5% - H1 protocol treasury
+  function getAllRevenueWalletDetails() external view returns (
+    address buyback,
+    address developer,
+    address creator,
+    address scholar,
+    address treasury
+  ) {
+    RevenueWallets memory wallets = revenueConfig().defaultWallets;
+    return (
+      wallets.buybackWallet,
+      wallets.developerWallet,
+      wallets.creatorPoolWallet,
+      wallets.scholarPoolWallet,
+      wallets.h1TreasuryWallet
+    );
+  }
+
   /// @notice Internal function to access revenue config storage
   function revenueConfig() internal pure returns (RevenueConfig storage rc) {
     bytes32 slot = REVENUE_CONFIG_SLOT;
@@ -197,37 +247,33 @@ contract RevenueFacet {
       LibH1Storage.Lab storage lab = hs.labs[labId];
       if (lab.owner == address(0)) revert InvalidLabId();
 
-      uint256 buybackAmount = (amount * BUYBACK_H1_HOLDERS_BPS) / BPS_DENOMINATOR;
-      uint256 developerAmount = (amount * APP_DEVELOPER_BPS) / BPS_DENOMINATOR;
-      uint256 creatorAmount = (amount * DATA_CREATORS_BPS) / BPS_DENOMINATOR;
-      uint256 scholarAmount = (amount * SCHOLARS_BPS) / BPS_DENOMINATOR;
-      uint256 treasuryAmount = (amount * H1_TREASURY_BPS) / BPS_DENOMINATOR;
+      RevenueBreakdown memory breakdown = _calculateRevenueBreakdown(amount);
 
       lab.totalRevenue += amount;
 
       // Route to individual wallets
-      if (buybackAmount > 0) {
-        (bool success, ) = payable(wallets.buybackWallet).call{value: buybackAmount}("");
+      if (breakdown.buyback > 0) {
+        (bool success, ) = payable(wallets.buybackWallet).call{value: breakdown.buyback}("");
         if (!success) revert TransferFailed();
       }
 
-      if (developerAmount > 0) {
-        (bool success, ) = payable(wallets.developerWallet).call{value: developerAmount}("");
+      if (breakdown.developer > 0) {
+        (bool success, ) = payable(wallets.developerWallet).call{value: breakdown.developer}("");
         if (!success) revert TransferFailed();
       }
 
-      if (creatorAmount > 0) {
-        (bool success, ) = payable(wallets.creatorPoolWallet).call{value: creatorAmount}("");
+      if (breakdown.creator > 0) {
+        (bool success, ) = payable(wallets.creatorPoolWallet).call{value: breakdown.creator}("");
         if (!success) revert TransferFailed();
       }
 
-      if (scholarAmount > 0) {
-        (bool success, ) = payable(wallets.scholarPoolWallet).call{value: scholarAmount}("");
+      if (breakdown.scholar > 0) {
+        (bool success, ) = payable(wallets.scholarPoolWallet).call{value: breakdown.scholar}("");
         if (!success) revert TransferFailed();
       }
 
-      if (treasuryAmount > 0) {
-        (bool success, ) = payable(wallets.h1TreasuryWallet).call{value: treasuryAmount}("");
+      if (breakdown.treasury > 0) {
+        (bool success, ) = payable(wallets.h1TreasuryWallet).call{value: breakdown.treasury}("");
         if (!success) revert TransferFailed();
       }
 
@@ -239,11 +285,11 @@ contract RevenueFacet {
         wallets.creatorPoolWallet,
         wallets.scholarPoolWallet,
         wallets.h1TreasuryWallet,
-        buybackAmount,
-        developerAmount,
-        creatorAmount,
-        scholarAmount,
-        treasuryAmount
+        breakdown.buyback,
+        breakdown.developer,
+        breakdown.creator,
+        breakdown.scholar,
+        breakdown.treasury
       );
     }
   }
@@ -265,47 +311,43 @@ contract RevenueFacet {
       LibH1Storage.Lab storage lab = hs.labs[labId];
       if (lab.owner == address(0)) revert InvalidLabId();
 
-      uint256 buybackAmount = (amount * BUYBACK_H1_HOLDERS_BPS) / BPS_DENOMINATOR;
-      uint256 developerAmount = (amount * APP_DEVELOPER_BPS) / BPS_DENOMINATOR;
-      uint256 creatorAmount = (amount * DATA_CREATORS_BPS) / BPS_DENOMINATOR;
-      uint256 scholarAmount = (amount * SCHOLARS_BPS) / BPS_DENOMINATOR;
-      uint256 treasuryAmount = (amount * H1_TREASURY_BPS) / BPS_DENOMINATOR;
+      RevenueBreakdown memory breakdown = _calculateRevenueBreakdown(amount);
 
       lab.totalRevenue += amount;
 
-      if (treasury != address(0) && buybackAmount > 0) {
-        (bool successBuyback, ) = payable(treasury).call{value: buybackAmount}("");
+      if (treasury != address(0) && breakdown.buyback > 0) {
+        (bool successBuyback, ) = payable(treasury).call{value: breakdown.buyback}("");
         if (!successBuyback) revert TransferFailed();
       }
 
-      if (treasury != address(0) && developerAmount > 0) {
-        (bool successDeveloper, ) = payable(treasury).call{value: developerAmount}("");
+      if (treasury != address(0) && breakdown.developer > 0) {
+        (bool successDeveloper, ) = payable(treasury).call{value: breakdown.developer}("");
         if (!successDeveloper) revert TransferFailed();
       }
 
-      if (treasury != address(0) && creatorAmount > 0) {
-        (bool successCreator, ) = payable(treasury).call{value: creatorAmount}("");
+      if (treasury != address(0) && breakdown.creator > 0) {
+        (bool successCreator, ) = payable(treasury).call{value: breakdown.creator}("");
         if (!successCreator) revert TransferFailed();
       }
 
-      if (treasury != address(0) && scholarAmount > 0) {
-        (bool successScholar, ) = payable(treasury).call{value: scholarAmount}("");
+      if (treasury != address(0) && breakdown.scholar > 0) {
+        (bool successScholar, ) = payable(treasury).call{value: breakdown.scholar}("");
         if (!successScholar) revert TransferFailed();
       }
 
-      if (treasury != address(0) && treasuryAmount > 0) {
-        (bool successTreasury, ) = payable(treasury).call{value: treasuryAmount}("");
+      if (treasury != address(0) && breakdown.treasury > 0) {
+        (bool successTreasury, ) = payable(treasury).call{value: breakdown.treasury}("");
         if (!successTreasury) revert TransferFailed();
       }
 
       emit RevenueDistributed(
         datasetId,
         labId,
-        buybackAmount,
-        developerAmount,
-        creatorAmount,
-        scholarAmount,
-        treasuryAmount
+        breakdown.buyback,
+        breakdown.developer,
+        breakdown.creator,
+        breakdown.scholar,
+        breakdown.treasury
       );
     }
   }
@@ -336,11 +378,19 @@ contract RevenueFacet {
       uint256 treasury
     )
   {
-    buyback = (amount * BUYBACK_H1_HOLDERS_BPS) / BPS_DENOMINATOR;
-    developer = (amount * APP_DEVELOPER_BPS) / BPS_DENOMINATOR;
-    creator = (amount * DATA_CREATORS_BPS) / BPS_DENOMINATOR;
-    scholar = (amount * SCHOLARS_BPS) / BPS_DENOMINATOR;
-    treasury = (amount * H1_TREASURY_BPS) / BPS_DENOMINATOR;
+    RevenueBreakdown memory breakdown = _calculateRevenueBreakdown(amount);
+    return (breakdown.buyback, breakdown.developer, breakdown.creator, breakdown.scholar, breakdown.treasury);
+  }
+
+  /// @notice Internal function to calculate revenue breakdown for a given amount
+  function _calculateRevenueBreakdown(uint256 amount) internal pure returns (RevenueBreakdown memory) {
+    RevenueBreakdown memory breakdown;
+    breakdown.buyback = (amount * BUYBACK_H1_HOLDERS_BPS) / BPS_DENOMINATOR;
+    breakdown.developer = (amount * APP_DEVELOPER_BPS) / BPS_DENOMINATOR;
+    breakdown.creator = (amount * DATA_CREATORS_BPS) / BPS_DENOMINATOR;
+    breakdown.scholar = (amount * SCHOLARS_BPS) / BPS_DENOMINATOR;
+    breakdown.treasury = (amount * H1_TREASURY_BPS) / BPS_DENOMINATOR;
+    return breakdown;
   }
 }
 
