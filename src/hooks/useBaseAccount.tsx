@@ -52,8 +52,13 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
       const accounts = await provider.request({ method: 'eth_accounts' }) as string[];
       
       if (accounts && accounts.length > 0) {
-        const userAddress = accounts[0];
+        // Ensure address is properly checksummed and valid
+        const rawAddress = accounts[0];
+        const userAddress = rawAddress.toLowerCase(); // Use lowercase for consistency
         const balance = "8,320";
+        
+        console.log('🔍 Raw address from wallet:', rawAddress, `(${rawAddress.length} chars)`);
+        console.log('🔍 Normalized address:', userAddress, `(${userAddress.length} chars)`);
         
         setAddress(userAddress);
         setIsConnected(true);
