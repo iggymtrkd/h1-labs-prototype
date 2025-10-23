@@ -677,14 +677,7 @@ export default function Prototype() {
         console.log('getStakedBalance not available on contract:', error);
         setStakedLabs('0');
       }
-      try {
-        const labCount = await diamond.getUserLabCount(address);
-        console.log('🔍 Labs owned:', labCount.toString());
-        setLabsOwned(Number(labCount));
-      } catch (error) {
-        console.log('getUserLabCount not available on contract:', error);
-        setLabsOwned(0);
-      }
+      // Lab count will be set from event query results
     } catch (error) {
       console.error('❌ Failed to load balances:', error);
     }
