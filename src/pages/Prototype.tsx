@@ -747,8 +747,10 @@ export default function Prototype() {
       console.log('📍 STEP 2: Query ALL LabCreated Events (no filter)');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       
-      const eventSignature = ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)");
+      // Correct signature from BaseScan: LabCreated(uint256 labId, address owner, address h1Token, string name, string symbol, string domain, bool active, uint256 level)
+      const eventSignature = ethers.id("LabCreated(uint256,address,address,string,string,string,bool,uint256)");
       console.log('  Event signature:', eventSignature);
+      console.log('  Expected from BaseScan: 0x3e6fb49b7de5fe8c3e5a2a846ba40dd843eb56cb6a6895b81e66783e03d51181');
       
       // Query recent blocks first to see if ANY events exist
       const recentBlockRange = 10000;

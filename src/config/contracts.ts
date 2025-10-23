@@ -13,7 +13,7 @@ export const CONTRACTS = {
   BLOCK_EXPLORER: "https://sepolia.basescan.org",
   
   // Contract deployment block (for efficient event queries)
-  DEPLOYMENT_BLOCK: 17500000, // Approximate deployment block on Base Sepolia
+  DEPLOYMENT_BLOCK: 32000000, // Updated based on actual lab creation at block 32723565
   
   // Core Contracts (✅ DEPLOYED)
   H1Diamond: "0x29a7297e84df485aff8def2d27e467f3a37619c0",
