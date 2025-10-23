@@ -82,6 +82,32 @@ library LibH1Storage {
     bool isActive;                  // 1 byte: profile active status
   }
 
+  /// @notice Vesting schedule for locked H1 tokens
+  /// @dev Tracks vesting parameters and claim progress
+  struct VestingSchedule {
+    address beneficiary;            // 20 bytes: who receives the tokens
+    uint256 totalAmount;            // 32 bytes: total H1 tokens vesting
+    uint256 claimedAmount;          // 32 bytes: amount already claimed
+    uint256 startTime;              // 32 bytes: vesting start timestamp
+    uint256 duration;               // 32 bytes: vesting duration in seconds
+    uint256 cliffDuration;          // 32 bytes: cliff period before any unlock
+    uint8 vestingType;              // 1 byte: 0=owner, 1=scholar, 2=dev
+    bool revoked;                   // 1 byte: if vesting was revoked
+  }
+
+  /// @notice Initial H1 distribution tracking per lab
+  /// @dev Records how tokens were allocated on lab creation
+  struct H1Distribution {
+    uint256 totalMinted;            // 32 bytes: total H1 minted for this lab
+    uint256 ownerAllocation;        // 32 bytes: 30% to owner (vested)
+    uint256 curveAllocation;        // 32 bytes: 10% to bonding curve (liquid)
+    uint256 scholarAllocation;      // 32 bytes: 40% to scholars (vested)
+    uint256 devAllocation;          // 32 bytes: 15% to devs (vested)
+    uint256 treasuryAllocation;     // 32 bytes: 5% to treasury (instant)
+    uint256 ownerVestingId;         // 32 bytes: vesting schedule ID for owner
+    bool initialized;               // 1 byte: if distribution happened
+  }
+
   struct H1Storage {
     mapping(uint256 => Lab) labs;
     uint256 nextLabId;
@@ -123,6 +149,15 @@ library LibH1Storage {
     mapping(uint256 => uint256[]) userCredentials;  // userId → [credentialIds]
     uint256 nextCredentialId;                       // credentialId counter
     bool defaultsInitialized;
+    // ============ H1 Vesting & Distribution Storage ============
+    // Vesting schedules
+    mapping(uint256 => VestingSchedule) vestingSchedules;  // vestingId → schedule
+    uint256 nextVestingId;                                  // vestingId counter
+    // Lab H1 distributions
+    mapping(uint256 => H1Distribution) labDistributions;    // labId → distribution
+    // Lab vesting IDs (for scholars and devs)
+    mapping(uint256 => uint256[]) labScholarVestings;       // labId → [vestingIds]
+    mapping(uint256 => uint256[]) labDevVestings;           // labId → [vestingIds]
   }
 
   function h1Storage() internal pure returns (H1Storage storage hs) {

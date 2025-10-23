@@ -80,14 +80,18 @@ contract LabVault is ERC20Base {
   event FeesUpdated(uint16 depositLabOwnerBps, uint16 depositTreasuryBps, uint16 redemptionLabOwnerBps, uint16 redemptionTreasuryBps);
   event Paused(address indexed account);
   event Unpaused(address indexed account);
+  event InitialMintCompleted(uint256 totalMinted, address indexed diamond);
 
   error Unauthorized();
   error InvalidAddress();
   error InvalidAmount();
   error InvalidParameter();
   error ContractPaused();
+  error InitialMintAlreadyCompleted();
 
   bool private _paused;
+  bool public initialMintCompleted;  // Track if initial H1 distribution happened
+  address public immutable diamond;   // H1Diamond address for auth
 
   // Testing variables (TESTNET ONLY)
   bool public testMode;
@@ -113,11 +117,13 @@ contract LabVault is ERC20Base {
     uint16 epochExitCapBps_,
     address admin_,
     address labOwner_,
-    address treasury_
+    address treasury_,
+    address diamond_
   ) ERC20Base(h1Name_, h1Symbol_, 18) {
     require(labsToken_ != address(0), "labs token = 0");
     require(labOwner_ != address(0), "lab owner = 0");
     require(treasury_ != address(0), "treasury = 0");
+    require(diamond_ != address(0), "diamond = 0");
     require(bytes(h1Name_).length > 0 && bytes(h1Name_).length <= 50, "invalid name");
     require(bytes(h1Symbol_).length > 0 && bytes(h1Symbol_).length <= 10, "invalid symbol");
     require(epochExitCapBps_ <= MAX_EXIT_CAP_BPS, "exit cap > 100%");
@@ -129,6 +135,7 @@ contract LabVault is ERC20Base {
     admin = admin_;
     labOwner = labOwner_;
     treasury = treasury_;
+    diamond = diamond_;
   }
 
   function assetsPerShare() public view returns (uint256) {
@@ -187,6 +194,48 @@ contract LabVault is ERC20Base {
     if (level == 2) return 2;
     if (level == 1) return 1;
     return 0;
+  }
+
+  /// @notice Initial H1 mint on lab creation (one-time only)
+  /// @dev Called by H1Diamond during lab creation to distribute initial H1 tokens
+  /// @param labsAmount Total LABS backing this H1 issuance
+  /// @param recipients Array of recipient addresses [owner, curve, vault, vault, treasury]
+  /// @param amounts Array of H1 amounts [owner 30%, curve 10%, scholars 40%, devs 15%, treasury 5%]
+  /// @return totalH1Minted Total H1 tokens minted
+  function initialMint(
+    uint256 labsAmount,
+    address[] calldata recipients,
+    uint256[] calldata amounts
+  ) external nonReentrant returns (uint256 totalH1Minted) {
+    // Only diamond can call during lab creation
+    if (msg.sender != diamond) revert Unauthorized();
+    if (initialMintCompleted) revert InitialMintAlreadyCompleted();
+    if (recipients.length != 5 || amounts.length != 5) revert InvalidParameter();
+    
+    // Transfer LABS backing from diamond
+    require(
+      IERC20(labsToken).transferFrom(msg.sender, address(this), labsAmount),
+      "LABS transfer failed"
+    );
+    
+    // Update vault backing (no fees on initial mint)
+    totalAssets += labsAmount;
+    
+    // Mint H1 tokens to recipients
+    // recipients[0] = vault (owner vesting holder)
+    // recipients[1] = curve (liquid market making)
+    // recipients[2] = vault (scholar reserve holder)
+    // recipients[3] = vault (dev reserve holder)
+    // recipients[4] = treasury (instant distribution)
+    for (uint256 i = 0; i < recipients.length; i++) {
+      if (amounts[i] > 0) {
+        _mint(recipients[i], amounts[i]);
+        totalH1Minted += amounts[i];
+      }
+    }
+    
+    initialMintCompleted = true;
+    emit InitialMintCompleted(totalH1Minted, msg.sender);
   }
 
   function depositLABS(uint256 assets, address receiver) external nonReentrant whenNotPaused returns (uint256 shares) {

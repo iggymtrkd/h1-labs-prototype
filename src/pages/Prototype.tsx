@@ -20,7 +20,7 @@ import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
-import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI } from '@/contracts/abis';
+import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI, H1VestingFacet_ABI } from '@/contracts/abis';
 import { fetchAllLabEvents } from '@/lib/eventScanner';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
@@ -172,6 +172,27 @@ export default function Prototype() {
     curveAddress?: string; // Optional: bonding curve address
     createdAt: Date;
     level: number; // ✅ NEW: Store actual level from contract
+    // H1 Distribution & Vesting
+    h1Distribution?: {
+      totalMinted: string;
+      ownerAllocation: string;
+      curveAllocation: string;
+      scholarAllocation: string;
+      devAllocation: string;
+      treasuryAllocation: string;
+      ownerVestingId: number;
+      initialized: boolean;
+    };
+    ownerVesting?: {
+      vestingId: number;
+      totalAmount: string;
+      claimedAmount: string;
+      claimableAmount: string;
+      startTime: number;
+      duration: number;
+      vestingType: number;
+    };
+    ownerH1Balance?: string;
   }
   const [userCreatedLabs, setUserCreatedLabs] = useState<CreatedLab[]>([]);
   const [loadingLabs, setLoadingLabs] = useState(false);
@@ -559,6 +580,12 @@ export default function Prototype() {
         }
       }
 
+      // Load vesting data for the new lab (if H1 distribution happened)
+      const vestingData = await loadLabVestingData(
+        typeof labId === 'number' ? labId : parseInt(labId),
+        vaultAddress
+      );
+      
       // Add to user's created labs
       const newLab: CreatedLab = {
         labId: typeof labId === 'number' ? labId : parseInt(labId),
@@ -567,11 +594,18 @@ export default function Prototype() {
         domain: labDomain,
         vaultAddress: vaultAddress,
         createdAt: new Date(),
-        level: eventLevel // ✅ NEW: Use actual level from contract event
+        level: eventLevel, // ✅ NEW: Use actual level from contract event
+        ...vestingData // Add H1 distribution & vesting data
       };
       setUserCreatedLabs(prev => [newLab, ...prev]);
-      addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, createTx.hash);
-      toast.success(`Step 1 Complete! Lab created with ID: ${labId} (Level ${eventLevel})`);
+      
+      if (vestingData?.h1Distribution) {
+        addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, createTx.hash);
+        toast.success(`Step 1 Complete! Lab created with ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 distributed`);
+      } else {
+        addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, createTx.hash);
+        toast.success(`Step 1 Complete! Lab created with ID: ${labId} (Level ${eventLevel})`);
+      }
       
       // Refresh marketplace data
       await loadMarketplaceLabs();
@@ -1069,6 +1103,104 @@ export default function Prototype() {
       
     } catch (error) {
       console.error('Error loading marketplace labs:', error);
+    }
+  };
+
+  // Load H1 distribution and vesting data for user's labs
+  const loadLabVestingData = async (labId: number, vaultAddress: string) => {
+    if (!isConnected || !sdk) return null;
+    
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, H1VestingFacet_ABI, provider);
+      const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+      
+      // Get H1 distribution
+      const distResult = await diamond.getLabDistribution(labId);
+      
+      if (!distResult[7]) { // initialized flag
+        return null; // No H1 distribution for this lab (old lab)
+      }
+      
+      const distribution = {
+        totalMinted: ethers.formatEther(distResult[0]),
+        ownerAllocation: ethers.formatEther(distResult[1]),
+        curveAllocation: ethers.formatEther(distResult[2]),
+        scholarAllocation: ethers.formatEther(distResult[3]),
+        devAllocation: ethers.formatEther(distResult[4]),
+        treasuryAllocation: ethers.formatEther(distResult[5]),
+        ownerVestingId: Number(distResult[6]),
+        initialized: distResult[7]
+      };
+      
+      // Get owner vesting schedule
+      const vestingResult = await diamond.getVestingSchedule(distribution.ownerVestingId);
+      const claimableAmount = await diamond.getClaimableAmount(distribution.ownerVestingId);
+      
+      const ownerVesting = {
+        vestingId: distribution.ownerVestingId,
+        totalAmount: ethers.formatEther(vestingResult[1]),
+        claimedAmount: ethers.formatEther(vestingResult[2]),
+        claimableAmount: ethers.formatEther(claimableAmount),
+        startTime: Number(vestingResult[3]),
+        duration: Number(vestingResult[4]),
+        vestingType: Number(vestingResult[6])
+      };
+      
+      // Get owner's H1 balance
+      const h1Balance = await vault.balanceOf(address);
+      
+      return {
+        h1Distribution: distribution,
+        ownerVesting: ownerVesting,
+        ownerH1Balance: ethers.formatEther(h1Balance)
+      };
+    } catch (error) {
+      console.error('Error loading vesting data for lab', labId, ':', error);
+      return null;
+    }
+  };
+
+  // Claim vested H1 tokens
+  const handleClaimVestedH1 = async (labId: number, vestingId: number) => {
+    if (!isConnected || !sdk) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    
+    setLoading('claimVesting');
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      const signer = await provider.getSigner(address);
+      
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, H1VestingFacet_ABI, signer);
+      
+      toast.info('Claiming vested H1 tokens...');
+      const tx = await diamond.claimVestedTokens(vestingId, labId);
+      await tx.wait();
+      
+      toast.success('H1 tokens claimed successfully!');
+      
+      // Refresh lab data
+      const updatedLabs = await Promise.all(
+        userCreatedLabs.map(async (lab) => {
+          if (lab.labId === labId) {
+            const vestingData = await loadLabVestingData(labId, lab.vaultAddress);
+            return { ...lab, ...vestingData };
+          }
+          return lab;
+        })
+      );
+      setUserCreatedLabs(updatedLabs);
+      
+    } catch (error: any) {
+      console.error('Claim vesting error:', error);
+      toast.error(`Failed to claim: ${error.message || 'Unknown error'}`);
+    } finally {
+      setLoading(null);
     }
   };
 
@@ -2246,6 +2378,114 @@ export default function Prototype() {
                                   '🚀 Deploy Curve'
                                 )}
                               </Button>
+                            </div>
+                          )}
+                          
+                          {/* H1 Distribution & Vesting Section */}
+                          {lab.h1Distribution && lab.h1Distribution.initialized && (
+                            <div className="mt-3 pt-3 border-t border-border">
+                              <div className="mb-2">
+                                <h5 className="text-xs font-semibold text-primary mb-1">🪙 H1 Token Distribution</h5>
+                              </div>
+                              <div className="space-y-1 text-xs">
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Total Minted:</span>
+                                  <span className="font-mono font-bold">{parseFloat(lab.h1Distribution.totalMinted).toFixed(0)} H1</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Your Allocation:</span>
+                                  <span className="font-mono">{parseFloat(lab.h1Distribution.ownerAllocation).toFixed(0)} H1 (30%)</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Curve Liquidity:</span>
+                                  <span className="font-mono">{parseFloat(lab.h1Distribution.curveAllocation).toFixed(0)} H1 (10%)</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Scholar Reserve:</span>
+                                  <span className="font-mono">{parseFloat(lab.h1Distribution.scholarAllocation).toFixed(0)} H1 (40%)</span>
+                                </div>
+                                <div className="flex justify-between">
+                                  <span className="text-muted-foreground">Dev Reserve:</span>
+                                  <span className="font-mono">{parseFloat(lab.h1Distribution.devAllocation).toFixed(0)} H1 (15%)</span>
+                                </div>
+                              </div>
+                              
+                              {/* Owner Vesting Schedule */}
+                              {lab.ownerVesting && (
+                                <div className="mt-3 pt-3 border-t border-border">
+                                  <div className="mb-2 flex items-center justify-between">
+                                    <h5 className="text-xs font-semibold text-primary">⏰ Your Vesting Schedule</h5>
+                                    <span className="text-xs text-muted-foreground">6 months, weekly unlocks</span>
+                                  </div>
+                                  <div className="space-y-1 text-xs mb-3">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Total Vesting:</span>
+                                      <span className="font-mono">{parseFloat(lab.ownerVesting.totalAmount).toFixed(0)} H1</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Already Claimed:</span>
+                                      <span className="font-mono">{parseFloat(lab.ownerVesting.claimedAmount).toFixed(0)} H1</span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground font-bold">Available to Claim:</span>
+                                      <span className="font-mono font-bold text-green-500">
+                                        {parseFloat(lab.ownerVesting.claimableAmount).toFixed(2)} H1
+                                      </span>
+                                    </div>
+                                  </div>
+                                  
+                                  {/* Vesting Progress Bar */}
+                                  <div className="mb-3">
+                                    <div className="flex justify-between text-xs mb-1">
+                                      <span className="text-muted-foreground">Vesting Progress</span>
+                                      <span className="font-mono">
+                                        {((parseFloat(lab.ownerVesting.claimedAmount) / parseFloat(lab.ownerVesting.totalAmount)) * 100).toFixed(1)}%
+                                      </span>
+                                    </div>
+                                    <Progress 
+                                      value={(parseFloat(lab.ownerVesting.claimedAmount) / parseFloat(lab.ownerVesting.totalAmount)) * 100} 
+                                      className="h-2"
+                                    />
+                                  </div>
+                                  
+                                  {/* Claim Button */}
+                                  {parseFloat(lab.ownerVesting.claimableAmount) > 0 ? (
+                                    <Button
+                                      size="sm"
+                                      className="w-full text-xs"
+                                      disabled={loading === 'claimVesting'}
+                                      onClick={() => handleClaimVestedH1(lab.labId, lab.ownerVesting!.vestingId)}
+                                    >
+                                      {loading === 'claimVesting' ? (
+                                        <Loader2 className="h-3 w-3 animate-spin mr-1" />
+                                      ) : (
+                                        '💎 '
+                                      )}
+                                      Claim {parseFloat(lab.ownerVesting.claimableAmount).toFixed(2)} H1
+                                    </Button>
+                                  ) : (
+                                    <Button size="sm" variant="outline" className="w-full text-xs" disabled>
+                                      ⏳ No H1 available yet
+                                    </Button>
+                                  )}
+                                  
+                                  <p className="text-xs text-muted-foreground text-center mt-2">
+                                    Next unlock: {new Date((lab.ownerVesting.startTime + 7 * 24 * 60 * 60) * 1000).toLocaleDateString()}
+                                  </p>
+                                </div>
+                              )}
+                              
+                              {/* Current H1 Balance */}
+                              {lab.ownerH1Balance && (
+                                <div className="mt-3 pt-3 border-t border-border">
+                                  <div className="flex justify-between items-center">
+                                    <span className="text-xs text-muted-foreground">Your H1 Balance:</span>
+                                    <span className="text-sm font-mono font-bold text-primary">
+                                      {parseFloat(lab.ownerH1Balance).toFixed(2)} H1
+                                    </span>
+                                  </div>
+                                </div>
+                              )}
                             </div>
                           )}
                         </div>

@@ -80,5 +80,19 @@ export const LabVault_ABI = [
   "function assetsPerShare() external view returns (uint256)",
   "function depositLABS(uint256 assets, address receiver) external returns (uint256 shares)",
   "function requestRedeem(uint256 shares) external returns (uint256 requestId)",
-  "function getLevel() external view returns (uint8)"
+  "function getLevel() external view returns (uint8)",
+  "function initialMintCompleted() external view returns (bool)"
+];
+
+export const H1VestingFacet_ABI = [
+  "function createVestingSchedule(uint256 labId, address beneficiary, uint256 totalAmount, uint8 vestingType, address vault) external returns (uint256 vestingId)",
+  "function getClaimableAmount(uint256 vestingId) external view returns (uint256 claimableAmount)",
+  "function claimVestedTokens(uint256 vestingId, uint256 labId) external returns (uint256 claimed)",
+  "function revokeVesting(uint256 vestingId, uint256 labId) external",
+  "function getVestingSchedule(uint256 vestingId) external view returns (address beneficiary, uint256 totalAmount, uint256 claimedAmount, uint256 startTime, uint256 duration, uint256 cliffDuration, uint8 vestingType, bool revoked)",
+  "function getLabScholarVestings(uint256 labId) external view returns (uint256[] memory)",
+  "function getLabDevVestings(uint256 labId) external view returns (uint256[] memory)",
+  "function getLabDistribution(uint256 labId) external view returns (uint256 totalMinted, uint256 ownerAllocation, uint256 curveAllocation, uint256 scholarAllocation, uint256 devAllocation, uint256 treasuryAllocation, uint256 ownerVestingId, bool initialized)",
+  "event VestingScheduleCreated(uint256 indexed vestingId, uint256 indexed labId, address indexed beneficiary, uint256 totalAmount, uint256 startTime, uint256 duration, uint8 vestingType)",
+  "event TokensClaimed(uint256 indexed vestingId, uint256 indexed labId, address indexed beneficiary, uint256 amount)"
 ];

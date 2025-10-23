@@ -17,6 +17,7 @@ library LibLabVaultFactory {
   /// @param admin Admin address for the vault
   /// @param labOwner Lab owner address for fee distribution
   /// @param treasury Treasury address for fee distribution
+  /// @param diamond The H1Diamond address for authorization
   /// @return vault The address of the deployed vault
   function deployVault(
     address labsToken,
@@ -27,7 +28,8 @@ library LibLabVaultFactory {
     uint16 epochExitCapBps,
     address admin,
     address labOwner,
-    address treasury
+    address treasury,
+    address diamond
   ) internal returns (address vault) {
     vault = address(new LabVault(
       labsToken,
@@ -38,7 +40,8 @@ library LibLabVaultFactory {
       epochExitCapBps,
       admin,
       labOwner,
-      treasury
+      treasury,
+      diamond
     ));
   }
 }
