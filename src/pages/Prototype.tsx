@@ -1300,6 +1300,7 @@ export default function Prototype() {
               {/* Debug Section - Wallet Address Checker */}
               <div className="mt-4 pt-4 border-t border-border">
                 <h4 className="text-sm font-semibold text-muted-foreground mb-3">🔍 Debug Tools</h4>
+                <div className="space-y-2">
                 <Button 
                   onClick={async () => {
                     if (!sdk || !address) {
@@ -1329,32 +1330,52 @@ export default function Prototype() {
                         });
                       }
                       
-                      // Also query for labs created by BOTH addresses
+                      // Also query for labs created by the address
                       const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
                       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, rpc);
                       const currentBlock = await rpc.getBlockNumber();
-                      const startBlock = Math.max(0, currentBlock - 100000);
                       
                       console.log("\n=== CHECKING FOR LABS ===");
+                      console.log(`Current block: ${currentBlock}`);
                       
-                      // Check UI address
-                      const filterUI = diamond.filters.LabCreated(null, address);
-                      const eventsUI = await diamond.queryFilter(filterUI, startBlock, currentBlock);
-                      console.log(`Labs created by UI address (${address}):`, eventsUI.length);
+                      // Query in chunks of 50k blocks (RPC limit)
+                      const CHUNK_SIZE = 50000;
+                      const startBlock = Math.max(0, currentBlock - 500000); // Last 500k blocks
+                      let allEvents: any[] = [];
                       
-                      // Check signer address
-                      const filterSigner = diamond.filters.LabCreated(null, signerAddr);
-                      const eventsSigner = await diamond.queryFilter(filterSigner, startBlock, currentBlock);
-                      console.log(`Labs created by signer address (${signerAddr}):`, eventsSigner.length);
+                      for (let fromBlock = startBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
+                        const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
+                        console.log(`📡 Querying blocks ${fromBlock} to ${toBlock}...`);
+                        
+                        try {
+                          const filter = diamond.filters.LabCreated(null, signerAddr);
+                          const events = await diamond.queryFilter(filter, fromBlock, toBlock);
+                          allEvents.push(...events);
+                          
+                          if (events.length > 0) {
+                            console.log(`✅ Found ${events.length} lab(s) in this chunk!`);
+                          }
+                        } catch (chunkError: any) {
+                          console.warn(`⚠️ Failed chunk ${fromBlock}-${toBlock}:`, chunkError.message);
+                        }
+                      }
                       
-                      if (eventsSigner.length > 0) {
-                        console.log("\n✅ Found labs created by SIGNER address!");
-                        eventsSigner.forEach((event: any) => {
+                      console.log(`\n📊 TOTAL LABS FOUND: ${allEvents.length}`);
+                      
+                      if (allEvents.length > 0) {
+                        console.log("\n✅ Labs created by your address:");
+                        allEvents.forEach((event: any) => {
                           if ('args' in event) {
-                            console.log(`  Lab #${event.args.labId}: ${event.args.name} (${event.args.domain})`);
+                            console.log(`  Lab #${event.args.labId}: ${event.args.name} (${event.args.domain}) - Block ${event.blockNumber}`);
                           }
                         });
-                        toast.info(`Found ${eventsSigner.length} lab(s) created by signer address!`);
+                        toast.success(`Found ${allEvents.length} lab(s)! Check console for details.`, {
+                          duration: 5000
+                        });
+                      } else {
+                        toast.warning(`No labs found in last 500k blocks for ${signerAddr}`, {
+                          duration: 5000
+                        });
                       }
                       
                     } catch (error) {
@@ -1368,6 +1389,70 @@ export default function Prototype() {
                 >
                   Debug: Check Wallet Addresses
                 </Button>
+                
+                <Button 
+                  onClick={async () => {
+                    if (!address) {
+                      toast.error("Please connect wallet first");
+                      return;
+                    }
+                    
+                    try {
+                      console.log("=== CHECKING LAB OWNERSHIP ===");
+                      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+                      const diamond = new ethers.Contract(
+                        CONTRACTS.H1Diamond, 
+                        LABSCoreFacet_ABI, 
+                        rpc
+                      );
+                      
+                      // Try to check labs 1-10
+                      const ownedLabs: any[] = [];
+                      
+                      for (let labId = 1; labId <= 10; labId++) {
+                        try {
+                          const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
+                          console.log(`Lab #${labId}:`, {
+                            owner,
+                            domain,
+                            active,
+                            level: level.toString(),
+                            h1Token
+                          });
+                          
+                          if (owner.toLowerCase() === address.toLowerCase()) {
+                            console.log(`✅ YOU OWN LAB #${labId}!`);
+                            ownedLabs.push({ labId, domain, level: level.toString(), h1Token });
+                          }
+                        } catch (e) {
+                          // Lab doesn't exist, stop checking
+                          console.log(`Lab #${labId}: doesn't exist (stopping)`);
+                          break;
+                        }
+                      }
+                      
+                      if (ownedLabs.length > 0) {
+                        console.log("\n✅ OWNED LABS:", ownedLabs);
+                        toast.success(`You own ${ownedLabs.length} lab(s)! Check console.`, {
+                          duration: 5000
+                        });
+                      } else {
+                        toast.warning("You don't own any labs (checked IDs 1-10)", {
+                          duration: 5000
+                        });
+                      }
+                    } catch (error) {
+                      console.error("Lab ownership check error:", error);
+                      toast.error("Failed to check lab ownership");
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                >
+                  Debug: Check Lab Ownership (IDs 1-10)
+                </Button>
+                </div>
               </div>
             </Card>
 
