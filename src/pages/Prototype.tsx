@@ -716,25 +716,22 @@ export default function Prototype() {
       
       const CHUNK_SIZE = 50000; // Max block range per query
       
-      // Use indexed event filtering for efficiency (labId=null, owner=address)
-      let filter;
-      try {
-        filter = diamond.filters.LabCreated(null, address);
-        console.log('🔍 Filter created:', filter);
-        console.log('🔍 Filter topics:', filter?.topics);
-      } catch (filterError) {
-        console.error('❌ Failed to create filter:', filterError);
-        // Create manual filter as fallback
-        const eventSignature = ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)");
-        const addressTopic = ethers.zeroPadValue(address, 32);
-        filter = {
-          address: CONTRACTS.H1Diamond,
-          topics: [eventSignature, null, addressTopic]
-        };
-        console.log('🔧 Created manual filter:', filter);
-      }
-      
       let userEvents = [];
+      
+      // ============================================
+      // DIRECT MANUAL QUERY (skip ethers filter)
+      // ============================================
+      console.log('🔧 Using direct manual query method...');
+      
+      const eventSignature = ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)");
+      const addressTopic = ethers.zeroPadValue(address, 32);
+      
+      console.log('📋 Query parameters:', {
+        eventSignature,
+        yourAddress: address,
+        addressTopic,
+        contractAddress: CONTRACTS.H1Diamond
+      });
       
       // Start from recent blocks (last 500k blocks should cover several months)
       const startBlock = Math.max(0, currentBlock - 500000);
@@ -744,19 +741,51 @@ export default function Prototype() {
         console.log(`📡 Querying blocks ${fromBlock} to ${toBlock}...`);
         
         try {
-          const events = await diamond.queryFilter(filter, fromBlock, toBlock);
-          userEvents.push(...events);
-          if (events.length > 0) {
-            console.log(`✅ Found ${events.length} lab(s) in blocks ${fromBlock}-${toBlock}`);
+          const logs = await provider.getLogs({
+            address: CONTRACTS.H1Diamond,
+            topics: [
+              eventSignature,
+              null, // labId (any)
+              addressTopic // owner (your address)
+            ],
+            fromBlock,
+            toBlock
+          });
+          
+          if (logs.length > 0) {
+            console.log(`✅ Found ${logs.length} raw log(s) in blocks ${fromBlock}-${toBlock}!`);
+            
+            // Parse the logs
+            const iface = new ethers.Interface(LABSCoreFacet_ABI);
+            for (const log of logs) {
+              try {
+                const parsed = iface.parseLog(log);
+                if (parsed && parsed.name === 'LabCreated') {
+                  userEvents.push({
+                    ...log,
+                    args: parsed.args,
+                    fragment: parsed.fragment
+                  });
+                  console.log('✅ Parsed LabCreated event:', {
+                    labId: parsed.args.labId.toString(),
+                    owner: parsed.args.owner,
+                    name: parsed.args.name,
+                    block: log.blockNumber
+                  });
+                }
+              } catch (parseError) {
+                console.warn('⚠️ Failed to parse log:', parseError);
+              }
+            }
           }
         } catch (chunkError) {
           console.warn(`⚠️ Failed to query blocks ${fromBlock}-${toBlock}:`, chunkError);
         }
       }
       
-      // If no events found, try alternative query method
+      // Old fallback code (keeping for reference but shouldn't be needed now)
       if (userEvents.length === 0) {
-        console.log('⚠️ No events found with filter. Trying manual topic query...');
+        console.log('⚠️ No events found in main query. Trying focused fallback query...');
         try {
           // Manual query with raw topics
           const eventSignature = ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)");
