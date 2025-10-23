@@ -45,39 +45,31 @@ export interface EventScanResult {
 }
 
 /**
- * Fetch events using Blockscout API
+ * Fetch events using Blockscout API (all events, no filtering)
  */
 export async function fetchLabEvents(
   targetCount: number = 100,
   ownerFilter?: string
 ): Promise<EventScanResult> {
   try {
-    console.log(`🔍 Fetching LabCreated events from Blockscout API`);
+    console.log(`🔍 Fetching ALL LabCreated events from Blockscout API`);
     console.log(`📍 Contract: ${CONTRACTS.H1Diamond}`);
     console.log(`📍 From block: ${CONTRACTS.DEPLOYMENT_BLOCK}`);
     console.log(`📍 Topic0: ${LAB_CREATED_TOPIC0}`);
     
-    const params: any = {
+    const params = {
       module: 'logs',
       action: 'getLogs',
       fromBlock: CONTRACTS.DEPLOYMENT_BLOCK.toString(),
       toBlock: 'latest',
       address: CONTRACTS.H1Diamond,
       topic0: LAB_CREATED_TOPIC0,
-      page: 1,
-      offset: LOGS_PER_REQUEST
+      page: '1',
+      offset: LOGS_PER_REQUEST.toString()
     };
 
-    // Add owner filter if provided (topic2 for indexed owner parameter)
-    if (ownerFilter) {
-      // Pad address to 32 bytes for topic filtering
-      const paddedAddress = '0x' + ownerFilter.slice(2).padStart(64, '0');
-      params.topic1 = paddedAddress;
-      console.log(`📍 Filtering by owner: ${ownerFilter}`);
-    }
-
     const url = new URL(BLOCKSCOUT_API);
-    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key as keyof typeof params]));
 
     console.log(`🌐 Requesting: ${url.toString()}`);
 
@@ -133,8 +125,16 @@ export async function fetchLabEvents(
 
     console.log(`✅ Parsed ${parsedLogs.length} events successfully`);
 
+    // Apply owner filter in JavaScript if provided
+    let filteredLogs = parsedLogs;
+    if (ownerFilter) {
+      const normalizedOwner = ownerFilter.toLowerCase();
+      filteredLogs = parsedLogs.filter(log => log.owner === normalizedOwner);
+      console.log(`🔍 Filtered to ${filteredLogs.length} events for owner ${ownerFilter}`);
+    }
+
     return {
-      logs: parsedLogs.slice(0, targetCount),
+      logs: filteredLogs.slice(0, targetCount),
       success: true,
       source: 'Blockscout API'
     };
