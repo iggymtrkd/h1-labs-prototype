@@ -743,7 +743,13 @@ export default function Prototype() {
           ]);
           
           // Get bonding curve address
-          const curveAddress = await diamond.getBondingCurve(labId);
+          let curveAddress = ethers.ZeroAddress;
+          try {
+            curveAddress = await diamond.getBondingCurve(labId);
+            console.log(`🔍 Lab #${labId} bonding curve address: ${curveAddress}`);
+          } catch (error) {
+            console.log(`⚠️ Lab #${labId}: Failed to get bonding curve address:`, error);
+          }
           
           // Get H1 price from bonding curve if it exists
           let h1Price = '0';
@@ -754,8 +760,10 @@ export default function Prototype() {
               h1Price = ethers.formatEther(priceWei);
               console.log(`💰 Lab #${labId} H1 price: ${h1Price} LABS`);
             } catch (error) {
-              console.log(`⚠️ Lab #${labId}: Bonding curve not deployed yet`);
+              console.log(`⚠️ Lab #${labId}: Bonding curve contract error:`, error);
             }
+          } else {
+            console.log(`⚠️ Lab #${labId}: No bonding curve deployed (address: ${curveAddress})`);
           }
           
           labs.push({
