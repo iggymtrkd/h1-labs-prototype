@@ -742,92 +742,90 @@ export default function Prototype() {
       console.log('  Deployment block:', CONTRACTS.DEPLOYMENT_BLOCK);
       console.log('  Blocks to scan:', currentBlock - CONTRACTS.DEPLOYMENT_BLOCK);
       
-      // STEP 2: Query backend API for all labs (much faster than blockchain events!)
+      // STEP 2: Query contract directly for LabCreated events
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📍 STEP 2: Query Backend API for All Labs');
+      console.log('📍 STEP 2: Query Contract for All LabCreated Events');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      
+      // Create contract instance to query events
+      const contract = new ethers.Contract(
+        CONTRACTS.H1Diamond,
+        LABSCoreFacet_ABI,
+        provider
+      );
+      
+      console.log('  Querying from block:', CONTRACTS.DEPLOYMENT_BLOCK);
+      console.log('  To current block:', currentBlock);
       
       let allRecentLabs = [];
       try {
-        const apiUrl = `${API_CONFIG.BASE_URL}/api/labs`;
-        console.log('  API URL:', apiUrl);
+        // Query all LabCreated events using ethers contract interface
+        const filter = contract.filters.LabCreated();
+        const events = await contract.queryFilter(
+          filter,
+          CONTRACTS.DEPLOYMENT_BLOCK,
+          currentBlock
+        );
         
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error(`API returned ${response.status}: ${response.statusText}`);
-        }
+        console.log(`✅ Found ${events.length} total LabCreated events!`);
         
-        const data = await response.json();
-        console.log(`✅ Found ${data.labs?.length || 0} total labs from backend!`);
-        
-        if (data.labs && data.labs.length > 0) {
-          for (const lab of data.labs) {
+        for (const event of events) {
+          if ('args' in event) {  // Type guard for EventLog
+            const args = event.args;
             allRecentLabs.push({
-              labId: lab.id.toString(),
-              owner: lab.owner_address.toLowerCase(),
-              name: lab.name,
-              domain: lab.domain,
-              block: 0 // Not needed from backend
+              labId: args.labId.toString(),
+              owner: args.owner.toLowerCase(),
+              name: args.name,
+              domain: args.domain,
+              block: event.blockNumber
             });
             console.log('  📝 Lab found:', {
-              labId: lab.id,
-              owner: lab.owner_address.toLowerCase(),
-              name: lab.name,
-              domain: lab.domain,
-              isYours: lab.owner_address.toLowerCase() === normalizedAddress
+              labId: args.labId.toString(),
+              owner: args.owner.toLowerCase(),
+              name: args.name,
+              block: event.blockNumber,
+              isYours: args.owner.toLowerCase() === normalizedAddress
             });
           }
-        } else {
-          console.log('⚠️ No labs found in backend database.');
-          console.log('  The event indexer may still be syncing...');
         }
-      } catch (apiError) {
-        console.error('❌ Failed to query backend API:', apiError);
-        console.log('  Falling back to direct blockchain query would go here...');
+      } catch (queryError) {
+        console.error('❌ Failed to query events:', queryError);
       }
       
-      // STEP 3: Now query backend API with owner filter
+      // STEP 3: Filter for YOUR labs
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📍 STEP 3: Query YOUR Labs from Backend');
+      console.log('📍 STEP 3: Filter for YOUR Labs');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
       console.log('  Your address:', normalizedAddress);
       
       let userEvents = [];
       
       try {
-        const apiUrl = `${API_CONFIG.BASE_URL}/api/labs?owner=${normalizedAddress}`;
-        console.log('  API URL:', apiUrl);
+        // Query with owner filter using contract interface
+        const filter = contract.filters.LabCreated(null, normalizedAddress);
+        const events = await contract.queryFilter(
+          filter,
+          CONTRACTS.DEPLOYMENT_BLOCK,
+          currentBlock
+        );
         
-        const response = await fetch(apiUrl);
-        if (!response.ok) {
-          throw new Error(`API returned ${response.status}: ${response.statusText}`);
-        }
+        console.log(`✅ Found ${events.length} labs owned by you!`);
         
-        const data = await response.json();
-        console.log(`✅ Found ${data.labs?.length || 0} labs owned by you!`);
-        
-        if (data.labs && data.labs.length > 0) {
-          for (const lab of data.labs) {
+        for (const event of events) {
+          if ('args' in event) {  // Type guard for EventLog
             userEvents.push({
-              args: {
-                labId: BigInt(lab.id),
-                owner: lab.owner_address,
-                name: lab.name,
-                symbol: lab.symbol || lab.name.substring(0, 3).toUpperCase(),
-                domain: lab.domain
-              }
+              args: event.args
             });
             console.log('  📝 Your lab:', {
-              labId: lab.id,
-              name: lab.name,
-              domain: lab.domain
+              labId: event.args.labId.toString(),
+              name: event.args.name,
+              domain: event.args.domain,
+              block: event.blockNumber
             });
           }
-        } else {
-          console.log('  ℹ️ No labs found for your address');
         }
-      } catch (apiError) {
-        console.error('❌ Failed to query your labs from backend:', apiError);
+      } catch (queryError) {
+        console.error('❌ Failed to query your labs:', queryError);
       }
       
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
