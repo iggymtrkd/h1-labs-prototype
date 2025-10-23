@@ -719,20 +719,17 @@ export default function Prototype() {
         try {
           // Event structure from Blockscout API has properties directly on event
           const labId = Number(event.labId);
-          console.log(`📋 Loading lab #${labId}...`);
+          const owner = event.owner;
+          const name = event.name;
+          const symbol = event.symbol;
+          const domain = event.domain;
+          const h1Token = event.h1Token;
           
-          // Get current lab details to check if still active
-          const details = await diamond.getLabDetails(labId);
-          const [owner, h1Token, domain, active, level] = details;
+          console.log(`📋 Loading lab #${labId}: ${name} (${symbol})...`);
           
-          // Check if user still owns this lab
+          // Check if user still owns this lab (events are already filtered by owner)
           if (owner.toLowerCase() !== address.toLowerCase()) {
             console.log(`⚠️ Lab #${labId} is no longer owned by user, skipping`);
-            continue;
-          }
-          
-          if (!active) {
-            console.log(`⚠️ Lab #${labId} is inactive, skipping`);
             continue;
           }
           
@@ -740,9 +737,7 @@ export default function Prototype() {
           
           // Get vault details (H1 token is the vault)
           const vault = new ethers.Contract(h1Token, LabVault_ABI, provider);
-          const [name, symbol, totalAssets, userBalance] = await Promise.all([
-            vault.name(),
-            vault.symbol(),
+          const [totalAssets, userBalance] = await Promise.all([
             vault.totalAssets(),
             vault.balanceOf(address)
           ]);
