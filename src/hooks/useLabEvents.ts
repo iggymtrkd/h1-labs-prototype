@@ -1,46 +1,12 @@
 // React Hook for Lab Events with Pagination Support
 import { useState, useEffect } from 'react';
-import { Log } from 'viem';
-import { fetchLabEvents, fetchUserLabEvents } from '@/lib/eventScanner';
-
-interface LabEventData {
-  labId: bigint;
-  owner: string;
-  domain: string;
-  stakedAmount: bigint;
-  level: bigint;
-}
-
-export interface ParsedLabEvent {
-  labId: string;
-  owner: string;
-  domain: string;
-  stakedAmount: string;
-  level: number;
-  blockNumber: bigint;
-  transactionHash: string;
-}
+import { fetchLabEvents, fetchUserLabEvents, ParsedLabEvent } from '@/lib/eventScanner';
 
 export function useLabEvents(ownerAddress?: string, autoFetch: boolean = true) {
   const [labs, setLabs] = useState<ParsedLabEvent[]>([]);
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
-  const [rpcUsed, setRpcUsed] = useState<string>('');
-
-  const parseLogs = (logs: Log[]): ParsedLabEvent[] => {
-    return logs.map(log => {
-      const args = (log as any).args as LabEventData;
-      return {
-        labId: args.labId.toString(),
-        owner: args.owner,
-        domain: args.domain,
-        stakedAmount: args.stakedAmount.toString(),
-        level: Number(args.level),
-        blockNumber: log.blockNumber,
-        transactionHash: log.transactionHash,
-      };
-    });
-  };
+  const [source, setSource] = useState<string>('');
 
   const fetchLabs = async () => {
     setLoading(true);
@@ -51,11 +17,10 @@ export function useLabEvents(ownerAddress?: string, autoFetch: boolean = true) {
         ? await fetchUserLabEvents(ownerAddress)
         : await fetchLabEvents();
       
-      const parsed = parseLogs(result.logs);
-      setLabs(parsed);
-      setRpcUsed(result.rpcUsed || '');
+      setLabs(result.logs);
+      setSource(result.source || '');
       
-      console.log(`✅ Loaded ${parsed.length} labs from ${result.rpcUsed}`);
+      console.log(`✅ Loaded ${result.logs.length} labs from ${result.source}`);
     } catch (err) {
       const errorMsg = err instanceof Error ? err.message : 'Failed to fetch labs';
       setError(errorMsg);
@@ -75,7 +40,7 @@ export function useLabEvents(ownerAddress?: string, autoFetch: boolean = true) {
     labs,
     loading,
     error,
-    rpcUsed,
+    source,
     refetch: fetchLabs,
   };
 }

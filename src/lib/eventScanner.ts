@@ -1,10 +1,14 @@
-// Event Scanner with Chunked Fetching and RPC Fallback
-import { createPublicClient, http, parseAbiItem, Log, decodeEventLog } from 'viem';
-import { baseSepolia } from 'viem/chains';
+// Event Scanner using Blockscout API
+import { keccak256, toHex, decodeEventLog } from 'viem';
 import { CONTRACTS } from '@/config/contracts';
 
-const CHUNK_SIZE = 1000n; // Blocks per chunk
-const MAX_RETRIES = 3;
+// Blockscout API endpoint for Base Sepolia
+const BLOCKSCOUT_API = 'https://base-sepolia.blockscout.com/api';
+const LOGS_PER_REQUEST = 1000;
+
+// LabCreated event signature: LabCreated(uint256,address,string,string,string,address)
+const LAB_CREATED_SIGNATURE = 'LabCreated(uint256,address,string,string,string,address)';
+const LAB_CREATED_TOPIC0 = keccak256(toHex(LAB_CREATED_SIGNATURE));
 
 // Define the LabCreated event ABI
 const LAB_CREATED_ABI = [
@@ -14,95 +18,143 @@ const LAB_CREATED_ABI = [
     inputs: [
       { name: 'labId', type: 'uint256', indexed: true },
       { name: 'owner', type: 'address', indexed: true },
+      { name: 'name', type: 'string', indexed: false },
+      { name: 'symbol', type: 'string', indexed: false },
       { name: 'domain', type: 'string', indexed: false },
-      { name: 'stakedAmount', type: 'uint256', indexed: false },
-      { name: 'level', type: 'uint256', indexed: false },
+      { name: 'h1Token', type: 'address', indexed: false },
     ],
   },
 ] as const;
 
+export interface ParsedLabEvent {
+  labId: string;
+  owner: string;
+  name: string;
+  symbol: string;
+  domain: string;
+  h1Token: string;
+  blockNumber: string;
+  transactionHash: string;
+  logIndex: number;
+}
+
 export interface EventScanResult {
-  logs: Log[];
+  logs: ParsedLabEvent[];
   success: boolean;
-  rpcUsed?: string;
+  source: string;
 }
 
 /**
- * Fetch events with chunked backward scanning and RPC fallback
+ * Fetch events using Blockscout API
  */
 export async function fetchLabEvents(
   targetCount: number = 100,
   ownerFilter?: string
 ): Promise<EventScanResult> {
-  const rpcEndpoints = [CONTRACTS.RPC_URL, ...CONTRACTS.RPC_FALLBACKS];
-  
-  for (const rpcUrl of rpcEndpoints) {
-    try {
-      console.log(`🔍 Attempting to fetch events from ${rpcUrl}`);
-      
-      const client = createPublicClient({
-        chain: baseSepolia,
-        transport: http(rpcUrl),
-      });
-      
-      const currentBlock = await client.getBlockNumber();
-      const deploymentBlock = BigInt(CONTRACTS.DEPLOYMENT_BLOCK);
-      
-      let toBlock = currentBlock;
-      let allLogs: Log[] = [];
-      
-      // Scan backwards in chunks until we have enough events or reach deployment block
-      while (allLogs.length < targetCount && toBlock > deploymentBlock) {
-        const fromBlock = toBlock - CHUNK_SIZE > deploymentBlock 
-          ? toBlock - CHUNK_SIZE 
-          : deploymentBlock;
-        
-        console.log(`📦 Scanning blocks ${fromBlock} to ${toBlock}`);
-        
-      const logs = await client.getLogs({
-        address: CONTRACTS.H1Diamond as `0x${string}`,
-        event: parseAbiItem('event LabCreated(uint256 indexed labId, address indexed owner, string domain, uint256 stakedAmount, uint256 level)'),
-        args: ownerFilter ? { owner: ownerFilter as `0x${string}` } : undefined,
-        fromBlock,
-        toBlock,
-      });
-      
-      console.log(`📦 Block range ${fromBlock}-${toBlock}: Found ${logs.length} events`);
-        
-        // Add new logs to the beginning (maintain chronological order)
-        allLogs = [...logs.reverse(), ...allLogs];
-        
-        console.log(`✅ Found ${logs.length} events in chunk (total: ${allLogs.length})`);
-        
-        if (fromBlock === deploymentBlock) break;
-        toBlock = fromBlock - 1n;
-      }
-      
-      return { 
-        logs: allLogs.slice(0, targetCount), 
-        success: true, 
-        rpcUsed: rpcUrl 
-      };
-      
-    } catch (error) {
-      console.warn(`⚠️ RPC ${rpcUrl} failed:`, error);
-      continue; // Try next RPC
+  try {
+    console.log(`🔍 Fetching LabCreated events from Blockscout API`);
+    console.log(`📍 Contract: ${CONTRACTS.H1Diamond}`);
+    console.log(`📍 From block: ${CONTRACTS.DEPLOYMENT_BLOCK}`);
+    console.log(`📍 Topic0: ${LAB_CREATED_TOPIC0}`);
+    
+    const params: any = {
+      module: 'logs',
+      action: 'getLogs',
+      fromBlock: CONTRACTS.DEPLOYMENT_BLOCK.toString(),
+      toBlock: 'latest',
+      address: CONTRACTS.H1Diamond,
+      topic0: LAB_CREATED_TOPIC0,
+      page: 1,
+      offset: LOGS_PER_REQUEST
+    };
+
+    // Add owner filter if provided (topic2 for indexed owner parameter)
+    if (ownerFilter) {
+      // Pad address to 32 bytes for topic filtering
+      const paddedAddress = '0x' + ownerFilter.slice(2).padStart(64, '0');
+      params.topic1 = paddedAddress;
+      console.log(`📍 Filtering by owner: ${ownerFilter}`);
     }
+
+    const url = new URL(BLOCKSCOUT_API);
+    Object.keys(params).forEach(key => url.searchParams.append(key, params[key]));
+
+    console.log(`🌐 Requesting: ${url.toString()}`);
+
+    const response = await fetch(url.toString());
+    const data = await response.json();
+
+    if (data.status === '0' && data.message === 'No records found') {
+      console.log('📭 No events found');
+      return { logs: [], success: true, source: 'Blockscout API' };
+    }
+
+    if (data.status === '0') {
+      throw new Error(data.message || 'Blockscout API error');
+    }
+
+    const results = data.result || [];
+    console.log(`✅ Found ${results.length} raw events`);
+
+    // Parse and decode events
+    const parsedLogs: ParsedLabEvent[] = results.map((log: any) => {
+      try {
+        const decoded = decodeEventLog({
+          abi: LAB_CREATED_ABI,
+          data: log.data,
+          topics: [log.topics[0], log.topics[1], log.topics[2]],
+        }) as any;
+
+        const args = decoded.args as {
+          labId: bigint;
+          owner: string;
+          name: string;
+          symbol: string;
+          domain: string;
+          h1Token: string;
+        };
+
+        return {
+          labId: args.labId.toString(),
+          owner: args.owner.toLowerCase(),
+          name: args.name,
+          symbol: args.symbol,
+          domain: args.domain,
+          h1Token: args.h1Token.toLowerCase(),
+          blockNumber: log.blockNumber,
+          transactionHash: log.transactionHash,
+          logIndex: parseInt(log.logIndex, 16),
+        };
+      } catch (error) {
+        console.warn('Failed to decode log:', log, error);
+        return null;
+      }
+    }).filter((log): log is ParsedLabEvent => log !== null);
+
+    console.log(`✅ Parsed ${parsedLogs.length} events successfully`);
+
+    return {
+      logs: parsedLogs.slice(0, targetCount),
+      success: true,
+      source: 'Blockscout API'
+    };
+
+  } catch (error) {
+    console.error('❌ Blockscout API failed:', error);
+    throw new Error(`Failed to fetch events from Blockscout: ${error instanceof Error ? error.message : 'Unknown error'}`);
   }
-  
-  throw new Error('All RPC endpoints failed to fetch events');
 }
 
 /**
  * Fetch all labs without pagination (for dashboard overview)
  */
 export async function fetchAllLabEvents(): Promise<EventScanResult> {
-  return fetchLabEvents(1000); // Reasonable limit for all labs
+  return fetchLabEvents(10000); // High limit for all labs
 }
 
 /**
  * Fetch user-specific labs
  */
 export async function fetchUserLabEvents(ownerAddress: string): Promise<EventScanResult> {
-  return fetchLabEvents(100, ownerAddress.toLowerCase());
+  return fetchLabEvents(1000, ownerAddress.toLowerCase());
 }

@@ -699,9 +699,9 @@ export default function Prototype() {
       
       const normalizedAddress = address.toLowerCase();
       
-      // Use new event scanner with chunked fetching and RPC fallback
-      const { logs: userEvents, rpcUsed } = await fetchUserLabEvents(normalizedAddress);
-      console.log(`✅ Found ${userEvents.length} labs using ${rpcUsed}`);
+      // Use new event scanner with Blockscout API
+      const { logs: userEvents, source } = await fetchUserLabEvents(normalizedAddress);
+      console.log(`✅ Found ${userEvents.length} labs using ${source}`);
       
       // Get provider for loading lab details
       const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
