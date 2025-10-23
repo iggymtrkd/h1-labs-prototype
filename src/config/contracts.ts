@@ -4,16 +4,16 @@
 export const CONTRACTS = {
   // Network Configuration
   CHAIN_ID: 84532, // Base Sepolia
-  RPC_URL: "https://base-sepolia-rpc.publicnode.com",
+  RPC_URL: "https://sepolia.base.org",
   RPC_FALLBACKS: [
-    "https://sepolia.base.org",
-    "https://base-sepolia.blockpi.network/v1/rpc/public",
-    "https://public.stackup.sh/api/v1/node/base-sepolia"
+    "https://base-sepolia.publicnode.com",
+    "https://base-sepolia-rpc.publicnode.com",
+    "https://base-sepolia.blockpi.network/v1/rpc/public"
   ],
   BLOCK_EXPLORER: "https://sepolia.basescan.org",
   
   // Contract deployment block (for efficient event queries)
-  DEPLOYMENT_BLOCK: 32000000, // Updated based on actual lab creation at block 32723565
+  DEPLOYMENT_BLOCK: 32565868, // Actual deployment block for optimized scanning
   
   // Core Contracts (✅ DEPLOYED)
   H1Diamond: "0x29a7297e84df485aff8def2d27e467f3a37619c0",

@@ -1,10 +1,25 @@
 // Event Scanner with Chunked Fetching and RPC Fallback
-import { createPublicClient, http, parseAbiItem, Log } from 'viem';
+import { createPublicClient, http, parseAbiItem, Log, decodeEventLog } from 'viem';
 import { baseSepolia } from 'viem/chains';
 import { CONTRACTS } from '@/config/contracts';
 
 const CHUNK_SIZE = 1000n; // Blocks per chunk
 const MAX_RETRIES = 3;
+
+// Define the LabCreated event ABI
+const LAB_CREATED_ABI = [
+  {
+    type: 'event',
+    name: 'LabCreated',
+    inputs: [
+      { name: 'labId', type: 'uint256', indexed: true },
+      { name: 'owner', type: 'address', indexed: true },
+      { name: 'domain', type: 'string', indexed: false },
+      { name: 'stakedAmount', type: 'uint256', indexed: false },
+      { name: 'level', type: 'uint256', indexed: false },
+    ],
+  },
+] as const;
 
 export interface EventScanResult {
   logs: Log[];
@@ -44,13 +59,15 @@ export async function fetchLabEvents(
         
         console.log(`📦 Scanning blocks ${fromBlock} to ${toBlock}`);
         
-        const logs = await client.getLogs({
-          address: CONTRACTS.H1Diamond as `0x${string}`,
-          event: parseAbiItem('event LabCreated(uint256 indexed labId, address indexed owner, string domain, uint256 stakedAmount, uint256 level)'),
-          args: ownerFilter ? { owner: ownerFilter as `0x${string}` } : undefined,
-          fromBlock,
-          toBlock,
-        });
+      const logs = await client.getLogs({
+        address: CONTRACTS.H1Diamond as `0x${string}`,
+        event: parseAbiItem('event LabCreated(uint256 indexed labId, address indexed owner, string domain, uint256 stakedAmount, uint256 level)'),
+        args: ownerFilter ? { owner: ownerFilter as `0x${string}` } : undefined,
+        fromBlock,
+        toBlock,
+      });
+      
+      console.log(`📦 Block range ${fromBlock}-${toBlock}: Found ${logs.length} events`);
         
         // Add new logs to the beginning (maintain chronological order)
         allLogs = [...logs.reverse(), ...allLogs];
