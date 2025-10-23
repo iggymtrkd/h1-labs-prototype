@@ -718,6 +718,8 @@ export default function Prototype() {
       
       // Use indexed event filtering for efficiency (labId=null, owner=address)
       const filter = diamond.filters.LabCreated(null, address);
+      console.log('🔍 Filter topics:', filter.topics);
+      
       let userEvents = [];
       
       // Start from recent blocks (last 500k blocks should cover several months)
@@ -735,6 +737,58 @@ export default function Prototype() {
           }
         } catch (chunkError) {
           console.warn(`⚠️ Failed to query blocks ${fromBlock}-${toBlock}:`, chunkError);
+        }
+      }
+      
+      // If no events found, try alternative query method
+      if (userEvents.length === 0) {
+        console.log('⚠️ No events found with filter. Trying manual topic query...');
+        try {
+          // Manual query with raw topics
+          const eventSignature = ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)");
+          const addressTopic = ethers.zeroPadValue(address, 32);
+          
+          console.log('📋 Manual query params:', {
+            eventSignature,
+            addressTopic,
+            address: CONTRACTS.H1Diamond,
+            fromBlock: currentBlock - 10000,
+            toBlock: currentBlock
+          });
+          
+          const logs = await provider.getLogs({
+            address: CONTRACTS.H1Diamond,
+            topics: [
+              eventSignature,
+              null, // labId (any)
+              addressTopic // owner (your address)
+            ],
+            fromBlock: currentBlock - 10000,
+            toBlock: currentBlock
+          });
+          
+          console.log(`🔍 Manual query found ${logs.length} logs`);
+          
+          if (logs.length > 0) {
+            // Parse the logs manually
+            const iface = new ethers.Interface(LABSCoreFacet_ABI);
+            for (const log of logs) {
+              try {
+                const parsed = iface.parseLog(log);
+                if (parsed) {
+                  userEvents.push({
+                    ...log,
+                    args: parsed.args,
+                    name: parsed.name
+                  });
+                }
+              } catch (parseError) {
+                console.warn('Failed to parse log:', parseError);
+              }
+            }
+          }
+        } catch (manualError) {
+          console.error('Manual query failed:', manualError);
         }
       }
       
@@ -1406,10 +1460,10 @@ export default function Prototype() {
                         rpc
                       );
                       
-                      // Try to check labs 1-10
+                      // Try to check labs 1-20 (expanded range)
                       const ownedLabs: any[] = [];
                       
-                      for (let labId = 1; labId <= 10; labId++) {
+                      for (let labId = 1; labId <= 20; labId++) {
                         try {
                           const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
                           console.log(`Lab #${labId}:`, {
@@ -1437,7 +1491,7 @@ export default function Prototype() {
                           duration: 5000
                         });
                       } else {
-                        toast.warning("You don't own any labs (checked IDs 1-10)", {
+                        toast.warning("You don't own any labs (checked IDs 1-20)", {
                           duration: 5000
                         });
                       }
@@ -1450,7 +1504,7 @@ export default function Prototype() {
                   size="sm"
                   className="w-full text-xs"
                 >
-                  Debug: Check Lab Ownership (IDs 1-10)
+                  Debug: Check Lab Ownership (IDs 1-20)
                 </Button>
                 </div>
               </div>
