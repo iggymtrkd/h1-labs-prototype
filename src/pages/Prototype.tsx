@@ -754,18 +754,18 @@ export default function Prototype() {
       console.log('  Event signature from ABI:', eventSignature);
       console.log('  Event format:', eventFragment.format('sighash'));
       
-      // Query recent blocks first to see if ANY events exist
-      const recentBlockRange = 10000;
-      const recentStartBlock = Math.max(CONTRACTS.DEPLOYMENT_BLOCK, currentBlock - recentBlockRange);
+      // Query from deployment block to catch all labs
+      const queryStartBlock = CONTRACTS.DEPLOYMENT_BLOCK;
       
-      console.log(`  Querying recent blocks ${recentStartBlock} to ${currentBlock}...`);
+      console.log(`  Querying all blocks from ${queryStartBlock} to ${currentBlock}...`);
+      console.log(`  Total blocks to scan: ${currentBlock - queryStartBlock}`);
       
       let allRecentLabs = [];
       try {
         const allLabsLogs = await provider.getLogs({
           address: CONTRACTS.H1Diamond,
           topics: [eventSignature], // Only event signature, no owner filter
-          fromBlock: recentStartBlock,
+          fromBlock: queryStartBlock,
           toBlock: currentBlock
         });
         
