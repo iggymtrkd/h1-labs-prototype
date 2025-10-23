@@ -695,149 +695,21 @@ export default function Prototype() {
     console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
     
     try {
-      // STEP 1: Validate wallet address
-      console.log('📍 STEP 1: Address Validation');
-      console.log('  Raw address:', address);
-      console.log('  Address length:', address.length, '(should be 42)');
+      console.log('🔍 Loading labs using chunked event scanner...');
       
-      if (!address || address.length !== 42) {
-        console.error('❌ Invalid wallet address format!', { address, length: address?.length });
-        toast.error('Invalid wallet address. Please reconnect your wallet.');
-        setLoadingMarketplace(false);
-        return;
-      }
-      
-      // Normalize address to lowercase for consistency
       const normalizedAddress = address.toLowerCase();
-      console.log('  Normalized address:', normalizedAddress);
       
-      // Try primary RPC, fallback to others if it fails
-      let provider;
-      try {
-        provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-        await provider.getBlockNumber(); // Test connection
-        console.log('✅ Connected to primary RPC');
-      } catch (rpcError) {
-        console.warn('⚠️ Primary RPC failed, trying fallback...');
-        provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_FALLBACKS[0]);
-        console.log('✅ Connected to fallback RPC');
-      }
+      // Use new event scanner with chunked fetching and RPC fallback
+      const { logs: userEvents, rpcUsed } = await fetchUserLabEvents(normalizedAddress);
+      console.log(`✅ Found ${userEvents.length} labs using ${rpcUsed}`);
       
-      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], provider);
-      
-      // Get current block number
-      const currentBlock = await provider.getBlockNumber();
-      
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📊 Blockchain State');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('  Current block:', currentBlock);
-      console.log('  Contract address:', CONTRACTS.H1Diamond);
-      console.log('  Deployment block:', CONTRACTS.DEPLOYMENT_BLOCK);
-      console.log('  Blocks to scan:', currentBlock - CONTRACTS.DEPLOYMENT_BLOCK);
-      
-      // STEP 2: Query contract directly for LabCreated events
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📍 STEP 2: Query Contract for All LabCreated Events');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
-      // Create contract instance to query events
-      const contract = new ethers.Contract(
-        CONTRACTS.H1Diamond,
-        LABSCoreFacet_ABI,
+      // Get provider for loading lab details
+      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      const diamond = new ethers.Contract(
+        CONTRACTS.H1Diamond, 
+        [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], 
         provider
       );
-      
-      console.log('  Querying from block:', CONTRACTS.DEPLOYMENT_BLOCK);
-      console.log('  To current block:', currentBlock);
-      
-      let allRecentLabs = [];
-      try {
-        // Query all LabCreated events using ethers contract interface
-        const filter = contract.filters.LabCreated();
-        const events = await contract.queryFilter(
-          filter,
-          CONTRACTS.DEPLOYMENT_BLOCK,
-          currentBlock
-        );
-        
-        console.log(`✅ Found ${events.length} total LabCreated events!`);
-        
-        for (const event of events) {
-          if ('args' in event) {  // Type guard for EventLog
-            const args = event.args;
-            allRecentLabs.push({
-              labId: args.labId.toString(),
-              owner: args.owner.toLowerCase(),
-              name: args.name,
-              domain: args.domain,
-              block: event.blockNumber
-            });
-            console.log('  📝 Lab found:', {
-              labId: args.labId.toString(),
-              owner: args.owner.toLowerCase(),
-              name: args.name,
-              block: event.blockNumber,
-              isYours: args.owner.toLowerCase() === normalizedAddress
-            });
-          }
-        }
-      } catch (queryError) {
-        console.error('❌ Failed to query events:', queryError);
-      }
-      
-      // STEP 3: Filter for YOUR labs
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📍 STEP 3: Filter for YOUR Labs');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('  Your address:', normalizedAddress);
-      
-      let userEvents = [];
-      
-      try {
-        // Query with owner filter using contract interface
-        const filter = contract.filters.LabCreated(null, normalizedAddress);
-        const events = await contract.queryFilter(
-          filter,
-          CONTRACTS.DEPLOYMENT_BLOCK,
-          currentBlock
-        );
-        
-        console.log(`✅ Found ${events.length} labs owned by you!`);
-        
-        for (const event of events) {
-          if ('args' in event) {  // Type guard for EventLog
-            userEvents.push({
-              args: event.args
-            });
-            console.log('  📝 Your lab:', {
-              labId: event.args.labId.toString(),
-              name: event.args.name,
-              domain: event.args.domain,
-              block: event.blockNumber
-            });
-          }
-        }
-      } catch (queryError) {
-        console.error('❌ Failed to query your labs:', queryError);
-      }
-      
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📊 Query Results Summary');
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log(`  Total labs in recent blocks: ${allRecentLabs.length}`);
-      console.log(`  Your labs found: ${userEvents.length}`);
-      console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
-      // If no events found, show helpful debug info
-      if (userEvents.length === 0 && allRecentLabs.length > 0) {
-        console.log('⚠️ No labs found for your address, but other labs exist.');
-        console.log('  Your address:', normalizedAddress);
-        console.log('  Other lab owners found:', Array.from(new Set(allRecentLabs.map(l => l.owner))));
-        console.log('  🔗 Check your transactions on BaseScan:', `${CONTRACTS.BLOCK_EXPLORER}/address/${normalizedAddress}`);
-      }
-      
-      console.log(`📊 Final result: ${userEvents.length} labs owned by you`);
       
       const labs = [];
       let activeLabCount = 0;
