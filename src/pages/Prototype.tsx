@@ -1296,6 +1296,79 @@ export default function Prototype() {
                   </div>
                 </div>
               </div>
+              
+              {/* Debug Section - Wallet Address Checker */}
+              <div className="mt-4 pt-4 border-t border-border">
+                <h4 className="text-sm font-semibold text-muted-foreground mb-3">🔍 Debug Tools</h4>
+                <Button 
+                  onClick={async () => {
+                    if (!sdk || !address) {
+                      toast.error("Please connect wallet first");
+                      return;
+                    }
+                    
+                    try {
+                      console.log("=== WALLET DEBUG INFO ===");
+                      console.log("UI Address:", address);
+                      
+                      const walletProvider = sdk.getProvider();
+                      const provider = new ethers.BrowserProvider(walletProvider as any);
+                      const signer = await provider.getSigner();
+                      const signerAddr = await signer.getAddress();
+                      
+                      console.log("Signer Address:", signerAddr);
+                      console.log("Addresses Match?", address?.toLowerCase() === signerAddr.toLowerCase());
+                      
+                      if (address?.toLowerCase() === signerAddr.toLowerCase()) {
+                        toast.success(`✅ Addresses Match!\n\nUI: ${address}\nSigner: ${signerAddr}`, {
+                          duration: 5000
+                        });
+                      } else {
+                        toast.error(`❌ ADDRESS MISMATCH!\n\nUI shows: ${address}\nBut signer is: ${signerAddr}\n\nThis is why labs aren't found!`, {
+                          duration: 10000
+                        });
+                      }
+                      
+                      // Also query for labs created by BOTH addresses
+                      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+                      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, rpc);
+                      const currentBlock = await rpc.getBlockNumber();
+                      const startBlock = Math.max(0, currentBlock - 100000);
+                      
+                      console.log("\n=== CHECKING FOR LABS ===");
+                      
+                      // Check UI address
+                      const filterUI = diamond.filters.LabCreated(null, address);
+                      const eventsUI = await diamond.queryFilter(filterUI, startBlock, currentBlock);
+                      console.log(`Labs created by UI address (${address}):`, eventsUI.length);
+                      
+                      // Check signer address
+                      const filterSigner = diamond.filters.LabCreated(null, signerAddr);
+                      const eventsSigner = await diamond.queryFilter(filterSigner, startBlock, currentBlock);
+                      console.log(`Labs created by signer address (${signerAddr}):`, eventsSigner.length);
+                      
+                      if (eventsSigner.length > 0) {
+                        console.log("\n✅ Found labs created by SIGNER address!");
+                        eventsSigner.forEach((event: any) => {
+                          if ('args' in event) {
+                            console.log(`  Lab #${event.args.labId}: ${event.args.name} (${event.args.domain})`);
+                          }
+                        });
+                        toast.info(`Found ${eventsSigner.length} lab(s) created by signer address!`);
+                      }
+                      
+                    } catch (error) {
+                      console.error("Debug error:", error);
+                      toast.error("Debug check failed - see console");
+                    }
+                  }}
+                  variant="outline"
+                  size="sm"
+                  className="w-full text-xs"
+                >
+                  Debug: Check Wallet Addresses
+                </Button>
+              </div>
             </Card>
 
             {/* Stage 1: Stake LABS & Create Lab */}
