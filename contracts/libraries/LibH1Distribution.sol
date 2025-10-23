@@ -31,7 +31,8 @@ library LibH1Distribution {
     Amounts memory a = _calc(stake);
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     
-    require(IERC20(hs.labsToken).transferFrom(sender, address(this), a.total), "XFER");
+    // LABS are already staked in the Diamond, so Diamond already has them
+    // Just approve vault to use them for initial H1 mint
     require(IERC20(hs.labsToken).approve(vault, a.total), "APRV");
     
     address curveRecipient = curve == address(0) ? vault : curve;

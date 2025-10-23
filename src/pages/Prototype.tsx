@@ -585,14 +585,6 @@ export default function Prototype() {
         throw new Error("Could not get labId from Step 1 - check contract events");
       }
 
-      // Approve Diamond to spend LABS for H1 distribution
-      addLog('info', 'Stage 1: Create Lab', '🔐 Approving Diamond to transfer LABS for H1 distribution...');
-      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-      const approvalAmount = ethers.parseEther("500000"); // 500k LABS should cover max distribution
-      const approveTx = await labsToken.approve(CONTRACTS.H1Diamond, approvalAmount);
-      await approveTx.wait();
-      addLog('success', 'Stage 1: Create Lab', '✅ Approval granted for H1 distribution');
-
       // STEP 2: Deploy curve + distribute H1
       const diamond2 = new ethers.Contract(CONTRACTS.H1Diamond, LabDistributionFacet_ABI, signer);
       addLog('info', 'Stage 1: Create Lab', '💎 Step 2/2: Deploying bonding curve and distributing H1 tokens...');
