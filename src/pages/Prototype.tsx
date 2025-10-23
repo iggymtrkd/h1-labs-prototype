@@ -717,9 +717,8 @@ export default function Prototype() {
       // Load details for each lab from events
       for (const event of userEvents) {
         try {
-          // Parse event args from viem log
-          const args = (event as any).args;
-          const labId = Number(args.labId);
+          // Event structure from Blockscout API has properties directly on event
+          const labId = Number(event.labId);
           console.log(`📋 Loading lab #${labId}...`);
           
           // Get current lab details to check if still active
