@@ -7,41 +7,35 @@ import { LabVault } from "../vaults/LabVault.sol";
 /// @notice Library for deploying LabVault contracts
 /// @dev Separates deployment logic to reduce facet contract size
 library LibLabVaultFactory {
+  /// @notice Parameters for deploying a LabVault
+  struct VaultParams {
+    address labsToken;
+    string h1Name;
+    string h1Symbol;
+    string labDisplayName;
+    uint64 cooldownSeconds;
+    uint16 epochExitCapBps;
+    address admin;
+    address labOwner;
+    address treasury;
+    address diamond;
+  }
+
   /// @notice Deploys a new LabVault contract
-  /// @param labsToken The LABS token address
-  /// @param h1Name The H1 token name
-  /// @param h1Symbol The H1 token symbol
-  /// @param labDisplayName The lab display name
-  /// @param cooldownSeconds Cooldown period for redemptions
-  /// @param epochExitCapBps Exit cap in basis points
-  /// @param admin Admin address for the vault
-  /// @param labOwner Lab owner address for fee distribution
-  /// @param treasury Treasury address for fee distribution
-  /// @param diamond The H1Diamond address for authorization
+  /// @param params The vault deployment parameters
   /// @return vault The address of the deployed vault
-  function deployVault(
-    address labsToken,
-    string memory h1Name,
-    string memory h1Symbol,
-    string memory labDisplayName,
-    uint64 cooldownSeconds,
-    uint16 epochExitCapBps,
-    address admin,
-    address labOwner,
-    address treasury,
-    address diamond
-  ) internal returns (address vault) {
+  function deployVault(VaultParams memory params) internal returns (address vault) {
     vault = address(new LabVault(
-      labsToken,
-      h1Name,
-      h1Symbol,
-      labDisplayName,
-      cooldownSeconds,
-      epochExitCapBps,
-      admin,
-      labOwner,
-      treasury,
-      diamond
+      params.labsToken,
+      params.h1Name,
+      params.h1Symbol,
+      params.labDisplayName,
+      params.cooldownSeconds,
+      params.epochExitCapBps,
+      params.admin,
+      params.labOwner,
+      params.treasury,
+      params.diamond
     ));
   }
 }

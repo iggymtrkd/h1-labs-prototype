@@ -1,16 +1,11 @@
 // SPDX-License-Identifier: MIT
 pragma solidity ^0.8.20;
 
+import { IERC20 } from "../interfaces/IERC20.sol";
+
 interface ILabVaultLike {
   function depositLABS(uint256 assets, address receiver) external returns (uint256 shares);
   function assetsPerShare() external view returns (uint256);
-}
-
-interface IERC20Like {
-  function transferFrom(address from, address to, uint256 value) external returns (bool);
-  function transfer(address to, uint256 value) external returns (bool);
-  function approve(address spender, uint256 value) external returns (bool);
-  function allowance(address owner, address spender) external view returns (uint256);
 }
 
 /// @title BondingCurveSale
@@ -156,27 +151,27 @@ contract BondingCurveSale {
     uint256 toDeposit = labsAmount - fee - pol;
 
     // Transfer tokens from sender
-    if (!IERC20Like(labsToken).transferFrom(msg.sender, address(this), labsAmount)) {
+    if (!IERC20(labsToken).transferFrom(msg.sender, address(this), labsAmount)) {
       revert TransferFailed();
     }
     
     // Distribute fee to treasury
-    if (fee > 0 && !IERC20Like(labsToken).transfer(treasury, fee)) {
+    if (fee > 0 && !IERC20(labsToken).transfer(treasury, fee)) {
       revert TransferFailed();
     }
     // Route POL to treasury as well (protocol-owned liquidity reserve)
-    if (pol > 0 && !IERC20Like(labsToken).transfer(treasury, pol)) {
+    if (pol > 0 && !IERC20(labsToken).transfer(treasury, pol)) {
       revert TransferFailed();
     }
     
     // Approve vault to spend tokens using robust allowance pattern
-    uint256 currentAllowance = IERC20Like(labsToken).allowance(address(this), address(vault));
+    uint256 currentAllowance = IERC20(labsToken).allowance(address(this), address(vault));
     if (currentAllowance < toDeposit) {
       // Some ERC20s require zeroing allowance first
       if (currentAllowance != 0) {
-        if (!IERC20Like(labsToken).approve(address(vault), 0)) revert TransferFailed();
+        if (!IERC20(labsToken).approve(address(vault), 0)) revert TransferFailed();
       }
-      if (!IERC20Like(labsToken).approve(address(vault), toDeposit)) revert TransferFailed();
+      if (!IERC20(labsToken).approve(address(vault), toDeposit)) revert TransferFailed();
     }
     
     // Deposit to vault and receive shares
@@ -202,26 +197,26 @@ contract BondingCurveSale {
     uint256 toDeposit = labsAmount - fee - pol;
 
     // Transfer tokens from buyer
-    if (!IERC20Like(labsToken).transferFrom(buyer, address(this), labsAmount)) {
+    if (!IERC20(labsToken).transferFrom(buyer, address(this), labsAmount)) {
       revert TransferFailed();
     }
     
     // Distribute fee to treasury
-    if (fee > 0 && !IERC20Like(labsToken).transfer(treasury, fee)) {
+    if (fee > 0 && !IERC20(labsToken).transfer(treasury, fee)) {
       revert TransferFailed();
     }
     // Route POL to treasury as well
-    if (pol > 0 && !IERC20Like(labsToken).transfer(treasury, pol)) {
+    if (pol > 0 && !IERC20(labsToken).transfer(treasury, pol)) {
       revert TransferFailed();
     }
     
     // Approve vault to spend tokens using robust allowance pattern
-    uint256 currentAllowance = IERC20Like(labsToken).allowance(address(this), address(vault));
+    uint256 currentAllowance = IERC20(labsToken).allowance(address(this), address(vault));
     if (currentAllowance < toDeposit) {
       if (currentAllowance != 0) {
-        if (!IERC20Like(labsToken).approve(address(vault), 0)) revert TransferFailed();
+        if (!IERC20(labsToken).approve(address(vault), 0)) revert TransferFailed();
       }
-      if (!IERC20Like(labsToken).approve(address(vault), toDeposit)) revert TransferFailed();
+      if (!IERC20(labsToken).approve(address(vault), toDeposit)) revert TransferFailed();
     }
     
     // Deposit to vault and receive shares

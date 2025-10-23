@@ -1,5 +1,7 @@
 # **H1 Labs — Litepaper**  
 > Status: Aligned with smart contracts as of 2025-10-19 | **UPDATED 2025-10-20: Enhanced accuracy on level thresholds, ownership mechanics, validator rewards, and detailed economic flywheel example**
+> 
+> **✨ MAJOR UPDATE 2025-10-23: New Tokenomics - Automatic H1 distribution on lab creation with vesting schedules. Labs now auto-deploy bonding curves with 10% liquidity. Owners receive 30% H1 (vested 6 months), 40% reserved for scholars, 15% for devs, 5% to treasury.**
 
 ### Advancing AI through provable, human‑validated data — powered by blockchain.
 
@@ -106,16 +108,19 @@ Benefit: Low cost, direct ownership, no premium
 Entry: Instant
 ```
 
-**Option B: Bonding Curve (Bootstrap Phase)**
+**Option B: Bonding Curve (✨ NEW: Available from Day 1)**
 ```
 You send: 10,000 LABS
-Protocol fee: 1.5% = 150 LABS
-POL reserve: 7.5% = 750 LABS
-Net deposited: 8,100 LABS
-You receive: ~8,100 H1 shares
-Cost: ~2% premium vs NAV
-Benefit: Bootstraps liquidity for the lab, early entry bonus
-Entry: Instant, but locked 7 days
+Protocol fee: 5% = 500 LABS (default, configurable)
+POL reserve: 5% = 500 LABS (default, configurable)
+Net deposited: 9,000 LABS
+You receive: ~9,000 H1 shares (at NAV × 1.005)
+Cost: ~10% total vs direct deposit
+Benefit: Immediate trading, no waiting for curve deployment
+Entry: Instant, tradeable immediately (7 day cooldown to redeem)
+
+✨ NEW FEATURE: Every lab gets 10% of H1 supply in bonding curve from creation
+Example: Lab creates with 100K LABS → 10,000 H1 available for trading day 1
 ```
 
 **Option C: Secondary Market (After Launch)**
@@ -642,6 +647,30 @@ TIER 3: REVENUE ATTRIBUTION
 
 ## 4.2 Smart Contract Architecture
 
+### **Global Architecture: Diamond Pattern (EIP-2535)**
+
+The H1 Labs protocol uses the **Diamond Pattern** for modular, upgradeable smart contracts:
+
+```
+H1Diamond (Proxy Router)
+    ├─ DiamondCutFacet (add/remove facets)
+    ├─ DiamondLoupeFacet (inspect facet functions)
+    ├─ OwnershipFacet (admin controls)
+    ├─ SecurityFacet (access control)
+    ├─ LABSCoreFacet (create labs)
+    ├─ VaultFacet (deploy per-lab vaults)
+    ├─ LabPassFacet (deploy per-lab passes)
+    ├─ BondingCurveFacet (bonding curve deposits)
+    ├─ CredentialFacet (user credentials & identity)
+    ├─ DataValidationFacet (dataset validation with delta-gain)
+    ├─ RevenueFacet (revenue distribution splits)
+    └─ TreasuryFacet (protocol treasury management)
+```
+
+All facets share state via **LibH1Storage** (centralized storage library), enabling seamless upgrades without data migration.
+
+### **Credentialing & Validation Facets**
+
 The credentialing and validation systems are implemented as **Diamond facets** (EIP-2535):
 
 | Component | Location | Purpose |
@@ -682,49 +711,217 @@ Attribution:
   └─ revenueShare: allocated to creator + supervisor
 ```
 
+### **Per-Lab Vault & Pass Architecture (Deployed on Demand)**
+
+While facets are **global and deployed once** to the H1Diamond, each Lab gets its own **isolated vault and pass contracts**:
+
+#### **Distinction: Facet vs Per-Lab Contract**
+
+| Component | Facet (Global) | Per-Lab Contract |
+|-----------|--|--|
+| **VaultFacet** | ✅ Deployed once; calls via H1Diamond | — |
+| **LabVault** | — | ✅ **Deployed per lab** when lab is created |
+| **LabPassFacet** | ✅ Deployed once; calls via H1Diamond | — |
+| **LabPass** | — | ✅ **Deployed per lab** when requested |
+| **Scope** | All labs use the same facet code | Each lab has isolated vault + pass |
+| **State** | Shared global state via LibH1Storage | Independent ERC20/ERC721 state |
+
+#### **How It Works: Per-Lab Deployment Flow**
+
+**When a user creates a lab:**
+
+```
+User calls: createLab("MediTrust", "MEDI", "medical")
+     ↓
+LABSCoreFacet.createLab() (global facet on H1Diamond)
+     ├─ Creates Lab record (stored in LibH1Storage)
+     ├─ Deploys NEW LabVault contract
+     │  └─ Location: /contracts/vaults/LabVault.sol
+     │  └─ Instance: 0xABC123... (unique per lab)
+     │  └─ Contains: ERC20-style H1 token logic, deposit/redemption mechanics
+     │  └─ Features: Cooldown periods, exit caps, level tracking, fee management
+     ├─ Deploys NEW BondingCurveSale contract (optional)
+     │  └─ Location: /contracts/sales/BondingCurveSale.sol
+     │  └─ Enables: Accelerated capital raise with 0.5% premium
+     └─ Stores addresses: labIdToVault[labId] = LabVault, labIdToPass[labId] = null
+
+Result: Lab now has its own vault + optional bonding curve
+```
+
+**When LabPassFacet.deployLabPass() is called:**
+
+```
+User calls: deployLabPass(labId)
+     ↓
+LabPassFacet.deployLabPass() (global facet on H1Diamond)
+     ├─ Deploys NEW LabPass contract
+     │  └─ Location: /contracts/tokens/LabPass.sol
+     │  └─ Instance: 0xDEF456... (unique per lab)
+     │  └─ Type: ERC721 NFT (soulbound or transferable)
+     │  └─ Features: Level-based membership, app slot allocation
+     ├─ Sets LabPassFacet as minter
+     │  └─ Enables: mintLabPass() to create NFTs for members
+     └─ Stores address: labIdToLabPass[labId] = LabPass
+
+Result: Lab now has LabPass NFT system for membership
+```
+
+#### **LabVault Contract Details**
+
+Each **LabVault** is an independent ERC20-style contract that:
+
+```solidity
+contract LabVault {
+  // Immutable config (set at deployment)
+  address immutable labsToken;      // $LABS token address
+  address public labOwner;          // Lab creator (receives fees)
+  address public treasury;          // Protocol treasury
+  
+  // Dynamic config (managed by admin)
+  uint64 cooldownSeconds;           // Redemption cooldown (e.g., 7 days)
+  uint16 epochExitCapBps;           // Max % that can exit per epoch (e.g., 20%)
+  uint16 depositFeeLabOwnerBps;     // 1.5% to lab owner
+  uint16 depositFeeTreasuryBps;     // 1% to protocol treasury
+  uint16 redemptionFeeLabOwnerBps;  // 1.5% to lab owner
+  uint16 redemptionFeeTreasuryBps;  // 1% to protocol treasury
+  
+  // Vault state
+  uint256 totalAssets;              // $LABS locked in vault
+  uint256 pendingExitAssets;        // $LABS waiting cooldown
+  uint256 epochExitedAssets;        // $LABS exited this epoch
+  
+  // ERC20 shares
+  mapping(address => uint256) balanceOf;  // H1 shares per user
+  uint256 totalSupply;              // Total H1 in circulation
+  
+  // Level tracking
+  uint256 LEVEL1 = 100_000e18;      // Unlock 1 app slot
+  uint256 LEVEL2 = 250_000e18;      // Unlock 2 app slots
+  uint256 LEVEL3 = 500_000e18;      // Unlock 3 app slots
+}
+```
+
+**Key Methods:**
+- `deposit(amount)`: Lock $LABS, mint H1 shares at current NAV
+- `requestRedemption(shares)`: Request to exit (starts cooldown)
+- `claimRedemption(requestId)`: Claim $LABS after cooldown
+- `getCurrentLevel()`: Check level based on TVL
+- `setFees()`: Adjust fee structure (admin only)
+
+#### **LabPass Contract Details**
+
+Each **LabPass** is an independent ERC721 NFT contract that:
+
+```solidity
+contract LabPass is ERC721 {
+  // Metadata
+  string name = "LabPass";
+  string symbol = "LBP";
+  
+  // Soulbound config
+  bool transferable;                // Admin can toggle soulbinding
+  address minter;                   // Facet that can mint
+  address admin;                    // Lab owner
+  
+  // NFT data per token
+  struct PassData {
+    uint8 level;                    // 1-10 (membership tier)
+    uint8 appSlots;                 // Number of app slots user can use
+  }
+  mapping(uint256 => PassData) passData;
+  
+  // Standard ERC721 state
+  mapping(uint256 => address) ownerOf;
+  mapping(address => uint256) balanceOf;
+}
+```
+
+**Key Methods:**
+- `mint(to, tokenId, level, slots)`: Create membership NFT (minter only)
+- `burn(tokenId)`: Revoke membership
+- `setTransferable(bool)`: Toggle soulbound mode
+- `updatePassData(tokenId, level, slots)`: Update tier/slots
+
+#### **Why Per-Lab Contracts?**
+
+✅ **Isolation**: Each lab's vault is independent; a bug or exploit doesn't affect others  
+✅ **Scalability**: No shared state bottleneck; can scale to millions of labs  
+✅ **Customization**: Each lab can configure fees, cooldowns, and parameters independently  
+✅ **Gas Efficiency**: Only deploy what's needed; users don't pay for unused features  
+✅ **Regulatory Compliance**: Each lab's financial state is independently auditable  
+
 ---
 
 ## 4.5 Lab Creation & Growth Mechanics
 
 ### **Lab Lifecycle & Ownership**
 
-Creating a Lab unlocks three stages:
+Creating a Lab unlocks automatic tokenomics with built-in distribution:
 
-**Stage 1: Initialization & First Staker**  
-Lab creator calls `createLab(name, symbol, domain)` and deposits $LABS into the auto-deployed LabVault. 
-- Creator's deposit is converted to H1 shares at 1:1 NAV (initial exchange rate = 1 LABS/share)
-- If creator is the only depositor, they own **100% of H1 shares** and thus **100% of the lab**
-- **No minimum deposit enforced** (recommended: $10K+ for early viability)
+**Stage 1: Lab Creation & Automatic H1 Distribution** ✨ **NEW**  
+Lab creator calls `createLab(name, symbol, domain)` with **minimum 100,000 LABS staked**. The system automatically:
 
-**Stage 2: Growth via Community Deposits**  
-Additional users can deposit $LABS into the vault and receive H1 shares at current NAV. Ownership is **fractional and proportional**:
+1. **Deploys LabVault** (H1 token contract)
+2. **Deploys Bonding Curve** (enables immediate H1 trading)
+3. **Mints H1 tokens** (1:1 with staked LABS, capped at 500,000 H1 per lab)
+4. **Distributes H1 automatically**:
+
 ```
-Example:
-├─ Creator deposits $100K → gets 100K H1 shares (100% ownership)
-├─ New staker deposits $50K → gets 50K H1 shares
-├─ Total vault now has: 150K H1 shares, $150K assets
-├─ Creator's ownership: 100K/150K = 66.7% of lab
-└─ New staker's ownership: 50K/150K = 33.3% of lab
+Example: Creator stakes 100,000 LABS → 100,000 H1 minted
+
+Automatic Distribution:
+├─ 30% → Lab Owner (30,000 H1) - VESTED over 6 months, weekly unlocks
+├─ 10% → Bonding Curve (10,000 H1) - LIQUID, tradeable immediately
+├─ 40% → Scholar Reserve (40,000 H1) - VESTED, paid as validation completes
+├─ 15% → Dev Reserve (15,000 H1) - VESTED, paid as development completes
+└─ 5% → Protocol Treasury (5,000 H1) - INSTANT distribution
+
+Total: 100% allocated at creation
 ```
-As the lab generates revenue, all H1 holders gain value proportionally (see NAV growth example below).
 
-**Level Unlocking (Based on Total TVL):**
+**Key Changes from Previous System:**
+- ❌ **OLD**: Creator had to manually deploy bonding curve, no H1 received
+- ✅ **NEW**: Bonding curve auto-deployed, creator receives 30% H1 (vested)
 
-| Level | TVL Threshold | App Slots | Implications |
-|-------|---------------|-----------|---|
-| **L0** | < $100K | 0 | Lab exists but no operational apps |
-| **L1** | $100K–$250K | 1 | Can run 1 backend/frontend app pair |
-| **L2** | $250K–$500K | 2 | Can run 2 app slots in parallel |
-| **L3** | $500K+ | 3 | Can run 3 app slots in parallel |
+**Vesting Schedule for Lab Owner:**
+- **Duration**: 26 weeks (6 months)
+- **Cliff**: 1 week (first unlock after 1 week)
+- **Frequency**: Weekly unlocks (linear vesting)
+- **Example Timeline**:
+  - Week 0: 30,000 H1 allocated, 0 claimable
+  - Week 1: ~1,154 H1 claimable (1/26 of total)
+  - Week 13: ~15,000 H1 claimable (50% of total)
+  - Week 26: 30,000 H1 fully claimable (100% of total)
 
-**Stage 3: Bootstrap via Bonding Curve (Optional)**  
-Labs can deploy `BondingCurveSale` for accelerated capital raise:
-- Users buy H1 shares at `NAV × 1.005` (0.5% premium)
-- Fee allocation:
-  - **1-2% Protocol Fee**: To treasury (configurable, max 10%)
-  - **5-10% POL Reserve**: For liquidity provisioning (configurable, max 10%)
-  - **80-90% Net Deposit**: Enters vault at NAV, minting H1 shares
-- Bonding curve price increases as more capital flows in, naturally incentivizing early participation
+**Level Unlocking (Based on Staked LABS at Creation):**
+
+| Level | LABS Staked | App Slots | H1 Minted | Implications |
+|-------|-------------|-----------|-----------|--------------|
+| **L1** | 100K–250K | 1 | 100K–250K H1 | Can run 1 backend/frontend app pair |
+| **L2** | 250K–500K | 2 | 250K–500K H1 | Can run 2 app slots in parallel |
+| **L3** | 500K+ | 3 | 500K H1 (capped) | Can run 3 app slots in parallel |
+
+**Stage 2: Immediate Trading via Bonding Curve**  
+With 10% of H1 automatically allocated to the bonding curve at creation, users can immediately:
+- **Buy H1** with LABS at `NAV × 1.005` (0.5% premium)
+- **Price discovery** starts immediately
+- **No manual deployment needed** - curve is live from day 1
+
+**Stage 3: Growth via Additional Deposits**  
+After initial distribution, additional users can:
+- **Buy from bonding curve** (if available supply)
+- **Deposit directly to vault** (if vault allows additional deposits)
+- **Trade on secondary markets** (once H1 is listed)
+
+Ownership becomes fractional as more users participate:
+```
+Example Timeline:
+├─ T0 (Creation): Creator owns 30% vested + vault holds 55% for future distribution
+├─ T1 (Week 1): Creator claims 1,154 H1, starts trading on curve
+├─ T2 (Month 3): Community buys 50K H1 from bonding curve
+├─ Total H1 supply: 100K original + any additional minted via vault deposits
+└─ Creator's ownership: Diluted but NAV increases with community participation
+```
 
 ### **Revenue Accrual & NAV Growth**
 
@@ -905,18 +1102,51 @@ Result: Early H1 holders gain from:
 
 ---
 
-### 6.9 Bonding Curves — Bootstrap Mechanics
+### 6.9 Bonding Curves — Automatic Deployment & Bootstrap Mechanics
+
+**✨ NEW: Automatic Deployment on Lab Creation**
+
+Every lab now gets a bonding curve automatically deployed at creation with **10% of initial H1 supply** pre-allocated for immediate trading:
+
+```
+Lab Creation Example (100K LABS staked):
+├─ Total H1 Minted: 100,000 H1
+├─ Bonding Curve Allocation: 10,000 H1 (10%)
+├─ Initial Liquidity: Available immediately for trading
+└─ Price: Starts at vault NAV × 1.005 (0.5% premium)
+```
 
 **Why Bonding Curves?**  
-Auto-adjusting price pegged to vault NAV eliminates ICO-style pricing risks. Buyers receive H1 shares at a 0.5% premium; protocol fees and protocol-owned liquidity (POL) are reserved, with remainder entering vault to grow TVL.
+Auto-adjusting price pegged to vault NAV eliminates ICO-style pricing risks. The bonding curve:
+- **Enables immediate trading** - No waiting for manual deployment
+- **Provides price discovery** - Market finds fair value from day 1
+- **Creates liquid market** - 10% supply available for buy/sell
+- **Prevents manipulation** - Price tied to vault NAV, not speculation
 
 **Formula:** `price_per_share = vault_NAV × 1.005`
 
-**Fee Breakdown (Configurable)**  
-Of each $LABS deposit via bonding curve, the split is:
-- **0-10% Protocol Fee**: Routed to treasury (configurable per lab, typically 1-2%)
-- **0-10% POL Reserve**: Reserved for liquidity provisioning (configurable per lab, typically 5-10%)
-- **Remainder (~80-90%)**: Deposited to vault at NAV, minting H1 shares
+**Initial Supply Breakdown:**
+```
+100,000 H1 Total Minted:
+├─ 10,000 H1 (10%) → Bonding Curve (LIQUID)
+│   └─ Available for immediate purchase
+├─ 30,000 H1 (30%) → Lab Owner (VESTED, 6 months)
+├─ 40,000 H1 (40%) → Scholar Reserve (VESTED)
+├─ 15,000 H1 (15%) → Dev Reserve (VESTED)
+└─ 5,000 H1 (5%) → Protocol Treasury (INSTANT)
+```
+
+**Fee Breakdown for Additional Purchases (Configurable)**  
+When users buy MORE H1 beyond the initial 10% via bonding curve, the split is:
+- **0-10% Protocol Fee**: Routed to treasury (configurable per lab, typically 5%)
+- **0-10% POL Reserve**: Reserved for liquidity provisioning (configurable per lab, typically 5%)
+- **Remainder (~80-90%)**: Deposited to vault at NAV, minting NEW H1 shares
+
+**Trading Mechanics:**
+1. **Initial 10% Supply**: First 10,000 H1 traded from pre-allocated supply
+2. **After Initial Supply**: Bonding curve mints NEW H1 by depositing LABS to vault
+3. **Price Increases**: As vault TVL grows, NAV increases, so does H1 price
+4. **Slippage Protection**: minSharesOut parameter prevents frontrunning
 
 **Redemption & Cooldown Mechanics**  
 H1 shares purchased via bonding curve can be redeemed like any other H1:
@@ -924,6 +1154,13 @@ H1 shares purchased via bonding curve can be redeemed like any other H1:
 - **Cooldown Period**: Default 7 days before $LABS can be claimed
 - **Exit Caps**: Daily redemption limit (~20% of vault TVL per day) prevents sudden drains
 - **Grace Period**: If redemptions exceed caps, system waits for next epoch or allows backfilling by new deposits
+
+**Bonding Curve Advantages:**
+✅ **Immediate Liquidity**: 10% supply tradeable from day 1  
+✅ **Fair Pricing**: Tied to vault NAV, not arbitrary  
+✅ **No Manual Setup**: Automatically deployed on lab creation  
+✅ **Price Discovery**: Market determines fair value organically  
+✅ **Anti-Manipulation**: NAV-based pricing prevents pumps/dumps
 
 ---
 
@@ -1603,15 +1840,63 @@ H1 Labs uniquely combines **verified human intelligence, provenance, and complia
 - **$LABS holders**: Stake, govern, seed labs, and participate in platform‑level value.  
 - **H1 holders (per lab)**: Hold fractional shares of a lab's backing and exposure to its dataset economy.  
 
+### ✨ NEW: Automatic H1 Distribution on Lab Creation
+
+When a lab is created, H1 tokens are automatically minted (1:1 with staked LABS, max 500K) and distributed:
+
+| Recipient | Allocation | Vesting | Purpose |
+|-----------|-----------|---------|---------|
+| **Lab Owner** | **30%** | 6 months, weekly unlocks | Incentive for lab creation & management |
+| **Bonding Curve** | **10%** | Liquid immediately | Trading liquidity, price discovery |
+| **Scholar Reserve** | **40%** | Paid as work completes | Rewards for data validators |
+| **Dev Reserve** | **15%** | Paid as work completes | Rewards for developers |
+| **Protocol Treasury** | **5%** | Instant | Protocol operations & grants |
+| **TOTAL** | **100%** | - | Complete allocation at creation |
+
 ### Flows
 ```
-Stake/Deposit $LABS → Mint H1 → Enrich/Validate → Dataset Sale →
-RevenueFacet Split (50/25/25) → Treasury custody + Buyback budget
+Stake 100K+ LABS → Create Lab → Automatic:
+  ├─ Deploy LabVault (H1 token)
+  ├─ Deploy Bonding Curve (trading)
+  ├─ Mint 100K-500K H1 (1:1 with LABS)
+  └─ Distribute: 30% owner + 10% curve + 40% scholars + 15% devs + 5% treasury
+  
+After Creation:
+  ├─ Week 1+: Owner claims vested H1 (weekly unlocks)
+  ├─ Day 1: Community trades H1 on bonding curve
+  ├─ Ongoing: Scholars/Devs receive H1 as work completes
+  └─ Revenue: Dataset sales → RevenueFacet Split → Buyback + NAV growth
 ```
+
+### Vesting Details
+
+**Lab Owner (30%):**
+- **Duration**: 26 weeks (6 months)
+- **Frequency**: Weekly linear unlocks
+- **Cliff**: 1 week (first unlock after 7 days)
+- **Example**: 30,000 H1 allocated → ~1,154 H1 claimable per week
+
+**Scholars & Devs (55% combined):**
+- **Duration**: No time lock (instant when earned)
+- **Payment**: Triggered by completed tasks
+- **Custody**: Held in LabVault until distribution
+- **Example**: Validate 10 datasets → Receive proportional H1 from reserve
+
+**Protocol Treasury (5%):**
+- **Duration**: Instant
+- **Purpose**: Protocol operations, audits, grants
+- **Custody**: Held in H1Diamond treasury address
+
+### Key Changes from Previous Model
+- ❌ **OLD**: Manual bonding curve deployment, no initial H1 distribution
+- ✅ **NEW**: Automatic everything, owner receives 30% H1 (vested)
+- ❌ **OLD**: All H1 from deposits (dilutive for creator)
+- ✅ **NEW**: Fixed initial supply (non-dilutive for first 6 months)
 
 Notes (current state):  
 - Revenue is accepted as ETH and split immediately; buybacks are not automated yet (treasury event stubs exist).  
-- Lab creation does not burn $LABS; scarcity accrues via demand, treasury custody, and future buyback execution.
+- Lab creation requires minimum 100K LABS staked; H1 minted 1:1 with LABS at creation only.
+- After initial distribution, additional H1 can only be minted via bonding curve purchases (deposits LABS to vault).
 
 ---
 

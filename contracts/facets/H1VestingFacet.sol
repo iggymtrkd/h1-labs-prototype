@@ -77,14 +77,13 @@ contract H1VestingFacet {
   /// @param beneficiary Address receiving the vested tokens
   /// @param totalAmount Total H1 tokens to vest
   /// @param vestingType Type of vesting (0=owner, 1=scholar, 2=dev)
-  /// @param vault The LabVault address (H1 token contract)
   /// @return vestingId The created vesting schedule ID
   function createVestingSchedule(
     uint256 labId,
     address beneficiary,
     uint256 totalAmount,
     uint8 vestingType,
-    address vault
+    address /* vault */
   ) external returns (uint256 vestingId) {
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     
