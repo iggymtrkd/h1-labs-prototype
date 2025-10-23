@@ -19,7 +19,7 @@ import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircl
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
-import { CONTRACTS } from '@/config/contracts';
+import { CONTRACTS, API_CONFIG } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
@@ -742,142 +742,92 @@ export default function Prototype() {
       console.log('  Deployment block:', CONTRACTS.DEPLOYMENT_BLOCK);
       console.log('  Blocks to scan:', currentBlock - CONTRACTS.DEPLOYMENT_BLOCK);
       
-      // STEP 2: First, query ALL LabCreated events (no owner filter) to verify events exist
+      // STEP 2: Query backend API for all labs (much faster than blockchain events!)
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📍 STEP 2: Query ALL LabCreated Events (no filter)');
+      console.log('📍 STEP 2: Query Backend API for All Labs');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      
-      // Use ABI to derive the correct event signature (matches contract exactly)
-      const iface = new ethers.Interface(LABSCoreFacet_ABI);
-      const eventFragment = iface.getEvent('LabCreated');
-      const eventSignature = eventFragment.topicHash;
-      console.log('  Event signature from ABI:', eventSignature);
-      console.log('  Event format:', eventFragment.format('sighash'));
-      
-      // Query from deployment block to catch all labs
-      const queryStartBlock = CONTRACTS.DEPLOYMENT_BLOCK;
-      
-      console.log(`  Querying all blocks from ${queryStartBlock} to ${currentBlock}...`);
-      console.log(`  Total blocks to scan: ${currentBlock - queryStartBlock}`);
       
       let allRecentLabs = [];
       try {
-        const allLabsLogs = await provider.getLogs({
-          address: CONTRACTS.H1Diamond,
-          topics: [eventSignature], // Only event signature, no owner filter
-          fromBlock: queryStartBlock,
-          toBlock: currentBlock
-        });
+        const apiUrl = `${API_CONFIG.BASE_URL}/api/labs`;
+        console.log('  API URL:', apiUrl);
         
-        console.log(`✅ Found ${allLabsLogs.length} total LabCreated events in recent blocks!`);
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status}: ${response.statusText}`);
+        }
         
-        if (allLabsLogs.length > 0) {
-          const iface = new ethers.Interface(LABSCoreFacet_ABI);
-          for (const log of allLabsLogs) {
-            try {
-              const parsed = iface.parseLog(log);
-              if (parsed && parsed.name === 'LabCreated') {
-                allRecentLabs.push({
-                  labId: parsed.args.labId.toString(),
-                  owner: parsed.args.owner.toLowerCase(),
-                  name: parsed.args.name,
-                  domain: parsed.args.domain,
-                  block: log.blockNumber
-                });
-                console.log('  📝 Lab found:', {
-                  labId: parsed.args.labId.toString(),
-                  owner: parsed.args.owner.toLowerCase(),
-                  name: parsed.args.name,
-                  block: log.blockNumber,
-                  isYours: parsed.args.owner.toLowerCase() === normalizedAddress
-                });
-              }
-            } catch (parseError) {
-              console.warn('⚠️ Failed to parse log:', parseError);
-            }
+        const data = await response.json();
+        console.log(`✅ Found ${data.labs?.length || 0} total labs from backend!`);
+        
+        if (data.labs && data.labs.length > 0) {
+          for (const lab of data.labs) {
+            allRecentLabs.push({
+              labId: lab.id.toString(),
+              owner: lab.owner_address.toLowerCase(),
+              name: lab.name,
+              domain: lab.domain,
+              block: 0 // Not needed from backend
+            });
+            console.log('  📝 Lab found:', {
+              labId: lab.id,
+              owner: lab.owner_address.toLowerCase(),
+              name: lab.name,
+              domain: lab.domain,
+              isYours: lab.owner_address.toLowerCase() === normalizedAddress
+            });
           }
         } else {
-          console.log('⚠️ No LabCreated events found in recent blocks. This is unexpected!');
-          console.log('  Possible reasons:');
-          console.log('  1. No labs have been created recently');
-          console.log('  2. Wrong contract address');
-          console.log('  3. Wrong event signature');
+          console.log('⚠️ No labs found in backend database.');
+          console.log('  The event indexer may still be syncing...');
         }
-      } catch (allEventsError) {
-        console.error('❌ Failed to query all events:', allEventsError);
+      } catch (apiError) {
+        console.error('❌ Failed to query backend API:', apiError);
+        console.log('  Falling back to direct blockchain query would go here...');
       }
       
-      // STEP 3: Now query with owner filter
+      // STEP 3: Now query backend API with owner filter
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-      console.log('📍 STEP 3: Query YOUR Labs (with owner filter)');
+      console.log('📍 STEP 3: Query YOUR Labs from Backend');
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
+      console.log('  Your address:', normalizedAddress);
       
-      // Use lowercase address without checksum for topic encoding
-      let addressTopic;
-      try {
-        addressTopic = ethers.zeroPadValue(normalizedAddress, 32);
-        console.log('  Your address (normalized):', normalizedAddress);
-        console.log('  Address topic (padded):', addressTopic);
-      } catch (padError) {
-        console.error('❌ Failed to pad address:', padError);
-        toast.error('Address format error. Please reconnect your wallet.');
-        setLoadingMarketplace(false);
-        return;
-      }
-      
-      const CHUNK_SIZE = 50000;
       let userEvents = [];
       
-      // Start from deployment block, not recent blocks
-      const startBlock = CONTRACTS.DEPLOYMENT_BLOCK;
-      
-      console.log(`  Querying from block ${startBlock} to ${currentBlock} in chunks of ${CHUNK_SIZE}...`);
-      
-      for (let fromBlock = startBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
-        const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
-        console.log(`  📡 Chunk: blocks ${fromBlock} to ${toBlock}`);
+      try {
+        const apiUrl = `${API_CONFIG.BASE_URL}/api/labs?owner=${normalizedAddress}`;
+        console.log('  API URL:', apiUrl);
         
-        try {
-          const logs = await provider.getLogs({
-            address: CONTRACTS.H1Diamond,
-            topics: [
-              eventSignature,
-              null, // labId (any)
-              addressTopic // owner (your address)
-            ],
-            fromBlock,
-            toBlock
-          });
-          
-          if (logs.length > 0) {
-            console.log(`  ✅ Found ${logs.length} event(s) for your address!`);
-            
-            // Parse the logs
-            const iface = new ethers.Interface(LABSCoreFacet_ABI);
-            for (const log of logs) {
-              try {
-                const parsed = iface.parseLog(log);
-                if (parsed && parsed.name === 'LabCreated') {
-                  userEvents.push({
-                    ...log,
-                    args: parsed.args,
-                    fragment: parsed.fragment
-                  });
-                  console.log('  📝 Your lab:', {
-                    labId: parsed.args.labId.toString(),
-                    owner: parsed.args.owner,
-                    name: parsed.args.name,
-                    block: log.blockNumber
-                  });
-                }
-              } catch (parseError) {
-                console.warn('⚠️ Failed to parse log:', parseError);
-              }
-            }
-          }
-        } catch (chunkError) {
-          console.warn(`⚠️ Failed to query blocks ${fromBlock}-${toBlock}:`, chunkError);
+        const response = await fetch(apiUrl);
+        if (!response.ok) {
+          throw new Error(`API returned ${response.status}: ${response.statusText}`);
         }
+        
+        const data = await response.json();
+        console.log(`✅ Found ${data.labs?.length || 0} labs owned by you!`);
+        
+        if (data.labs && data.labs.length > 0) {
+          for (const lab of data.labs) {
+            userEvents.push({
+              args: {
+                labId: BigInt(lab.id),
+                owner: lab.owner_address,
+                name: lab.name,
+                symbol: lab.symbol || lab.name.substring(0, 3).toUpperCase(),
+                domain: lab.domain
+              }
+            });
+            console.log('  📝 Your lab:', {
+              labId: lab.id,
+              name: lab.name,
+              domain: lab.domain
+            });
+          }
+        } else {
+          console.log('  ℹ️ No labs found for your address');
+        }
+      } catch (apiError) {
+        console.error('❌ Failed to query your labs from backend:', apiError);
       }
       
       console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
