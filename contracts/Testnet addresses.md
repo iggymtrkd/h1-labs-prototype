@@ -4,13 +4,16 @@ DiamondLoupeFacet at 0x94c4868d99590e247ff48de19cd7be385a2b5e58
 OwnershipFacet at 0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9
 SecurityFacet at 0x330c418951a0237d4c28685c0a7dbdb5b42eb441
 RevenueFacet at 0xbe14097af4ad6f9ffd9ec39b404121ab44a5b112
-LABSCoreFacet at 0x4345a4ae14a1111b921a74868033d90f268c24bb (✅ NEW 2025-10-23: Optimized - Staking + Queries only, 14KB)
-LabCreationFacet at TBD (⏳ DEPLOY NEXT: Lab creation logic, 24KB)
+LABSCoreFacet at 0x4345a4ae14a1111b921a74868033d90f268c24bb (✅ DEPLOYED: Staking + Queries, 14KB)
+LabVaultDeploymentFacet at TBD (⏳ DEPLOY: Lab creation + vault deployment, ~15KB)
+LabDistributionFacet at TBD (⏳ DEPLOY: Curve deployment + H1 distribution, ~11KB)
 VaultFacet at 0xVaultFacetAddress (if still needed)
 BondingCurveFacet at 0x90c81d864d4d71af2449153091733cb1249706c6
 LabPassFacet at 0x799cb349e8feec8ce0155abe0a2f258307a66834
 TreasuryFacet at 0x65c38321d60b3e2fdbf30a474ff7063eadc9f509
 H1VestingFacet at 0x084c94e1f226393df32a6662abb4fdb75b3da54b (✅ DEPLOYED 2025-10-23: Manages H1 vesting schedules)
+LabVaultDeploymentFacet at 0x60320c6afd8118dd374a6407babc690fd5bcb599
+LabDistributionFacet at 0x34662d29c5995890cc24c3020a41ea1379da7669
 
 DataValidationFacet at 0xb607b954ed414bcdba321a02f487991518a795c0
 CredentialFacet at 0x3ffab9fa9568c68bf60c88891f238556f8d99387

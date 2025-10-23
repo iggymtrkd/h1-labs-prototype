@@ -8,13 +8,23 @@ export const LABSToken_ABI = [
 ];
 
 export const LABSCoreFacet_ABI = [
+  // Staking functions
   "function stakeLABS(uint256 amount) external",
-  "function createLab(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId)",
-  "function isDomainAvailable(string calldata domain) external view returns (bool)",
   "function getStakedBalance(address user) external view returns (uint256)",
+  // Lab query functions
+  "function isDomainAvailable(string calldata domain) external view returns (bool)",
   "function getLabLevel(uint256 labId) external view returns (uint8)",
-  "function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level)",
-  "event LabCreated(uint256 indexed labId, address indexed owner, string name, string symbol, string domain, address h1Token, uint8 level)"
+  "function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level)"
+];
+
+export const LabVaultDeploymentFacet_ABI = [
+  "function createLabStep1(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId, address vault)",
+  "event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault)"
+];
+
+export const LabDistributionFacet_ABI = [
+  "function createLabStep2(uint256 labId) external",
+  "event LabDistributionComplete(uint256 indexed labId, address indexed curve)"
 ];
 
 export const DiamondLoupeFacet_ABI = [
