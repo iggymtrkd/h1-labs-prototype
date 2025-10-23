@@ -20,8 +20,7 @@ import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
-import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI } from '@/contracts/abis';
-import { fetchAllLabEvents, fetchUserLabEvents } from '@/lib/eventScanner';
+import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI } from '@/contracts/abis';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 // Available domains for lab creation
@@ -154,14 +153,10 @@ export default function Prototype() {
     domain: string;
     h1Price: string;
     tvl: string;
-    curveAddress: string;
-    vaultAddress: string;
-    userH1Balance: string; // User's H1 token balance for this lab
   }>>([]);
   const [marketplaceAction, setMarketplaceAction] = useState<'buy' | 'sell'>('buy');
   const [selectedLabForTrade, setSelectedLabForTrade] = useState<number | null>(null);
   const [tradeAmount, setTradeAmount] = useState('1');
-  const [loadingMarketplace, setLoadingMarketplace] = useState(false);
 
   // Step 5: User's Created Labs
   interface CreatedLab {
@@ -170,6 +165,7 @@ export default function Prototype() {
     symbol: string;
     domain: string;
     vaultAddress: string;
+    curveAddress?: string; // Optional: bonding curve address
     createdAt: Date;
     level: number; // ✅ NEW: Store actual level from contract
   }
@@ -487,9 +483,6 @@ export default function Prototype() {
         const delta = parseFloat(ethers.formatEther(stakeAmountBN));
         setStakedLabs((current + delta).toString());
       } catch {}
-      
-      // Reset loading state after successful stake
-      setLoading(null);
     } catch (error: any) {
       console.error('❌ Stake error:', error);
       addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
@@ -593,9 +586,6 @@ export default function Prototype() {
       setLabName('');
       setLabSymbol('');
       setLabDomain('healthcare');
-
-      // Refresh lab count and marketplace
-      await loadUserLabsFromEvents();
     } catch (error: any) {
       console.error('Create lab error:', error);
       addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
@@ -678,124 +668,18 @@ export default function Prototype() {
         console.log('getStakedBalance not available on contract:', error);
         setStakedLabs('0');
       }
-      // Lab count will be set from event query results
+      try {
+        const labCount = await diamond.getUserLabCount(address);
+        console.log('🔍 Labs owned:', labCount.toString());
+        setLabsOwned(Number(labCount));
+      } catch (error) {
+        console.log('getUserLabCount not available on contract:', error);
+        setLabsOwned(0);
+      }
     } catch (error) {
       console.error('❌ Failed to load balances:', error);
     }
   };
-
-  // Load user's lab ownership count and marketplace data from blockchain events
-  const loadUserLabsFromEvents = async () => {
-    if (!address) return;
-    
-    setLoadingMarketplace(true);
-    
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    console.log('🔍 DEBUG: Lab Event Query Starting');
-    console.log('━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━');
-    
-    try {
-      console.log('🔍 Loading labs using chunked event scanner...');
-      
-      const normalizedAddress = address.toLowerCase();
-      
-      // Use new event scanner with Blockscout API
-      const { logs: userEvents, source } = await fetchUserLabEvents(normalizedAddress);
-      console.log(`✅ Found ${userEvents.length} labs using ${source}`);
-      
-      // Get provider for loading lab details
-      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-      const diamond = new ethers.Contract(
-        CONTRACTS.H1Diamond, 
-        [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI], 
-        provider
-      );
-      
-      const labs = [];
-      let activeLabCount = 0;
-      
-      // Load details for each lab from events
-      for (const event of userEvents) {
-        try {
-          // Event structure from Blockscout API has properties directly on event
-          const labId = Number(event.labId);
-          const owner = event.owner;
-          const name = event.name;
-          const symbol = event.symbol;
-          const domain = event.domain;
-          const h1Token = event.h1Token;
-          
-          console.log(`📋 Loading lab #${labId}: ${name} (${symbol})...`);
-          
-          // Check if user still owns this lab (events are already filtered by owner)
-          if (owner.toLowerCase() !== address.toLowerCase()) {
-            console.log(`⚠️ Lab #${labId} is no longer owned by user, skipping`);
-            continue;
-          }
-          
-          activeLabCount++;
-          
-          // Get vault details (H1 token is the vault)
-          const vault = new ethers.Contract(h1Token, LabVault_ABI, provider);
-          const [totalAssets, userBalance] = await Promise.all([
-            vault.totalAssets(),
-            vault.balanceOf(address)
-          ]);
-          
-          // Get bonding curve address
-          let curveAddress = ethers.ZeroAddress;
-          try {
-            curveAddress = await diamond.getBondingCurve(labId);
-            console.log(`🔍 Lab #${labId} bonding curve address: ${curveAddress}`);
-          } catch (error) {
-            console.log(`⚠️ Lab #${labId}: Failed to get bonding curve address:`, error);
-          }
-          
-          // Get H1 price from bonding curve if it exists
-          let h1Price = '0';
-          if (curveAddress && curveAddress !== ethers.ZeroAddress) {
-            try {
-              const curve = new ethers.Contract(curveAddress, BondingCurveSale_ABI, provider);
-              const priceWei = await curve.price();
-              h1Price = ethers.formatEther(priceWei);
-              console.log(`💰 Lab #${labId} H1 price: ${h1Price} LABS`);
-            } catch (error) {
-              console.log(`⚠️ Lab #${labId}: Bonding curve contract error:`, error);
-            }
-          } else {
-            console.log(`⚠️ Lab #${labId}: No bonding curve deployed (address: ${curveAddress})`);
-          }
-          
-          labs.push({
-            labId,
-            name,
-            symbol,
-            domain,
-            h1Price,
-            tvl: ethers.formatEther(totalAssets),
-            curveAddress,
-            vaultAddress: h1Token,
-            userH1Balance: ethers.formatEther(userBalance)
-          });
-          
-          console.log(`✅ Loaded lab #${labId}: ${name} (${symbol}), H1 balance: ${ethers.formatEther(userBalance)}`);
-        } catch (error) {
-          console.error(`❌ Failed to load lab from event:`, error);
-        }
-      }
-      
-      setAllLabsForMarketplace(labs);
-      setLabsOwned(activeLabCount);
-      console.log(`🏪 Loaded ${labs.length} lab(s) for marketplace. User owns ${activeLabCount} active lab(s).`);
-    } catch (error) {
-      console.error('❌ Failed to load labs from events:', error);
-      setLabsOwned(0);
-      setAllLabsForMarketplace([]);
-    } finally {
-      setLoadingMarketplace(false);
-    }
-  };
-
   const handleMintTestLabs = async () => {
     if (!address) {
       toast.error('Wallet not connected');
@@ -1036,92 +920,72 @@ export default function Prototype() {
       setLoading(null);
     }
   };
-  // Handle buying/selling H1 tokens with LABS
-  const handleTradeH1 = async (labId: number, action: 'buy' | 'sell') => {
+  // Deploy Bonding Curve for a lab
+  const handleDeployBondingCurve = async (labId: number) => {
     if (!isConnected || !sdk || !address) {
-      toast.error('Please connect your wallet first');
+      toast.error('Please connect your wallet');
       return;
     }
 
-    if (!tradeAmount || isNaN(Number(tradeAmount)) || Number(tradeAmount) <= 0) {
-      toast.error('Enter a valid amount');
-      return;
-    }
-
-    const lab = allLabsForMarketplace.find(l => l.labId === labId);
-    if (!lab) {
-      toast.error('Lab not found');
-      return;
-    }
-
-    if (!lab.curveAddress || lab.curveAddress === ethers.ZeroAddress) {
-      toast.error('Bonding curve not deployed for this lab yet. Please deploy it first.');
-      return;
-    }
-
-    setLoading('marketplace');
+    setLoading('deploy-curve-' + labId);
     
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner(address);
 
-      if (action === 'buy') {
-        // Buy H1 tokens with LABS
-        addLog('info', 'H1 Marketplace', `🎯 STARTING: Buy ${tradeAmount} H1 ${lab.symbol} with LABS`);
+      addLog('info', 'Bonding Curve', `🎯 STARTING: Deploy bonding curve for Lab #${labId}`);
 
-        // Get LABS token contract
-        const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-        
-        // Amount in wei
-        const amountWei = ethers.parseEther(tradeAmount);
+      // Get diamond contract with BondingCurveFacet ABI
+      const diamond = new ethers.Contract(
+        CONTRACTS.H1Diamond,
+        BondingCurveFacet_ABI,
+        signer
+      );
 
-        // Step 1: Approve LABS spending
-        addLog('info', 'H1 Marketplace', '📝 Step 1/2: Requesting approval to spend LABS tokens...');
-        const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
-        addLog('info', 'H1 Marketplace', '⏳ Mining approval transaction...');
-        await approveTx.wait();
-        addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
+      addLog('info', 'Bonding Curve', '📝 Deploying bonding curve...');
+      const tx = await diamond.deployBondingCurve(labId);
+      addLog('info', 'Bonding Curve', '⏳ Mining transaction...');
+      const receipt = await tx.wait();
+      
+      // Get the deployed curve address from events
+      const curveDeployedEvent = receipt.logs
+        .map((log: any) => {
+          try {
+            return diamond.interface.parseLog(log);
+          } catch {
+            return null;
+          }
+        })
+        .find((event: any) => event?.name === 'BondingCurveDeployed');
 
-        // Step 2: Buy H1 tokens via bonding curve
-        addLog('info', 'H1 Marketplace', `📝 Step 2/2: Buying H1 ${lab.symbol} tokens...`);
-        const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
-        const minSharesOut = 0; // Could add slippage protection here
-        const buyTx = await curve.buy(amountWei, address, minSharesOut);
-        addLog('info', 'H1 Marketplace', '⏳ Mining buy transaction...');
-        const receipt = await buyTx.wait();
-        
-        addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`, buyTx.hash);
-        toast.success(`Successfully bought H1 ${lab.symbol}!`);
-        
-        // Refresh balances and marketplace
-        await loadUserLabsBalance();
-        await loadUserLabsFromEvents();
-        
-        setTradeAmount('1');
-      } else {
-        // Sell functionality could be added here
-        // For now, show message that it's the same as redeeming from the vault
-        toast.info('To sell H1 tokens, use the vault redemption flow (coming soon in UI)');
-      }
+      const curveAddress = curveDeployedEvent?.args?.curve || 'N/A';
+      
+      addLog('success', 'Bonding Curve', `✅ COMPLETE: Bonding curve deployed at ${curveAddress}!`, tx.hash);
+      toast.success(`Bonding curve deployed successfully!`);
+      
+      // Update the lab in state with the new curve address
+      setUserCreatedLabs(prev => 
+        prev.map(lab => 
+          lab.labId === labId 
+            ? { ...lab, curveAddress: curveAddress }
+            : lab
+        )
+      );
+      
     } catch (error: any) {
-      console.error('Trade error:', error);
-      addLog('error', 'H1 Marketplace', `❌ ${error.message || 'Failed to trade H1 tokens'}`);
-      toast.error('Failed to trade H1 tokens');
+      console.error('Deploy bonding curve error:', error);
+      addLog('error', 'Bonding Curve', `❌ ${error.message || 'Failed to deploy bonding curve'}`);
+      toast.error('Failed to deploy bonding curve');
     } finally {
       setLoading(null);
     }
   };
 
   useEffect(() => {
-    console.log('🔌 Prototype useEffect - isConnected:', isConnected, 'address:', address);
     if (isConnected && address) {
-      console.log('✅ Loading blockchain data for:', address);
       loadFaucetBalance();
       loadUserLabsBalance();
-      loadUserLabsFromEvents();
-    } else {
-      console.log('❌ Not loading data - missing connection or address');
     }
   }, [isConnected, address]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
@@ -1161,8 +1025,7 @@ export default function Prototype() {
     if (status === 'error') return <XCircle className="h-3 w-3 text-destructive" />;
     return <div className="h-3 w-3 rounded-full border border-muted-foreground" />;
   };
-  return <TooltipProvider>
-    <div className="min-h-screen bg-background">
+  return <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
         {/* Back Button */}
         <Button variant="ghost" onClick={() => navigate('/get-started')} className="mb-6">
@@ -1265,164 +1128,6 @@ export default function Prototype() {
                   </div>
                 </div>
               </div>
-              
-              {/* Debug Section - Wallet Address Checker */}
-              <div className="mt-4 pt-4 border-t border-border">
-                <h4 className="text-sm font-semibold text-muted-foreground mb-3">🔍 Debug Tools</h4>
-                <div className="space-y-2">
-                <Button 
-                  onClick={async () => {
-                    if (!sdk || !address) {
-                      toast.error("Please connect wallet first");
-                      return;
-                    }
-                    
-                    try {
-                      console.log("=== WALLET DEBUG INFO ===");
-                      console.log("UI Address:", address);
-                      
-                      const walletProvider = sdk.getProvider();
-                      const provider = new ethers.BrowserProvider(walletProvider as any);
-                      const signer = await provider.getSigner();
-                      const signerAddr = await signer.getAddress();
-                      
-                      console.log("Signer Address:", signerAddr);
-                      console.log("Addresses Match?", address?.toLowerCase() === signerAddr.toLowerCase());
-                      
-                      if (address?.toLowerCase() === signerAddr.toLowerCase()) {
-                        toast.success(`✅ Addresses Match!\n\nUI: ${address}\nSigner: ${signerAddr}`, {
-                          duration: 5000
-                        });
-                      } else {
-                        toast.error(`❌ ADDRESS MISMATCH!\n\nUI shows: ${address}\nBut signer is: ${signerAddr}\n\nThis is why labs aren't found!`, {
-                          duration: 10000
-                        });
-                      }
-                      
-                      // Also query for labs created by the address
-                      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-                      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, rpc);
-                      const currentBlock = await rpc.getBlockNumber();
-                      
-                      console.log("\n=== CHECKING FOR LABS ===");
-                      console.log(`Current block: ${currentBlock}`);
-                      
-                      // Query in chunks of 50k blocks (RPC limit)
-                      const CHUNK_SIZE = 50000;
-                      const startBlock = Math.max(0, currentBlock - 500000); // Last 500k blocks
-                      let allEvents: any[] = [];
-                      
-                      for (let fromBlock = startBlock; fromBlock <= currentBlock; fromBlock += CHUNK_SIZE) {
-                        const toBlock = Math.min(fromBlock + CHUNK_SIZE - 1, currentBlock);
-                        console.log(`📡 Querying blocks ${fromBlock} to ${toBlock}...`);
-                        
-                        try {
-                          const filter = diamond.filters.LabCreated(null, signerAddr);
-                          const events = await diamond.queryFilter(filter, fromBlock, toBlock);
-                          allEvents.push(...events);
-                          
-                          if (events.length > 0) {
-                            console.log(`✅ Found ${events.length} lab(s) in this chunk!`);
-                          }
-                        } catch (chunkError: any) {
-                          console.warn(`⚠️ Failed chunk ${fromBlock}-${toBlock}:`, chunkError.message);
-                        }
-                      }
-                      
-                      console.log(`\n📊 TOTAL LABS FOUND: ${allEvents.length}`);
-                      
-                      if (allEvents.length > 0) {
-                        console.log("\n✅ Labs created by your address:");
-                        allEvents.forEach((event: any) => {
-                          if ('args' in event) {
-                            console.log(`  Lab #${event.args.labId}: ${event.args.name} (${event.args.domain}) - Block ${event.blockNumber}`);
-                          }
-                        });
-                        toast.success(`Found ${allEvents.length} lab(s)! Check console for details.`, {
-                          duration: 5000
-                        });
-                      } else {
-                        toast.warning(`No labs found in last 500k blocks for ${signerAddr}`, {
-                          duration: 5000
-                        });
-                      }
-                      
-                    } catch (error) {
-                      console.error("Debug error:", error);
-                      toast.error("Debug check failed - see console");
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                >
-                  Debug: Check Wallet Addresses
-                </Button>
-                
-                <Button 
-                  onClick={async () => {
-                    if (!address) {
-                      toast.error("Please connect wallet first");
-                      return;
-                    }
-                    
-                    try {
-                      console.log("=== CHECKING LAB OWNERSHIP ===");
-                      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-                      const diamond = new ethers.Contract(
-                        CONTRACTS.H1Diamond, 
-                        LABSCoreFacet_ABI, 
-                        rpc
-                      );
-                      
-                      // Try to check labs 1-20 (expanded range)
-                      const ownedLabs: any[] = [];
-                      
-                      for (let labId = 1; labId <= 20; labId++) {
-                        try {
-                          const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
-                          console.log(`Lab #${labId}:`, {
-                            owner,
-                            domain,
-                            active,
-                            level: level.toString(),
-                            h1Token
-                          });
-                          
-                          if (owner.toLowerCase() === address.toLowerCase()) {
-                            console.log(`✅ YOU OWN LAB #${labId}!`);
-                            ownedLabs.push({ labId, domain, level: level.toString(), h1Token });
-                          }
-                        } catch (e) {
-                          // Lab doesn't exist, stop checking
-                          console.log(`Lab #${labId}: doesn't exist (stopping)`);
-                          break;
-                        }
-                      }
-                      
-                      if (ownedLabs.length > 0) {
-                        console.log("\n✅ OWNED LABS:", ownedLabs);
-                        toast.success(`You own ${ownedLabs.length} lab(s)! Check console.`, {
-                          duration: 5000
-                        });
-                      } else {
-                        toast.warning("You don't own any labs (checked IDs 1-20)", {
-                          duration: 5000
-                        });
-                      }
-                    } catch (error) {
-                      console.error("Lab ownership check error:", error);
-                      toast.error("Failed to check lab ownership");
-                    }
-                  }}
-                  variant="outline"
-                  size="sm"
-                  className="w-full text-xs"
-                >
-                  Debug: Check Lab Ownership (IDs 1-20)
-                </Button>
-                </div>
-              </div>
             </Card>
 
             {/* Stage 1: Stake LABS & Create Lab */}
@@ -1434,22 +1139,24 @@ export default function Prototype() {
                 <div className="flex-1">
                   <div className="flex items-center gap-2">
                     <h2 className="text-xl font-bold mb-1">Stake $LABS</h2>
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <button aria-label="Staking info" className="text-muted-foreground hover:text-foreground">
-                          <CircleHelp className="h-4 w-4" />
-                        </button>
-                      </TooltipTrigger>
-                      <TooltipContent className="max-w-sm">
-                        <div className="space-y-1 text-xs">
-                          <p><strong>What happens on-chain:</strong></p>
-                          <p>1) Approve LABS: LABSToken.approve(diamond, amount)</p>
-                          <p>2) Stake LABS: H1Diamond → LABSCoreFacet.stakeLABS(amount)</p>
-                          <p>• Funds move from your wallet to the diamond for eligibility staking.</p>
-                          <p>• This does not mint H1; deposits into a LabVault mint H1 shares.</p>
-                        </div>
-                      </TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <button aria-label="Staking info" className="text-muted-foreground hover:text-foreground">
+                            <CircleHelp className="h-4 w-4" />
+                          </button>
+                        </TooltipTrigger>
+                        <TooltipContent className="max-w-sm">
+                          <div className="space-y-1 text-xs">
+                            <p><strong>What happens on-chain:</strong></p>
+                            <p>1) Approve LABS: LABSToken.approve(diamond, amount)</p>
+                            <p>2) Stake LABS: H1Diamond → LABSCoreFacet.stakeLABS(amount)</p>
+                            <p>• Funds move from your wallet to the diamond for eligibility staking.</p>
+                            <p>• This does not mint H1; deposits into a LabVault mint H1 shares.</p>
+                          </div>
+                        </TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                   <p className="text-sm text-muted-foreground">LABSToken.sol & LABSCoreFacet.sol</p>
                   <Badge className="mt-2 bg-primary/20 text-primary">Create Data Labs / H1 Tokens</Badge>
@@ -2164,130 +1871,162 @@ export default function Prototype() {
             </div>
 
             <div className="space-y-6">
-              {/* Your Labs */}
+              {/* Demo Labs */}
               <div>
-                <p className="text-sm font-semibold text-primary mb-4">
-                  {loadingMarketplace ? 'Loading labs...' : allLabsForMarketplace.length > 0 ? 'Your Labs (Available for Trading)' : 'No labs created yet'}
-                </p>
-                
-                {loadingMarketplace ? (
-                  <div className="flex items-center justify-center py-12">
-                    <Loader2 className="h-8 w-8 animate-spin text-primary" />
-                  </div>
-                ) : allLabsForMarketplace.length === 0 ? (
-                  <Card className="p-8 bg-slate-800/50 border-secondary/20">
-                    <div className="text-center space-y-3">
-                      <Beaker className="h-12 w-12 mx-auto text-muted-foreground" />
-                      <p className="text-sm text-muted-foreground">
-                        Create your first lab to see it here!
-                      </p>
-                      <p className="text-xs text-muted-foreground">
-                        Labs you create will appear here for buying/selling H1 tokens
+                <p className="text-sm font-semibold text-primary mb-4">Available Labs for Trading</p>
+                <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                  {/* Lab 1: Healthcare */}
+                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-secondary">Healthcare Lab</h4>
+                        <p className="text-sm text-muted-foreground">Domain: healthcare</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">H1 Price</p>
+                          <p className="font-mono font-bold">0.05 ETH</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Lab ID</p>
+                          <p className="font-mono font-bold">#1</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-2">
+                        <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Buy / Sell" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input type="number" placeholder="0.1" step="0.01" value={marketplaceAction === 'buy' && selectedLabForTrade === 1 ? tradeAmount : ''} onChange={e => {
+                        setSelectedLabForTrade(1);
+                        setTradeAmount(e.target.value);
+                      }} className="text-sm" />
+
+                        <Button size="sm" className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} disabled={loading === 'marketplace' || !tradeAmount}>
+                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Try buying H1 tokens to participate in lab governance
                       </p>
                     </div>
                   </Card>
-                ) : (
-                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {allLabsForMarketplace.map((lab) => (
-                      <Card key={lab.labId} className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
-                        <div className="space-y-3">
-                          <div>
-                            <h4 className="font-bold text-lg text-secondary">{lab.name}</h4>
-                            <p className="text-sm text-muted-foreground capitalize">Domain: {lab.domain}</p>
-                          </div>
 
-                          <div className="grid grid-cols-2 gap-2 text-sm">
-                            <div>
-                              <p className="text-muted-foreground text-xs">H1 Price (LABS)</p>
-                              <p className="font-mono font-bold">
-                                {parseFloat(lab.h1Price) > 0 ? parseFloat(lab.h1Price).toFixed(6) : 'N/A'}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-xs">Lab ID</p>
-                              <p className="font-mono font-bold">#{lab.labId}</p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-xs">TVL (LABS)</p>
-                              <p className="font-mono font-bold">
-                                {parseFloat(lab.tvl).toFixed(2)}
-                              </p>
-                            </div>
-                            <div>
-                              <p className="text-muted-foreground text-xs">Your H1</p>
-                              <p className="font-mono font-bold text-primary">
-                                {parseFloat(lab.userH1Balance).toFixed(4)}
-                              </p>
-                            </div>
-                          </div>
+                  {/* Lab 2: Biotech */}
+                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-secondary">Biotech Lab</h4>
+                        <p className="text-sm text-muted-foreground">Domain: biotech</p>
+                      </div>
 
-                          <Separator className="my-2" />
-
-                          {lab.curveAddress && lab.curveAddress !== ethers.ZeroAddress ? (
-                            <div className="space-y-2">
-                              <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
-                                <SelectTrigger className="text-sm">
-                                  <SelectValue placeholder="Buy / Sell" />
-                                </SelectTrigger>
-                                <SelectContent className="bg-background">
-                                  <SelectItem value="buy">🟢 Buy with LABS</SelectItem>
-                                  <SelectItem value="sell">🔴 Redeem H1</SelectItem>
-                                </SelectContent>
-                              </Select>
-
-                              <Input 
-                                type="number" 
-                                placeholder="Amount in LABS" 
-                                step="0.01" 
-                                value={selectedLabForTrade === lab.labId ? tradeAmount : ''} 
-                                onChange={e => {
-                                  setSelectedLabForTrade(lab.labId);
-                                  setTradeAmount(e.target.value);
-                                }} 
-                                className="text-sm" 
-                              />
-
-                              <Button 
-                                size="sm" 
-                                className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} 
-                                disabled={loading === 'marketplace' || !tradeAmount || selectedLabForTrade !== lab.labId}
-                                onClick={() => handleTradeH1(lab.labId, marketplaceAction)}
-                              >
-                                {loading === 'marketplace' && selectedLabForTrade === lab.labId ? (
-                                  <Loader2 className="h-4 w-4 animate-spin" />
-                                ) : (
-                                  marketplaceAction === 'buy' ? '🟢 Buy H1 with LABS' : '🔴 Redeem H1'
-                                )}
-                              </Button>
-                            </div>
-                          ) : (
-                            <div className="text-center py-2">
-                              <p className="text-xs text-muted-foreground">
-                                ⚠️ Bonding curve not deployed yet
-                              </p>
-                              <p className="text-xs text-muted-foreground mt-1">
-                                Deploy it to enable H1 trading
-                              </p>
-                            </div>
-                          )}
-
-                          <p className="text-xs text-muted-foreground text-center">
-                            💡 Stake LABS to get H1 tokens for governance
-                          </p>
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">H1 Price</p>
+                          <p className="font-mono font-bold">0.08 ETH</p>
                         </div>
-                      </Card>
-                    ))}
-                  </div>
-                )}
+                        <div>
+                          <p className="text-muted-foreground text-xs">Lab ID</p>
+                          <p className="font-mono font-bold">#2</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-2">
+                        <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Buy / Sell" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input type="number" placeholder="0.1" step="0.01" value={marketplaceAction === 'buy' && selectedLabForTrade === 2 ? tradeAmount : ''} onChange={e => {
+                        setSelectedLabForTrade(2);
+                        setTradeAmount(e.target.value);
+                      }} className="text-sm" />
+
+                        <Button size="sm" className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} disabled={loading === 'marketplace' || !tradeAmount}>
+                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Higher TVL = higher H1 price (bonding curve)
+                      </p>
+                    </div>
+                  </Card>
+
+                  {/* Lab 3: Finance */}
+                  <Card className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition cursor-pointer">
+                    <div className="space-y-3">
+                      <div>
+                        <h4 className="font-bold text-lg text-secondary">Finance Lab</h4>
+                        <p className="text-sm text-muted-foreground">Domain: finance</p>
+                      </div>
+
+                      <div className="grid grid-cols-2 gap-2 text-sm">
+                        <div>
+                          <p className="text-muted-foreground text-xs">H1 Price</p>
+                          <p className="font-mono font-bold">0.03 ETH</p>
+                        </div>
+                        <div>
+                          <p className="text-muted-foreground text-xs">Lab ID</p>
+                          <p className="font-mono font-bold">#3</p>
+                        </div>
+                      </div>
+
+                      <Separator className="my-2" />
+
+                      <div className="space-y-2">
+                        <Select value={marketplaceAction} onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}>
+                          <SelectTrigger className="text-sm">
+                            <SelectValue placeholder="Buy / Sell" />
+                          </SelectTrigger>
+                          <SelectContent className="bg-background">
+                            <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                            <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                          </SelectContent>
+                        </Select>
+
+                        <Input type="number" placeholder="0.1" step="0.01" value={marketplaceAction === 'buy' && selectedLabForTrade === 3 ? tradeAmount : ''} onChange={e => {
+                        setSelectedLabForTrade(3);
+                        setTradeAmount(e.target.value);
+                      }} className="text-sm" />
+
+                        <Button size="sm" className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} disabled={loading === 'marketplace' || !tradeAmount}>
+                          {marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'}
+                        </Button>
+                      </div>
+
+                      <p className="text-xs text-muted-foreground text-center">
+                        💡 Early adopter advantage on new labs
+                      </p>
+                    </div>
+                  </Card>
+                </div>
               </div>
 
               {/* Marketplace Info */}
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
                 <p className="text-sm text-muted-foreground space-y-2">
-                  <span className="block"><strong>📊 How It Works:</strong> Stake LABS tokens to get H1 tokens via bonding curves. H1 price increases with TVL.</span>
+                  <span className="block"><strong>📊 How It Works:</strong> H1 tokens are minted via bonding curves. Price increases with TVL.</span>
                   <span className="block"><strong>💰 Revenue Share:</strong> H1 holders earn % of dataset sale revenue via buybacks.</span>
-                  <span className="block"><strong>🎯 Early Advantage:</strong> First stakers get lowest prices. Prices increase as more LABS are staked.</span>
-                  <span className="block"><strong>🏦 Bonding Curve:</strong> Deploy a bonding curve for your lab to enable H1 trading (requires vault to be deployed first).</span>
+                  <span className="block"><strong>🎯 Early Advantage:</strong> First buyers get lowest prices. Prices increase as TVL grows.</span>
                 </p>
               </div>
             </div>
@@ -2338,6 +2077,34 @@ export default function Prototype() {
                                 {lab.vaultAddress.slice(0, 6)}...{lab.vaultAddress.slice(-4)} ↗
                               </a>
                             </div>}
+                          {lab.curveAddress && lab.curveAddress !== ethers.ZeroAddress ? (
+                            <div className="flex items-start justify-between pt-2 border-t border-border">
+                              <span className="text-muted-foreground">Curve:</span>
+                              <a href={`${CONTRACTS.BLOCK_EXPLORER}/address/${lab.curveAddress}`} target="_blank" rel="noopener noreferrer" className="text-xs text-primary hover:underline font-mono truncate max-w-[150px]">
+                                {lab.curveAddress.slice(0, 6)}...{lab.curveAddress.slice(-4)} ↗
+                              </a>
+                            </div>
+                          ) : (
+                            <div className="pt-2 border-t border-border">
+                              <div className="flex items-center justify-between mb-2">
+                                <span className="text-xs text-muted-foreground">Bonding Curve:</span>
+                                <Badge variant="secondary" className="text-xs">Not Deployed</Badge>
+                              </div>
+                              <Button
+                                size="sm"
+                                variant="outline"
+                                className="w-full text-xs"
+                                disabled={loading === 'deploy-curve-' + lab.labId}
+                                onClick={() => handleDeployBondingCurve(lab.labId)}
+                              >
+                                {loading === 'deploy-curve-' + lab.labId ? (
+                                  <Loader2 className="h-3 w-3 animate-spin" />
+                                ) : (
+                                  '🚀 Deploy Curve'
+                                )}
+                              </Button>
+                            </div>
+                          )}
                         </div>
                       </div>
                     </Card>;
@@ -2589,6 +2356,5 @@ export default function Prototype() {
         </div>
       </div>
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={100} gravity={0.2} wind={0.01} colors={['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']} />}
-    </div>
-  </TooltipProvider>;
+    </div>;
 }
