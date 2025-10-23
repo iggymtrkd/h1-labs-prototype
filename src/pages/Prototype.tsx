@@ -21,7 +21,7 @@ import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, LabVaultDeploymentFacet_ABI, LabDistributionFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI, H1VestingFacet_ABI } from '@/contracts/abis';
-import { fetchAllLabEvents } from '@/lib/eventScanner';
+import { fetchAllLabEvents, fetchUserLabEvents } from '@/lib/eventScanner';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 // Available domains for lab creation
@@ -1137,6 +1137,72 @@ export default function Prototype() {
     }
   };
 
+  // Load user's created labs from blockchain via Blockscout API
+  const loadUserCreatedLabsFromBlockchain = async () => {
+    if (!isConnected || !sdk || !address) return;
+    
+    try {
+      setLoadingLabs(true);
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      
+      // Fetch user's lab events from Blockscout API (filtered by owner)
+      console.log(`🔍 Fetching labs for owner: ${address}`);
+      const result = await fetchUserLabEvents(address);
+      
+      if (!result.success || result.logs.length === 0) {
+        console.log('No labs created by this user yet');
+        setUserCreatedLabs([]);
+        return;
+      }
+
+      const diamond = new ethers.Contract(
+        CONTRACTS.H1Diamond,
+        [...LABSCoreFacet_ABI, ...BondingCurveFacet_ABI],
+        provider
+      );
+
+      console.log(`✅ Found ${result.logs.length} labs created by ${address} (via Blockscout API)`);
+      
+      // For each user lab, load full details
+      const userLabsWithDetails = await Promise.all(
+        result.logs.map(async (lab) => {
+          try {
+            const labId = parseInt(lab.labId);
+            const curveAddress = await diamond.getBondingCurve(labId);
+            
+            // Load vesting data
+            const vestingData = await loadLabVestingData(labId, lab.h1Token);
+            
+            return {
+              labId: labId,
+              name: lab.name,
+              symbol: lab.symbol,
+              domain: lab.domain,
+              vaultAddress: lab.h1Token,
+              curveAddress: curveAddress !== ethers.ZeroAddress ? curveAddress : undefined,
+              createdAt: new Date(), // Use current date as we don't have exact timestamp from event
+              level: (lab as any).level || 1, // Level might not be in older events
+              ...vestingData
+            };
+          } catch (error) {
+            console.error(`Error loading details for lab ${lab.labId}:`, error);
+            return null;
+          }
+        })
+      );
+      
+      const validUserLabs = userLabsWithDetails.filter(lab => lab !== null);
+      setUserCreatedLabs(validUserLabs as any);
+      console.log(`✅ Loaded ${validUserLabs.length} user labs from blockchain via Blockscout API`);
+      
+    } catch (error) {
+      console.error('Error loading user labs from blockchain:', error);
+    } finally {
+      setLoadingLabs(false);
+    }
+  };
+
   // Load H1 distribution and vesting data for user's labs
   const loadLabVestingData = async (labId: number, vaultAddress: string) => {
     if (!isConnected || !sdk) return null;
@@ -1315,6 +1381,7 @@ export default function Prototype() {
       loadFaucetBalance();
       loadUserLabsBalance();
       loadMarketplaceLabs();
+      loadUserCreatedLabsFromBlockchain(); // 🔥 Load user's labs from blockchain
     }
   }, [isConnected, address]);
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
