@@ -717,8 +717,22 @@ export default function Prototype() {
       const CHUNK_SIZE = 50000; // Max block range per query
       
       // Use indexed event filtering for efficiency (labId=null, owner=address)
-      const filter = diamond.filters.LabCreated(null, address);
-      console.log('🔍 Filter topics:', filter.topics);
+      let filter;
+      try {
+        filter = diamond.filters.LabCreated(null, address);
+        console.log('🔍 Filter created:', filter);
+        console.log('🔍 Filter topics:', filter?.topics);
+      } catch (filterError) {
+        console.error('❌ Failed to create filter:', filterError);
+        // Create manual filter as fallback
+        const eventSignature = ethers.id("LabCreated(uint256,address,string,string,string,address,uint8)");
+        const addressTopic = ethers.zeroPadValue(address, 32);
+        filter = {
+          address: CONTRACTS.H1Diamond,
+          topics: [eventSignature, null, addressTopic]
+        };
+        console.log('🔧 Created manual filter:', filter);
+      }
       
       let userEvents = [];
       
@@ -752,20 +766,40 @@ export default function Prototype() {
             eventSignature,
             addressTopic,
             address: CONTRACTS.H1Diamond,
-            fromBlock: currentBlock - 10000,
+            fromBlock: Math.max(0, currentBlock - 100000), // Expanded to 100k blocks
             toBlock: currentBlock
           });
           
-          const logs = await provider.getLogs({
-            address: CONTRACTS.H1Diamond,
-            topics: [
-              eventSignature,
-              null, // labId (any)
-              addressTopic // owner (your address)
-            ],
-            fromBlock: currentBlock - 10000,
-            toBlock: currentBlock
-          });
+          // Query in chunks to avoid RPC limits
+          const manualChunkSize = 50000;
+          const manualStartBlock = Math.max(0, currentBlock - 100000);
+          const allLogs = [];
+          
+          for (let from = manualStartBlock; from <= currentBlock; from += manualChunkSize) {
+            const to = Math.min(from + manualChunkSize - 1, currentBlock);
+            console.log(`📡 Manual query chunk: ${from} to ${to}`);
+            
+            try {
+              const chunkLogs = await provider.getLogs({
+                address: CONTRACTS.H1Diamond,
+                topics: [
+                  eventSignature,
+                  null, // labId (any)
+                  addressTopic // owner (your address)
+                ],
+                fromBlock: from,
+                toBlock: to
+              });
+              allLogs.push(...chunkLogs);
+              if (chunkLogs.length > 0) {
+                console.log(`✅ Found ${chunkLogs.length} logs in chunk!`);
+              }
+            } catch (chunkErr) {
+              console.warn(`⚠️ Manual chunk ${from}-${to} failed:`, chunkErr);
+            }
+          }
+          
+          const logs = allLogs;
           
           console.log(`🔍 Manual query found ${logs.length} logs`);
           
