@@ -19,8 +19,9 @@ import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircl
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
-import { CONTRACTS, API_CONFIG } from '@/config/contracts';
+import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI } from '@/contracts/abis';
+import { fetchAllLabEvents, fetchUserLabEvents } from '@/lib/eventScanner';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 // Available domains for lab creation
@@ -844,13 +845,9 @@ export default function Prototype() {
       // Load details for each lab from events
       for (const event of userEvents) {
         try {
-          // Type guard for EventLog
-          if (!('args' in event)) {
-            console.log('⚠️ Event is not an EventLog, skipping');
-            continue;
-          }
-          
-          const labId = Number(event.args.labId);
+          // Parse event args from viem log
+          const args = (event as any).args;
+          const labId = Number(args.labId);
           console.log(`📋 Loading lab #${labId}...`);
           
           // Get current lab details to check if still active
