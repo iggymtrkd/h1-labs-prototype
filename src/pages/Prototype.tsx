@@ -623,6 +623,7 @@ export default function Prototype() {
         symbol: labSymbol,
         domain: labDomain,
         vaultAddress: vaultAddress,
+        curveAddress: curveAddress, // ✅ Add curve address from Step 2
         createdAt: new Date(),
         level: eventLevel, // ✅ NEW: Use actual level from contract event
         ...vestingData // Add H1 distribution & vesting data
