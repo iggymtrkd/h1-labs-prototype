@@ -101,10 +101,12 @@ export default function Prototype() {
   const [credentialDomain, setCredentialDomain] = useState('healthcare');
   
   // Step 3: Enrichment workflow
+  const [enrichmentLabId, setEnrichmentLabId] = useState('1');
   const [enrichmentDataId, setEnrichmentDataId] = useState('0');
   const [enrichmentSupervisor, setEnrichmentSupervisor] = useState('');
   const [enrichmentSupervisorCredentialId, setEnrichmentSupervisorCredentialId] = useState('1');
   const [enrichmentDeltaGain, setEnrichmentDeltaGain] = useState('5000'); // 50%
+  const [createdLabIds, setCreatedLabIds] = useState<number[]>([]); // Track created lab IDs
   const [createdDataIds, setCreatedDataIds] = useState<number[]>([]); // Track created data IDs
 
   // Step 4: Purchase Dataset (AI Companies)
@@ -789,6 +791,15 @@ export default function Prototype() {
       await loadMarketplaceLabs();
       await loadBlockchainLabs(); // Refresh blockchain labs to show newly created lab
       
+      // Track created lab ID for dropdowns
+      const numericLabId = typeof labId === 'number' ? labId : parseInt(labId as string);
+      if (!isNaN(numericLabId)) {
+        setCreatedLabIds(prev => [...prev, numericLabId]);
+        // Auto-fill Lab ID for Stage 2 (Create Data)
+        setDataLabId(numericLabId.toString());
+        addLog('info', 'Stage 2: Create Data', `✨ Lab ID auto-filled: ${numericLabId} (ready for data creation)`);
+      }
+      
       setCompletedSteps(prev => ({
         ...prev,
         step1: true
@@ -796,7 +807,7 @@ export default function Prototype() {
       setDatasetMetadata(prev => ({
         ...prev,
         step1: {
-          labId: typeof labId === 'number' ? labId : parseInt(labId as string),
+          labId: numericLabId,
           timestamp: new Date(),
           txHash: tx1.hash,
           walletAddress: address as string
@@ -1152,24 +1163,24 @@ export default function Prototype() {
       return;
     }
     
-    // Auto-select data ID if needed
-    let dataIdToEnrich = enrichmentDataId;
-    if (!dataIdToEnrich || dataIdToEnrich === '0') {
-      // Check if we have any created data IDs
-      if (createdDataIds.length === 0) {
-        const errorMsg = 'No dataset available to enrich. Create one first in Stage 2.';
-        addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
-        toast.error(errorMsg);
-        return;
-      }
-      // Auto-select the most recent data ID
-      dataIdToEnrich = createdDataIds[createdDataIds.length - 1].toString();
-      setEnrichmentDataId(dataIdToEnrich);
-      addLog('info', 'Stage 3: Enrichment', `🎯 Auto-selected Data ID: ${dataIdToEnrich}`);
+    // Validate Lab ID selection
+    if (!enrichmentLabId || enrichmentLabId === '' || enrichmentLabId === '0') {
+      const errorMsg = 'Please select a Lab ID from the dropdown.';
+      addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
+      toast.error(errorMsg);
+      return;
+    }
+    
+    // Validate Data ID selection
+    if (!enrichmentDataId || enrichmentDataId === '0') {
+      const errorMsg = 'Please select a Data ID from the dropdown.';
+      addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
+      toast.error(errorMsg);
+      return;
     }
     
     setLoading('enrichment');
-    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Auto-enriching data ID ${dataIdToEnrich}...`);
+    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Enriching Lab #${enrichmentLabId}, Data #${enrichmentDataId}...`);
     
     try {
       const walletProvider = sdk.getProvider();
@@ -1243,9 +1254,9 @@ export default function Prototype() {
       // Step 2: Submit data for review (using same user as supervisor for demo)
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Submitting data ${dataIdToEnrich} for review...`);
+      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Lab #${enrichmentLabId}, Data #${enrichmentDataId} for review...`);
       const submitTx = await validationDiamond.submitForReview(
-        dataIdToEnrich,
+        enrichmentDataId,
         address, // Use same user as supervisor for demo
         credentialId
       );
@@ -1254,16 +1265,16 @@ export default function Prototype() {
       
       // Step 3: Auto-approve the data
       addLog('info', 'Stage 3: Enrichment', '✅ Auto-approving data...');
-      const approvalSignature = ethers.keccak256(ethers.toUtf8Bytes(`approval-${dataIdToEnrich}-${Date.now()}`));
+      const approvalSignature = ethers.keccak256(ethers.toUtf8Bytes(`approval-${enrichmentDataId}-${Date.now()}`));
       const approveTx = await validationDiamond.approveData(
-        dataIdToEnrich,
+        enrichmentDataId,
         parseInt(enrichmentDeltaGain), // Use the delta gain from input
         approvalSignature
       );
       const approveReceipt = await approveTx.wait();
       
-      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data ${dataIdToEnrich} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
-      toast.success(`Enrichment complete! Data ${dataIdToEnrich} approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
+      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Lab #${enrichmentLabId}, Data #${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
+      toast.success(`Enrichment complete! Lab #${enrichmentLabId}, Data #${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
       
       setCompletedSteps(prev => ({ ...prev, step3: true }));
       setDatasetMetadata(prev => ({
@@ -2240,8 +2251,19 @@ export default function Prototype() {
 
               <div className="space-y-4">
                 <div>
-                  <Label htmlFor="dataLabId">Lab ID</Label>
-                  <Input id="dataLabId" type="number" value={dataLabId} onChange={e => setDataLabId(e.target.value)} placeholder="1" />
+                  <Label htmlFor="dataLabId">
+                    Lab ID {createdLabIds.length > 0 && <span className="text-green-500">✓ Auto-filled from Stage 1</span>}
+                  </Label>
+                  <Input 
+                    id="dataLabId" 
+                    type="number" 
+                    value={dataLabId} 
+                    onChange={e => setDataLabId(e.target.value)} 
+                    placeholder={createdLabIds.length > 0 ? `Auto-filled: ${createdLabIds[createdLabIds.length - 1]}` : "Create lab first in Stage 1"}
+                  />
+                  {createdLabIds.length === 0 && (
+                    <p className="text-xs text-amber-500 mt-1">⚠️ Create a lab in Stage 1 first</p>
+                  )}
                 </div>
                 <div>
                   <Label htmlFor="dataContent">Data Content</Label>
@@ -2332,18 +2354,37 @@ export default function Prototype() {
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-2 gap-3">
+                  <div className="grid grid-cols-3 gap-3">
                     <div>
-                      <Label htmlFor="enrichmentDataId" className="text-xs">
-                        Data ID {createdDataIds.length > 0 && <span className="text-green-500">✓ Auto-filled</span>}
-                      </Label>
-                      <Input 
-                        id="enrichmentDataId" 
-                        value={enrichmentDataId} 
-                        onChange={e => setEnrichmentDataId(e.target.value)} 
-                        placeholder={createdDataIds.length > 0 ? `Auto-selected: ${createdDataIds[createdDataIds.length - 1]}` : "Create data first"} 
-                        className="text-sm"
-                      />
+                      <Label htmlFor="enrichmentLabId" className="text-xs">Lab ID</Label>
+                      <select 
+                        id="enrichmentLabId"
+                        value={enrichmentLabId}
+                        onChange={e => setEnrichmentLabId(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        {createdLabIds.length === 0 ? (
+                          <option value="">No labs created</option>
+                        ) : (
+                          createdLabIds.map(labId => (
+                            <option key={labId} value={labId}>Lab #{labId}</option>
+                          ))
+                        )}
+                      </select>
+                    </div>
+                    <div>
+                      <Label htmlFor="enrichmentDataId" className="text-xs">Data ID</Label>
+                      <select 
+                        id="enrichmentDataId"
+                        value={enrichmentDataId}
+                        onChange={e => setEnrichmentDataId(e.target.value)}
+                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+                      >
+                        <option value="0">Select data...</option>
+                        {createdDataIds.map(dataId => (
+                          <option key={dataId} value={dataId}>Data #{dataId}</option>
+                        ))}
+                      </select>
                     </div>
                     <div>
                       <Label htmlFor="enrichmentDeltaGain" className="text-xs">Delta-Gain (bps)</Label>
@@ -2394,7 +2435,7 @@ export default function Prototype() {
                   </p>
 
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
-                    💡 <span className="font-semibold">Tip:</span> Data ID auto-selects from Stage 2. Delta-gain in basis points (5000 = 50%). {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold">Create data first!</span>}
+                    💡 <span className="font-semibold">Tip:</span> Select Lab & Data from dropdowns. Delta-gain in basis points (5000 = 50%). Enrichment can be done multiple times on same data. {(createdLabIds.length === 0 || createdDataIds.length === 0) && <span className="text-amber-500 font-semibold"> Create lab & data first!</span>}
                   </div>
                 </div>
               </div>
