@@ -1204,10 +1204,16 @@ export default function Prototype() {
       const supervisorAddress = address as string;
       addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${enrichmentDataId} for review (supervisor: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)})...`);
       
+      // Convert string IDs to numbers for the contract
+      const dataIdNum = parseInt(enrichmentDataId);
+      const credentialIdNum = parseInt(credentialId);
+      
+      addLog('info', 'Stage 3: Enrichment', `📋 Parameters: dataId=${dataIdNum}, supervisor=${supervisorAddress}, credentialId=${credentialIdNum}`);
+      
       const submitTx = await validationDiamond.submitForReview(
-        enrichmentDataId,
+        dataIdNum,
         supervisorAddress,
-        credentialId
+        credentialIdNum
       );
       await submitTx.wait();
       addLog('success', 'Stage 3: Enrichment', `✅ Data submitted for review`);
@@ -1215,9 +1221,11 @@ export default function Prototype() {
       // Step 3: Auto-approve the data
       addLog('info', 'Stage 3: Enrichment', '✅ Auto-approving data...');
       const approvalSignature = ethers.keccak256(ethers.toUtf8Bytes(`approval-${enrichmentDataId}-${Date.now()}`));
+      const deltaGainNum = parseInt(enrichmentDeltaGain);
+      
       const approveTx = await validationDiamond.approveData(
-        enrichmentDataId,
-        parseInt(enrichmentDeltaGain), // Use the delta gain from input
+        dataIdNum,
+        deltaGainNum,
         approvalSignature
       );
       const approveReceipt = await approveTx.wait();
