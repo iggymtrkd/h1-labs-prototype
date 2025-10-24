@@ -589,11 +589,22 @@ export default function Prototype() {
     try {
       // Check on-chain staked balance to ensure it meets requirements
       const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      
+      // Query via H1Diamond proxy using LABSCoreFacet ABI
+      // This calls the LABSCoreFacet.getStakedBalance() function which reads from LibH1Storage.stakedBalances
+      console.log('🔍 Querying staked balance from H1Diamond:', CONTRACTS.H1Diamond);
+      console.log('🔍 For address:', address);
+      
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
       const onChainStaked = await diamond.getStakedBalance(address);
+      
+      console.log('✅ Raw staked balance (wei):', onChainStaked.toString());
+      
       const stakedAmount = parseFloat(ethers.formatEther(onChainStaked));
       
-      addLog('info', 'Stage 1: Create Lab', `📊 On-chain staked balance: ${stakedAmount.toLocaleString()} LABS`);
+      console.log('✅ Formatted staked balance (LABS):', stakedAmount);
+      
+      addLog('info', 'Stage 1: Create Lab', `📊 On-chain staked balance: ${stakedAmount.toLocaleString()} LABS (from H1Diamond via LABSCoreFacet)`);
       
       if (stakedAmount < MIN_STAKE_FOR_LAB) {
         const needed = MIN_STAKE_FOR_LAB - stakedAmount;
