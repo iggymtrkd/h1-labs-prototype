@@ -108,6 +108,7 @@ export default function Prototype() {
   const [enrichmentDeltaGain, setEnrichmentDeltaGain] = useState('5000'); // 50%
   const [createdLabIds, setCreatedLabIds] = useState<number[]>([]); // Track created lab IDs
   const [createdDataIds, setCreatedDataIds] = useState<number[]>([]); // Track created data IDs
+  const [dataToLabMapping, setDataToLabMapping] = useState<Record<number, number>>({}); // Map data ID to lab ID
 
   // Step 4: Purchase Dataset (AI Companies)
   const [purchaseDatasetId, setPurchaseDatasetId] = useState('1');
@@ -1054,6 +1055,11 @@ export default function Prototype() {
       const numericDataId = typeof dataId === 'number' ? dataId : parseInt(dataId as string);
       if (!isNaN(numericDataId)) {
         setCreatedDataIds(prev => [...prev, numericDataId]);
+        // Also track which lab this data belongs to
+        const numericLabId = parseInt(dataLabId);
+        if (!isNaN(numericLabId)) {
+          setDataToLabMapping(prev => ({ ...prev, [numericDataId]: numericLabId }));
+        }
       }
       
       setCompletedSteps(prev => ({
@@ -1162,14 +1168,6 @@ export default function Prototype() {
       return;
     }
     
-    // Validate Lab ID selection
-    if (!enrichmentLabId || enrichmentLabId === '' || enrichmentLabId === '0') {
-      const errorMsg = createdLabIds.length === 0 ? 'No labs available. Create a lab in Stage 1 first.' : 'Please select a Lab ID from the dropdown.';
-      addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
-      toast.error(errorMsg);
-      return;
-    }
-    
     // Validate Data ID selection
     if (!enrichmentDataId || enrichmentDataId === '0') {
       const errorMsg = createdDataIds.length === 0 ? 'No data available. Create data in Stage 2 first.' : 'Please select a Data ID from the dropdown.';
@@ -1179,7 +1177,8 @@ export default function Prototype() {
     }
     
     setLoading('enrichment');
-    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Enriching Lab #${enrichmentLabId}, Data #${enrichmentDataId}...`);
+    const dataLabId = dataToLabMapping[parseInt(enrichmentDataId)] || '?';
+    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Enriching Data #${enrichmentDataId} (Lab #${dataLabId})...`);
     
     try {
       const walletProvider = sdk.getProvider();
@@ -1263,7 +1262,7 @@ export default function Prototype() {
         throw new Error('Invalid supervisor address. Please reconnect your wallet.');
       }
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Lab #${enrichmentLabId}, Data #${enrichmentDataId} for review...`);
+      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${enrichmentDataId} for review...`);
       addLog('info', 'Stage 3: Enrichment', `📋 Supervisor: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)}`);
       
       const submitTx = await validationDiamond.submitForReview(
@@ -1284,8 +1283,8 @@ export default function Prototype() {
       );
       const approveReceipt = await approveTx.wait();
       
-      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Lab #${enrichmentLabId}, Data #${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
-      toast.success(`Enrichment complete! Lab #${enrichmentLabId}, Data #${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
+      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data #${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
+      toast.success(`Enrichment complete! Data #${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
       
       setCompletedSteps(prev => ({ ...prev, step3: true }));
       setDatasetMetadata(prev => ({
@@ -2399,29 +2398,9 @@ export default function Prototype() {
                     </p>
                   </div>
                   
-                  <div className="grid grid-cols-3 gap-3">
+                  <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="enrichmentLabId" className="text-xs">Lab ID</Label>
-                      <select 
-                        id="enrichmentLabId"
-                        value={enrichmentLabId}
-                        onChange={e => setEnrichmentLabId(e.target.value)}
-                        className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                      >
-                        {createdLabIds.length === 0 ? (
-                          <option value="">Loading labs from blockchain...</option>
-                        ) : (
-                          <>
-                            <option value="">Select lab...</option>
-                            {createdLabIds.map(labId => (
-                              <option key={labId} value={labId}>Lab #{labId}</option>
-                            ))}
-                          </>
-                        )}
-                      </select>
-                    </div>
-                    <div>
-                      <Label htmlFor="enrichmentDataId" className="text-xs">Data ID</Label>
+                      <Label htmlFor="enrichmentDataId" className="text-xs">Data ID (with Lab info)</Label>
                       <select 
                         id="enrichmentDataId"
                         value={enrichmentDataId}
@@ -2433,9 +2412,14 @@ export default function Prototype() {
                         ) : (
                           <>
                             <option value="0">Select data...</option>
-                            {createdDataIds.map(dataId => (
-                              <option key={dataId} value={dataId}>Data #{dataId}</option>
-                            ))}
+                            {createdDataIds.map(dataId => {
+                              const labId = dataToLabMapping[dataId];
+                              return (
+                                <option key={dataId} value={dataId}>
+                                  Data #{dataId} {labId ? `(Lab #${labId})` : ''}
+                                </option>
+                              );
+                            })}
                           </>
                         )}
                       </select>
@@ -2489,7 +2473,7 @@ export default function Prototype() {
                   </p>
 
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
-                    💡 <span className="font-semibold">Tip:</span> Select Lab & Data from dropdowns. Delta-gain in basis points (5000 = 50%). Enrichment can be done multiple times on same data. {(createdLabIds.length === 0 || createdDataIds.length === 0) && <span className="text-amber-500 font-semibold"> Create lab & data first!</span>}
+                    💡 <span className="font-semibold">Tip:</span> Select Data from dropdown (data already has lab info). Delta-gain in basis points (5000 = 50%). Enrichment can be done multiple times on same data. {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold"> Create data first in Stage 2!</span>}
                   </div>
                 </div>
               </div>
