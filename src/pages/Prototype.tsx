@@ -105,6 +105,7 @@ export default function Prototype() {
   const [enrichmentSupervisor, setEnrichmentSupervisor] = useState('');
   const [enrichmentSupervisorCredentialId, setEnrichmentSupervisorCredentialId] = useState('1');
   const [enrichmentDeltaGain, setEnrichmentDeltaGain] = useState('5000'); // 50%
+  const [createdDataIds, setCreatedDataIds] = useState<number[]>([]); // Track created data IDs
 
   // Step 4: Purchase Dataset (AI Companies)
   const [purchaseDatasetId, setPurchaseDatasetId] = useState('1');
@@ -1037,6 +1038,14 @@ export default function Prototype() {
       const dataId = dataCreatedEvent ? ethers.toNumber(dataCreatedEvent.topics[1]) : "unknown";
       addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedTagger.`, createTx.hash);
       toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
+      
+      // Track created data ID for auto-selection in enrichment
+      const numericDataId = typeof dataId === 'number' ? dataId : parseInt(dataId as string);
+      if (!isNaN(numericDataId)) {
+        setCreatedDataIds(prev => [...prev, numericDataId]);
+        setEnrichmentDataId(numericDataId.toString()); // Auto-populate enrichment field
+      }
+      
       setCompletedSteps(prev => ({
         ...prev,
         step2: true
@@ -1044,7 +1053,7 @@ export default function Prototype() {
       setDatasetMetadata(prev => ({
         ...prev,
         step2: {
-          dataId: typeof dataId === 'number' ? dataId : parseInt(dataId as string),
+          dataId: numericDataId,
           dataHash: dataHash,
           timestamp: new Date(),
           txHash: createTx.hash,
@@ -1143,8 +1152,24 @@ export default function Prototype() {
       return;
     }
     
+    // Auto-select data ID if needed
+    let dataIdToEnrich = enrichmentDataId;
+    if (!dataIdToEnrich || dataIdToEnrich === '0') {
+      // Check if we have any created data IDs
+      if (createdDataIds.length === 0) {
+        const errorMsg = 'No dataset available to enrich. Create one first in Stage 2.';
+        addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
+        toast.error(errorMsg);
+        return;
+      }
+      // Auto-select the most recent data ID
+      dataIdToEnrich = createdDataIds[createdDataIds.length - 1].toString();
+      setEnrichmentDataId(dataIdToEnrich);
+      addLog('info', 'Stage 3: Enrichment', `🎯 Auto-selected Data ID: ${dataIdToEnrich}`);
+    }
+    
     setLoading('enrichment');
-    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Auto-enriching data workflow...`);
+    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Auto-enriching data ID ${dataIdToEnrich}...`);
     
     try {
       const walletProvider = sdk.getProvider();
@@ -1203,9 +1228,9 @@ export default function Prototype() {
       // Step 3: Submit data for review (using same user as supervisor for demo)
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Submitting data ${enrichmentDataId} for review...`);
+      addLog('info', 'Stage 3: Enrichment', `📋 Submitting data ${dataIdToEnrich} for review...`);
       const submitTx = await validationDiamond.submitForReview(
-        enrichmentDataId,
+        dataIdToEnrich,
         address, // Use same user as supervisor for demo
         credentialId
       );
@@ -1214,16 +1239,16 @@ export default function Prototype() {
       
       // Step 4: Auto-approve the data
       addLog('info', 'Stage 3: Enrichment', '✅ Auto-approving data...');
-      const approvalSignature = ethers.keccak256(ethers.toUtf8Bytes(`approval-${enrichmentDataId}-${Date.now()}`));
+      const approvalSignature = ethers.keccak256(ethers.toUtf8Bytes(`approval-${dataIdToEnrich}-${Date.now()}`));
       const approveTx = await validationDiamond.approveData(
-        enrichmentDataId,
+        dataIdToEnrich,
         parseInt(enrichmentDeltaGain), // Use the delta gain from input
         approvalSignature
       );
       const approveReceipt = await approveTx.wait();
       
-      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data ${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
-      toast.success(`Enrichment complete! Data approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
+      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data ${dataIdToEnrich} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
+      toast.success(`Enrichment complete! Data ${dataIdToEnrich} approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
       
       setCompletedSteps(prev => ({ ...prev, step3: true }));
       setDatasetMetadata(prev => ({
@@ -1256,6 +1281,8 @@ export default function Prototype() {
           errorMessage = 'Invalid Credential ID: Check your credential ID.';
         } else if (errorData.includes('8baa579f')) {
           errorMessage = 'Unverified Credential: Supervisor credential must be verified first.';
+        } else if (errorData.includes('165ca92b')) {
+          errorMessage = 'Invalid Address: Supervisor address cannot be zero address.';
         }
       }
       
@@ -2292,12 +2319,14 @@ export default function Prototype() {
                   
                   <div className="grid grid-cols-2 gap-3">
                     <div>
-                      <Label htmlFor="enrichmentDataId" className="text-xs">Data ID</Label>
+                      <Label htmlFor="enrichmentDataId" className="text-xs">
+                        Data ID {createdDataIds.length > 0 && <span className="text-green-500">✓ Auto-filled</span>}
+                      </Label>
                       <Input 
                         id="enrichmentDataId" 
                         value={enrichmentDataId} 
                         onChange={e => setEnrichmentDataId(e.target.value)} 
-                        placeholder="0" 
+                        placeholder={createdDataIds.length > 0 ? `Auto-selected: ${createdDataIds[createdDataIds.length - 1]}` : "Create data first"} 
                         className="text-sm"
                       />
                     </div>
@@ -2350,7 +2379,7 @@ export default function Prototype() {
                   </p>
 
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
-                    💡 <span className="font-semibold">Tip:</span> Use dataId from Stage 2. Delta-gain in basis points (5000 = 50%). These actions are independent.
+                    💡 <span className="font-semibold">Tip:</span> Data ID auto-selects from Stage 2. Delta-gain in basis points (5000 = 50%). {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold">Create data first!</span>}
                   </div>
                 </div>
               </div>
