@@ -596,35 +596,65 @@ export default function Prototype() {
         }
       }
       
-      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
-      addLog('info', 'Stage 1: Create Lab', '📡 Broadcasting lab creation transaction to LABSCoreFacet...');
-      const createTx = await diamond.createLab(labName, labSymbol, labDomain);
-      addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation & auto-deploying LabVault contract...');
-      const receipt = await createTx.wait();
-
-      // Parse events to get lab ID, vault address, and level
-      const iface = new ethers.Interface(LABSCoreFacet_ABI);
+      // Import ABIs needed for two-step lab creation
+      const { LabVaultDeploymentFacet_ABI, LabDistributionFacet_ABI } = await import('@/contracts/abis');
+      
+      // STEP 1: Create lab + vault
+      addLog('info', 'Stage 1: Create Lab', '🏗️ Step 1/2: Creating lab and deploying vault...');
+      const diamond1 = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
+      const tx1 = await diamond1.createLabStep1(labName, labSymbol, labDomain);
+      addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 1 transaction...');
+      const receipt1 = await tx1.wait();
+      
+      // Get labId and vault from Step 1 event
+      const iface1 = new ethers.Interface(LabVaultDeploymentFacet_ABI);
       let labId: number | string = "unknown";
       let vaultAddress = '';
-      let eventLevel = 0;
+      let eventLevel = labLevel; // Use calculated level as default
       
-      // Try to find and parse LabCreated event from logs
-      for (const log of receipt.logs) {
+      for (const log of receipt1.logs) {
         try {
-          const decoded = iface.parseLog(log);
-          if (decoded && decoded.name === "LabCreated") {
-            // Successfully decoded the event
-            labId = ethers.toNumber(decoded.args[0]); // First arg is labId
-            vaultAddress = decoded.args[5]; // 6th arg is vault address
-            eventLevel = Number(decoded.args[6]); // 7th arg is level
-            console.log('✅ LabCreated event decoded:', { labId, vaultAddress, eventLevel });
+          const decoded = iface1.parseLog(log);
+          if (decoded && decoded.name === "LabVaultDeployed") {
+            labId = ethers.toNumber(decoded.args[0]); // labId
+            vaultAddress = decoded.args[2]; // vault address
+            console.log('✅ LabVaultDeployed event decoded:', { labId, vaultAddress });
+            addLog('success', 'Stage 1: Create Lab', `✅ Step 1 Complete: Lab #${labId} created, vault deployed at ${vaultAddress.slice(0, 10)}...`);
             break;
           }
         } catch (e) {
-          // This log isn't a LabCreated event, try next one
           continue;
         }
       }
+      
+      if (labId === "unknown") {
+        throw new Error("Failed to get labId from Step 1");
+      }
+      
+      // STEP 2: Deploy bonding curve + distribute H1
+      addLog('info', 'Stage 1: Create Lab', '💎 Step 2/2: Deploying bonding curve and distributing H1 tokens...');
+      const diamond2 = new ethers.Contract(CONTRACTS.H1Diamond, LabDistributionFacet_ABI, signer);
+      const tx2 = await diamond2.createLabStep2(labId);
+      addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 2 transaction...');
+      const receipt2 = await tx2.wait();
+      
+      // Log Step 2 completion
+      const iface2 = new ethers.Interface(LabDistributionFacet_ABI);
+      for (const log of receipt2.logs) {
+        try {
+          const decoded = iface2.parseLog(log);
+          if (decoded && decoded.name === "LabDistributionComplete") {
+            console.log('✅ LabDistributionComplete event decoded');
+            addLog('success', 'Stage 1: Create Lab', `✅ Step 2 Complete: Bonding curve deployed and H1 tokens distributed!`);
+            break;
+          }
+        } catch (e) {
+          continue;
+        }
+      }
+      
+      // Use the combined receipt for final success message (we'll use tx1.hash as primary)
+      const receipt = receipt1;
 
       // Load vesting data for the new lab (if H1 distribution happened)
       const vestingData = await loadLabVestingData(
@@ -646,11 +676,11 @@ export default function Prototype() {
       setUserCreatedLabs(prev => [newLab, ...prev]);
       
       if (vestingData?.h1Distribution) {
-        addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, createTx.hash);
-        toast.success(`Step 1 Complete! Lab created with ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 distributed`);
+        addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, tx1.hash);
+        toast.success(`Lab Created! ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 tokens distributed`);
       } else {
-        addLog('success', 'Stage 1: Create Lab', `✅ STEP 1 COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, createTx.hash);
-        toast.success(`Step 1 Complete! Lab created with ID: ${labId} (Level ${eventLevel})`);
+        addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, tx1.hash);
+        toast.success(`Lab Created! Lab ID: ${labId} (Level ${eventLevel})`);
       }
       
       // Refresh marketplace data
@@ -665,7 +695,7 @@ export default function Prototype() {
         step1: {
           labId: typeof labId === 'number' ? labId : parseInt(labId as string),
           timestamp: new Date(),
-          txHash: createTx.hash,
+          txHash: tx1.hash,
           walletAddress: address as string
         }
       }));
