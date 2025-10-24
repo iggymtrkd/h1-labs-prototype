@@ -1181,6 +1181,13 @@ export default function Prototype() {
     addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Enriching Data #${enrichmentDataId} (Lab #${dataLabId})...`);
     
     try {
+      // Ensure we have a valid wallet address first
+      if (!address || address === ethers.ZeroAddress) {
+        throw new Error('Wallet address is invalid. Please reconnect your wallet.');
+      }
+      
+      addLog('info', 'Stage 3: Enrichment', `📋 Using wallet: ${address.substring(0, 6)}...${address.substring(38)}`);
+      
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner(address);
@@ -1193,18 +1200,9 @@ export default function Prototype() {
       // Step 2: Submit data for review (using same user as supervisor for demo)
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
-      // Use provided supervisor address or default to current user's address
-      const supervisorAddress = enrichmentSupervisor && enrichmentSupervisor.trim() !== '' 
-        ? enrichmentSupervisor 
-        : address;
-      
-      // Ensure we have a valid address
-      if (!supervisorAddress || supervisorAddress === ethers.ZeroAddress) {
-        throw new Error('Invalid supervisor address. Please reconnect your wallet.');
-      }
-      
-      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${enrichmentDataId} for review...`);
-      addLog('info', 'Stage 3: Enrichment', `📋 Supervisor: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)}`);
+      // Always use connected wallet as supervisor for demo
+      const supervisorAddress = address as string;
+      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${enrichmentDataId} for review (supervisor: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)})...`);
       
       const submitTx = await validationDiamond.submitForReview(
         enrichmentDataId,
@@ -2378,18 +2376,7 @@ export default function Prototype() {
                   </div>
 
                   <div>
-                    <Label htmlFor="enrichmentSupervisor" className="text-xs">Supervisor Address (optional)</Label>
-                    <Input 
-                      id="enrichmentSupervisor" 
-                      value={enrichmentSupervisor} 
-                      onChange={e => setEnrichmentSupervisor(e.target.value)} 
-                      placeholder="Leave empty to use your address" 
-                      className="text-sm"
-                    />
-                  </div>
-
-                  <div>
-                    <Label htmlFor="enrichmentSupervisorCredentialId" className="text-xs">Supervisor Credential ID</Label>
+                    <Label htmlFor="enrichmentSupervisorCredentialId" className="text-xs">Supervisor Credential ID (demo)</Label>
                     <Input 
                       id="enrichmentSupervisorCredentialId" 
                       value={enrichmentSupervisorCredentialId} 
@@ -2397,6 +2384,9 @@ export default function Prototype() {
                       placeholder="1" 
                       className="text-sm"
                     />
+                    <p className="text-xs text-muted-foreground mt-1">
+                      Supervisor: Your connected wallet (auto)
+                    </p>
                   </div>
 
                   {/* Simplified one-click enrichment for demo */}
