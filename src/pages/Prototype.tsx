@@ -603,6 +603,19 @@ export default function Prototype() {
         return;
       }
       
+      // Check if domain is available BEFORE attempting transaction
+      addLog('info', 'Stage 1: Create Lab', `🔍 Checking if domain "${labDomain}" is available...`);
+      const isDomainAvailable = await diamond.isDomainAvailable(labDomain);
+      
+      if (!isDomainAvailable) {
+        toast.error(`Domain "${labDomain}" is already taken. Please choose a different domain.`);
+        addLog('error', 'Stage 1: Create Lab', `❌ Domain "${labDomain}" is already taken. Try a different domain.`);
+        setLoading(null);
+        return;
+      }
+      
+      addLog('success', 'Stage 1: Create Lab', `✅ Domain "${labDomain}" is available!`);
+      
       labLevel = calculateLabLevel(stakedAmount);
       addLog('success', 'Stage 1: Create Lab', `✅ Staking requirement met! Creating Lab Level ${labLevel}...`);
       addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain - Lab Level ${labLevel}`);
@@ -756,42 +769,74 @@ export default function Prototype() {
       setLabSymbol('');
       setLabDomain('healthcare');
     } catch (error: any) {
-      console.error('Create lab error:', error);
+      console.error('❌ Create lab error (FULL OBJECT):', error);
+      console.error('❌ Error data:', error?.data);
+      console.error('❌ Error error:', error?.error);
+      console.error('❌ Error message:', error?.message);
+      console.error('❌ Error code:', error?.code);
       
-      // Decode custom error codes
-      const errorData = error?.data || error?.error?.data?.data;
+      // Try multiple paths to get error data
+      let errorData = error?.data || error?.error?.data?.data || error?.error?.data || '';
+      
+      // Convert to string if it's an object
+      if (typeof errorData === 'object' && errorData !== null) {
+        errorData = JSON.stringify(errorData);
+      }
+      
+      console.log('🔍 Extracted error data for checking:', errorData);
+      
       let errorMessage = error.message || 'Failed to create lab';
+      let errorHandled = false;
       
       // Check for specific custom errors from LabVaultDeploymentFacet
-      if (errorData) {
-        if (errorData.includes('0xccb21934')) {
+      // Error selectors (first 4 bytes of keccak256(errorSignature)):
+      // InvalidInput() = 0xb4fa3fb3
+      // DomainTaken() = 0x4ca8886f  
+      // InsufficientStake() = 0xccb21934
+      
+      if (errorData && typeof errorData === 'string') {
+        if (errorData.includes('4ca8886f')) {
+          // DomainTaken() error - MOST LIKELY the actual error
+          errorMessage = `Domain "${labDomain}" is already taken! Please choose a different domain and try again.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage, { duration: 7000 });
+          errorHandled = true;
+        } else if (errorData.includes('ccb21934')) {
           // InsufficientStake() error
           errorMessage = `Insufficient LABS staked. You need at least 100,000 LABS staked on-chain to create a lab.`;
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
           toast.error(errorMessage, { duration: 5000 });
-          
-          // Refresh staked balance to show accurate amount
-          await loadUserLabsBalance();
-        } else if (errorData.includes('0x4ca8886f')) {
-          // DomainTaken() error
-          errorMessage = `Domain "${labDomain}" is already taken. Please choose a different domain.`;
-          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
-          toast.error(errorMessage);
-        } else if (errorData.includes('0xb4fa3fb3')) {
+          await loadUserLabsBalance(); // Refresh staked balance
+          errorHandled = true;
+        } else if (errorData.includes('b4fa3fb3')) {
           // InvalidInput() error
-          errorMessage = 'Invalid input: Check that name, symbol, and domain meet requirements (name: 1-50 chars, symbol: 1-10 chars, domain: 1-100 chars)';
+          errorMessage = `Invalid input: Name must be 1-50 chars, Symbol must be 1-10 chars, Domain must be 1-100 chars. Please check your inputs.`;
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
-          toast.error(errorMessage);
-        } else {
-          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
-          toast.error(errorMessage);
+          toast.error(errorMessage, { duration: 7000 });
+          errorHandled = true;
         }
-      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('network changed')) {
-        addLog('error', 'Stage 1: Create Lab', `❌ Network changed during transaction. Please ensure you're on Base Sepolia (chainId 84532) and try again.`);
-        toast.error('Network changed during transaction. Please switch to Base Sepolia and retry.');
-      } else {
+      }
+      
+      // Check for user rejection
+      if (error?.code === 'ACTION_REJECTED' || error?.code === 4001 || errorMessage.includes('user rejected')) {
+        errorMessage = 'Transaction cancelled by user';
+        addLog('info', 'Stage 1: Create Lab', `ℹ️ ${errorMessage}`);
+        toast.info(errorMessage);
+        errorHandled = true;
+      }
+      
+      // Check for network errors
+      if (error.code === 'NETWORK_ERROR' || errorMessage?.includes('network changed')) {
+        errorMessage = 'Network changed during transaction. Please ensure you\'re on Base Sepolia (chainId 84532) and try again.';
         addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
-        toast.error('Failed to create lab');
+        toast.error(errorMessage);
+        errorHandled = true;
+      }
+      
+      // If error wasn't specifically handled, show generic error
+      if (!errorHandled) {
+        addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+        toast.error('Failed to create lab. Check console for details.');
       }
     } finally {
       setLoading(null);
