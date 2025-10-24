@@ -198,7 +198,6 @@ export default function Prototype() {
 
   const [blockchainLabs, setBlockchainLabs] = useState<BlockchainLab[]>([]);
   const [loadingBlockchainLabs, setLoadingBlockchainLabs] = useState(false);
-  const [blockchainDataIds, setBlockchainDataIds] = useState<Array<{dataId: number, labId: number}>>([]);
 
   // Step 5: User's Created Labs
   interface CreatedLab {
@@ -1051,12 +1050,10 @@ export default function Prototype() {
       addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedTagger.`, createTx.hash);
       toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
       
-      // Track created data ID and refresh blockchain data
+      // Track created data ID for dropdowns
       const numericDataId = typeof dataId === 'number' ? dataId : parseInt(dataId as string);
       if (!isNaN(numericDataId)) {
         setCreatedDataIds(prev => [...prev, numericDataId]);
-        // Refresh blockchain data to include newly created data
-        await loadBlockchainLabsAndData();
       }
       
       setCompletedSteps(prev => ({
@@ -1968,7 +1965,7 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
       
-      // Try to load labs by querying lab IDs (1-100 range for demo)
+      // Load labs by querying lab IDs (1-50 range for demo)
       const labs: number[] = [];
       for (let labId = 1; labId <= 50; labId++) {
         try {
@@ -1982,29 +1979,10 @@ export default function Prototype() {
       }
       setCreatedLabIds(labs);
       
-      // Try to load data IDs by querying data records
-      const dataValidationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, provider);
-      const dataRecords: Array<{dataId: number, labId: number}> = [];
-      
-      for (let dataId = 1; dataId <= 100; dataId++) {
-        try {
-          const record = await dataValidationDiamond.getDataRecord(dataId);
-          if (record && record[0] !== 0n) { // dataId is not 0
-            dataRecords.push({
-              dataId: Number(record[0]),
-              labId: Number(record[1])
-            });
-          }
-        } catch {
-          // Data doesn't exist, continue
-        }
-      }
-      
-      setBlockchainDataIds(dataRecords);
-      setCreatedDataIds(dataRecords.map(d => d.dataId));
+      // Data IDs are tracked locally from creation (not enumerable on-chain without events)
       
     } catch (error) {
-      console.error('Error loading blockchain labs and data:', error);
+      console.error('Error loading blockchain labs:', error);
     }
   };
   
@@ -2437,12 +2415,12 @@ export default function Prototype() {
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {createdDataIds.length === 0 ? (
-                          <option value="0">Loading data from blockchain...</option>
+                          <option value="0">Create data in Stage 2 first...</option>
                         ) : (
                           <>
                             <option value="0">Select data...</option>
                             {createdDataIds.map(dataId => (
-                              <option key={dataId} value={dataId}>Data #{dataId} (Lab #{blockchainDataIds.find(d => d.dataId === dataId)?.labId || '?'})</option>
+                              <option key={dataId} value={dataId}>Data #{dataId}</option>
                             ))}
                           </>
                         )}
