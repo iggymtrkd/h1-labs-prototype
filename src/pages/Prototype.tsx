@@ -286,18 +286,21 @@ export default function Prototype() {
       toast.error('Enter a positive stake amount');
       return;
     }
+    
     setLoading('stake');
     setStakeSteps({
       approve: 'idle',
       stake: 'idle'
     });
     addLog('info', 'Stage 1: Stake $LABS', `🎯 STARTING: Stake ${stakeAmount} LABS tokens to unlock Lab creation`);
+    
     try {
       // Get provider from Base Account SDK
       const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
+      let provider = new ethers.BrowserProvider(walletProvider as any);
       const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
       let signer = await provider.getSigner(address);
+      
       // Ensure signer corresponds to connected wallet address
       try {
         const signerAddr = await signer.getAddress();
@@ -307,6 +310,7 @@ export default function Prototype() {
       } catch {}
 
       // Ensure wallet is on the expected network (Base Sepolia)
+      addLog('info', 'Diagnostics', '🔍 Checking wallet network...');
       let net = await provider.getNetwork();
       if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
         const chainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
@@ -355,6 +359,12 @@ export default function Prototype() {
           return;
         }
         addLog('success', 'Diagnostics', '✅ Wallet switched to Base Sepolia');
+        
+        // Recreate provider and signer after network switch to avoid stale connection
+        const freshWalletProvider = sdk.getProvider();
+        provider = new ethers.BrowserProvider(freshWalletProvider as any);
+        signer = await provider.getSigner(address);
+        addLog('info', 'Diagnostics', '🔄 Provider and signer refreshed after network switch');
       }
 
       // Preflight diagnostics: verify routing, balances, allowance, and simulate
@@ -516,8 +526,15 @@ export default function Prototype() {
       } catch {}
     } catch (error: any) {
       console.error('❌ Stake error:', error);
-      addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
-      toast.error('Failed to stake LABS');
+      
+      // Check if this is a network change error
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('network changed')) {
+        addLog('error', 'Stage 1: Stake $LABS', `❌ Network changed during transaction. Please ensure you're on Base Sepolia (chainId 84532) and try again.`);
+        toast.error('Network changed during transaction. Please switch to Base Sepolia and retry.');
+      } else {
+        addLog('error', 'Stage 1: Stake $LABS', `❌ ${error.message || 'Failed to stake LABS tokens'}`);
+        toast.error('Failed to stake LABS');
+      }
       resetStakingState();
     }
   };
@@ -548,7 +565,7 @@ export default function Prototype() {
     addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain - Lab Level ${labLevel}`);
     try {
       const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
+      let provider = new ethers.BrowserProvider(walletProvider as any);
       let signer = await provider.getSigner(address);
       try {
         const signerAddr = await signer.getAddress();
@@ -556,6 +573,29 @@ export default function Prototype() {
           signer = await provider.getSigner(address);
         }
       } catch {}
+      
+      // Ensure wallet is on the expected network (Base Sepolia)
+      addLog('info', 'Diagnostics', '🔍 Checking wallet network...');
+      let net = await provider.getNetwork();
+      if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
+        addLog('info', 'Diagnostics', '🌐 Attempting to switch wallet to Base Sepolia...');
+        try {
+          const chainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
+          await provider.send('wallet_switchEthereumChain', [{ chainId: chainIdHex }]);
+          
+          // Recreate provider and signer after network switch
+          const freshWalletProvider = sdk.getProvider();
+          provider = new ethers.BrowserProvider(freshWalletProvider as any);
+          signer = await provider.getSigner(address);
+          addLog('success', 'Diagnostics', '✅ Wallet switched to Base Sepolia');
+        } catch (switchErr: any) {
+          addLog('error', 'Diagnostics', `❌ Failed to switch network: ${switchErr?.message || String(switchErr)}`);
+          toast.error('Wrong network. Please switch to Base Sepolia.');
+          setLoading(null);
+          return;
+        }
+      }
+      
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
       addLog('info', 'Stage 1: Create Lab', '📡 Broadcasting lab creation transaction to LABSCoreFacet...');
       const createTx = await diamond.createLab(labName, labSymbol, labDomain);
@@ -636,8 +676,15 @@ export default function Prototype() {
       setLabDomain('healthcare');
     } catch (error: any) {
       console.error('Create lab error:', error);
-      addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
-      toast.error('Failed to create lab');
+      
+      // Check if this is a network change error
+      if (error.code === 'NETWORK_ERROR' || error.message?.includes('network changed')) {
+        addLog('error', 'Stage 1: Create Lab', `❌ Network changed during transaction. Please ensure you're on Base Sepolia (chainId 84532) and try again.`);
+        toast.error('Network changed during transaction. Please switch to Base Sepolia and retry.');
+      } else {
+        addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
+        toast.error('Failed to create lab');
+      }
     } finally {
       setLoading(null);
     }
@@ -1930,13 +1977,11 @@ export default function Prototype() {
                               <div>
                                 <span className="text-muted-foreground font-semibold">App Used:</span>
                                 <p className="font-mono text-xs">MedTagger</p>
-                                <p className="text-xs text-yellow-500">⚠ Placeholder</p>
                               </div>
 
                               <div>
                                 <span className="text-muted-foreground font-semibold">App Developer Wallet:</span>
                                 <p className="font-mono text-xs break-all">0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb</p>
-                                <p className="text-xs text-yellow-500">⚠ Placeholder</p>
                               </div>
 
                               <Separator />
@@ -2076,12 +2121,10 @@ export default function Prototype() {
                             <div>
                               <span className="text-muted-foreground">App Used:</span>
                               <p className="font-mono text-xs">MedTagger (example app)</p>
-                              <p className="text-xs text-yellow-500">⚠ Placeholder</p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">App Developer:</span>
                               <p className="font-mono text-xs">0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb (example)</p>
-                              <p className="text-xs text-yellow-500">⚠ Placeholder</p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Transaction Hash:</span>
@@ -2785,12 +2828,10 @@ export default function Prototype() {
                                   <div>
                                     <span className="text-muted-foreground">App Used:</span>
                                     <p className="font-mono text-xs">MedTagger (example app)</p>
-                                    <p className="text-xs text-yellow-500">⚠ Placeholder</p>
                                   </div>
                                   <div>
                                     <span className="text-muted-foreground">App Developer:</span>
                                     <p className="font-mono text-xs">0x742d35Cc6634C0532925a3b844Bc9e7595f0bEb (example)</p>
-                                    <p className="text-xs text-yellow-500">⚠ Placeholder</p>
                                   </div>
                                   <div>
                                     <span className="text-muted-foreground">Transaction Hash:</span>
