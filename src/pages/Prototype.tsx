@@ -1186,36 +1186,35 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner(address);
       
-      // Step 1: Setup credential (simplified for demo - handle gracefully)
+      // Step 1: Setup placeholder credential for demo (avoids all credential errors)
       const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
-      let credentialId = enrichmentSupervisorCredentialId;
+      let credentialId = '1'; // Safe default
       
-      // Try to get/create credential, but don't fail if it already exists
       try {
-        if (!credentialId || credentialId === '0' || credentialId === '1') {
-          addLog('info', 'Stage 3: Enrichment', '🔍 Setting up credentials...');
-          
-          let userId = await credentialDiamond.getUserId(address);
-          
-          // Create user ID if needed
-          if (userId === 0n) {
-            try {
-              const createUserTx = await credentialDiamond.createUserId(address, credentialDomain);
-              await createUserTx.wait();
-              userId = await credentialDiamond.getUserId(address);
-              addLog('info', 'Stage 3: Enrichment', `✅ User ID: ${userId}`);
-            } catch (err: any) {
-              // User might already exist
-              userId = await credentialDiamond.getUserId(address);
-            }
-          }
-          
-          // Try to create and verify credential
+        // Try to get or create a simple user ID and credential
+        let userId = await credentialDiamond.getUserId(address);
+        
+        if (userId === 0n) {
+          // Try to create user ID, but don't fail if it exists
           try {
-            const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`demo-credential-${Date.now()}`));
+            const createUserTx = await credentialDiamond.createUserId(address, credentialDomain);
+            await createUserTx.wait();
+            userId = await credentialDiamond.getUserId(address);
+            addLog('info', 'Stage 3: Enrichment', `✅ User ID created: ${userId}`);
+          } catch (userErr: any) {
+            // User already exists, that's fine
+            userId = await credentialDiamond.getUserId(address);
+            addLog('info', 'Stage 3: Enrichment', `📋 Using existing user ID: ${userId}`);
+          }
+        }
+        
+        // If we have a userId, try to create a credential
+        if (userId !== 0n) {
+          try {
+            const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`demo-enrichment-${Date.now()}`));
             const issueTx = await credentialDiamond.issueCredential(
               userId, 
-              credentialType, 
+              'Demo Enrichment Credential', 
               credentialDomain, 
               verificationHash
             );
@@ -1224,39 +1223,52 @@ export default function Prototype() {
             const credIssuedEvent = issueReceipt.logs.find((log: any) => 
               log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
             );
-            credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[1]).toString() : '1';
             
-            // Try to verify - if it fails (already verified), continue anyway
-            try {
-              const verifyTx = await credentialDiamond.verifyCredential(credentialId, 'Demo auto-verified');
-              await verifyTx.wait();
-            } catch (verifyErr: any) {
-              // Already verified or can't verify - that's OK for demo
+            if (credIssuedEvent) {
+              credentialId = ethers.toNumber(credIssuedEvent.topics[1]).toString();
+              
+              // Auto-verify the credential
+              try {
+                const verifyTx = await credentialDiamond.verifyCredential(credentialId, 'Auto-verified for demo');
+                await verifyTx.wait();
+                addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialId} created & verified`);
+                setEnrichmentSupervisorCredentialId(credentialId);
+              } catch (verifyErr) {
+                // Already verified, that's OK
+                addLog('info', 'Stage 3: Enrichment', `📋 Credential ${credentialId} ready (already verified)`);
+              }
             }
-            
-            addLog('success', 'Stage 3: Enrichment', `✅ Credential ready (ID: ${credentialId})`);
-            setEnrichmentSupervisorCredentialId(credentialId.toString());
           } catch (credErr: any) {
-            // Credential creation failed - use default
-            credentialId = '1';
-            addLog('info', 'Stage 3: Enrichment', `📋 Using default credential for demo`);
+            // Credential might already exist, use provided or default
+            credentialId = enrichmentSupervisorCredentialId || '1';
+            addLog('info', 'Stage 3: Enrichment', `📋 Using credential ID: ${credentialId}`);
           }
-        } else {
-          addLog('info', 'Stage 3: Enrichment', `📋 Using credential ID: ${credentialId}`);
         }
-      } catch (credSetupErr: any) {
-        // If all credential setup fails, use default and continue
-        credentialId = enrichmentSupervisorCredentialId || '1';
-        addLog('info', 'Stage 3: Enrichment', `📋 Credential setup skipped - using ID: ${credentialId}`);
+      } catch (setupErr) {
+        // All credential setup failed, use safe default
+        credentialId = '1';
+        addLog('info', 'Stage 3: Enrichment', `📋 Using default credential for demo`);
       }
       
       // Step 2: Submit data for review (using same user as supervisor for demo)
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
+      // Use provided supervisor address or default to current user's address
+      const supervisorAddress = enrichmentSupervisor && enrichmentSupervisor.trim() !== '' 
+        ? enrichmentSupervisor 
+        : address;
+      
+      // Ensure we have a valid address
+      if (!supervisorAddress || supervisorAddress === ethers.ZeroAddress) {
+        throw new Error('Invalid supervisor address. Please reconnect your wallet.');
+      }
+      
       addLog('info', 'Stage 3: Enrichment', `📋 Submitting Lab #${enrichmentLabId}, Data #${enrichmentDataId} for review...`);
+      addLog('info', 'Stage 3: Enrichment', `📋 Supervisor: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)}`);
+      
       const submitTx = await validationDiamond.submitForReview(
         enrichmentDataId,
-        address, // Use same user as supervisor for demo
+        supervisorAddress,
         credentialId
       );
       await submitTx.wait();
@@ -1308,6 +1320,8 @@ export default function Prototype() {
           errorMessage = 'Unverified Credential: Supervisor credential must be verified first.';
         } else if (errorData.includes('165ca92b')) {
           errorMessage = 'Invalid Address: Supervisor address cannot be zero address.';
+        } else if (errorData.includes('caa03ea5')) {
+          errorMessage = 'Credential Already Exists: User ID or credential already created.';
         }
       }
       
