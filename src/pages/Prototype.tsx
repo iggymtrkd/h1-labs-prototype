@@ -548,21 +548,43 @@ export default function Prototype() {
       return;
     }
 
-    // Check staked balance before attempting to create lab
-    const stakedAmount = parseFloat(stakedLabs || '0');
-    if (stakedAmount < MIN_STAKE_FOR_LAB) {
-      const needed = MIN_STAKE_FOR_LAB - stakedAmount;
-      toast.error(`Insufficient staked LABS. You need at least ${MIN_STAKE_FOR_LAB.toLocaleString()} LABS to create a lab. Please stake ${needed.toLocaleString()} more LABS.`);
-      addLog('error', 'Stage 1: Create Lab', `❌ Cannot create lab - only ${stakedAmount.toLocaleString()} LABS staked. Need at least ${MIN_STAKE_FOR_LAB.toLocaleString()} LABS`);
-      return;
-    }
     if (!sdk) {
       toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
       return;
     }
+    
     setLoading('createLab');
-    const labLevel = calculateLabLevel(stakedAmount);
-    addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain - Lab Level ${labLevel}`);
+    addLog('info', 'Stage 1: Create Lab', `🔍 Verifying on-chain staked balance...`);
+    
+    let labLevel = 1; // Default level
+    
+    try {
+      // Check on-chain staked balance to ensure it meets requirements
+      const provider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
+      const onChainStaked = await diamond.getStakedBalance(address);
+      const stakedAmount = parseFloat(ethers.formatEther(onChainStaked));
+      
+      addLog('info', 'Stage 1: Create Lab', `📊 On-chain staked balance: ${stakedAmount.toLocaleString()} LABS`);
+      
+      if (stakedAmount < MIN_STAKE_FOR_LAB) {
+        const needed = MIN_STAKE_FOR_LAB - stakedAmount;
+        toast.error(`Insufficient LABS staked. You need at least ${MIN_STAKE_FOR_LAB.toLocaleString()} LABS to create a lab. Please stake ${needed.toLocaleString()} more LABS.`);
+        addLog('error', 'Stage 1: Create Lab', `❌ Cannot create lab - only ${stakedAmount.toLocaleString()} LABS staked on-chain. Need at least ${MIN_STAKE_FOR_LAB.toLocaleString()} LABS`);
+        setLoading(null);
+        return;
+      }
+      
+      labLevel = calculateLabLevel(stakedAmount);
+      addLog('success', 'Stage 1: Create Lab', `✅ Staking requirement met! Creating Lab Level ${labLevel}...`);
+      addLog('info', 'Stage 1: Create Lab', `🏗️ STARTING: Create "${labName}" (${labSymbol}) lab in ${labDomain} domain - Lab Level ${labLevel}`);
+    } catch (balanceCheckError) {
+      console.error('Failed to check staked balance:', balanceCheckError);
+      toast.error('Failed to verify staked balance. Please try again.');
+      addLog('error', 'Stage 1: Create Lab', `❌ Failed to verify on-chain staked balance`);
+      setLoading(null);
+      return;
+    }
     try {
       const walletProvider = sdk.getProvider();
       let provider = new ethers.BrowserProvider(walletProvider as any);
@@ -707,12 +729,39 @@ export default function Prototype() {
     } catch (error: any) {
       console.error('Create lab error:', error);
       
-      // Check if this is a network change error
-      if (error.code === 'NETWORK_ERROR' || error.message?.includes('network changed')) {
+      // Decode custom error codes
+      const errorData = error?.data || error?.error?.data?.data;
+      let errorMessage = error.message || 'Failed to create lab';
+      
+      // Check for specific custom errors from LabVaultDeploymentFacet
+      if (errorData) {
+        if (errorData.includes('0xccb21934')) {
+          // InsufficientStake() error
+          errorMessage = `Insufficient LABS staked. You need at least 100,000 LABS staked on-chain to create a lab.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage, { duration: 5000 });
+          
+          // Refresh staked balance to show accurate amount
+          await loadUserLabsBalance();
+        } else if (errorData.includes('0x4ca8886f')) {
+          // DomainTaken() error
+          errorMessage = `Domain "${labDomain}" is already taken. Please choose a different domain.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage);
+        } else if (errorData.includes('0xb4fa3fb3')) {
+          // InvalidInput() error
+          errorMessage = 'Invalid input: Check that name, symbol, and domain meet requirements (name: 1-50 chars, symbol: 1-10 chars, domain: 1-100 chars)';
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage);
+        } else {
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage);
+        }
+      } else if (error.code === 'NETWORK_ERROR' || error.message?.includes('network changed')) {
         addLog('error', 'Stage 1: Create Lab', `❌ Network changed during transaction. Please ensure you're on Base Sepolia (chainId 84532) and try again.`);
         toast.error('Network changed during transaction. Please switch to Base Sepolia and retry.');
       } else {
-        addLog('error', 'Stage 1: Create Lab', `❌ ${error.message || 'Failed to create lab'}`);
+        addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
         toast.error('Failed to create lab');
       }
     } finally {
