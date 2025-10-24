@@ -198,6 +198,7 @@ export default function Prototype() {
 
   const [blockchainLabs, setBlockchainLabs] = useState<BlockchainLab[]>([]);
   const [loadingBlockchainLabs, setLoadingBlockchainLabs] = useState(false);
+  const [blockchainDataIds, setBlockchainDataIds] = useState<Array<{dataId: number, labId: number}>>([]);
 
   // Step 5: User's Created Labs
   interface CreatedLab {
@@ -789,7 +790,7 @@ export default function Prototype() {
       
       // Refresh marketplace data and blockchain labs
       await loadMarketplaceLabs();
-      await loadBlockchainLabs(); // Refresh blockchain labs to show newly created lab
+      await loadBlockchainLabsAndData(); // Refresh blockchain labs to show newly created lab
       
       // Track created lab ID for dropdowns
       const numericLabId = typeof labId === 'number' ? labId : parseInt(labId as string);
@@ -1050,11 +1051,12 @@ export default function Prototype() {
       addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedTagger.`, createTx.hash);
       toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
       
-      // Track created data ID for auto-selection in enrichment
+      // Track created data ID and refresh blockchain data
       const numericDataId = typeof dataId === 'number' ? dataId : parseInt(dataId as string);
       if (!isNaN(numericDataId)) {
         setCreatedDataIds(prev => [...prev, numericDataId]);
-        setEnrichmentDataId(numericDataId.toString()); // Auto-populate enrichment field
+        // Refresh blockchain data to include newly created data
+        await loadBlockchainLabsAndData();
       }
       
       setCompletedSteps(prev => ({
@@ -1165,7 +1167,7 @@ export default function Prototype() {
     
     // Validate Lab ID selection
     if (!enrichmentLabId || enrichmentLabId === '' || enrichmentLabId === '0') {
-      const errorMsg = 'Please select a Lab ID from the dropdown.';
+      const errorMsg = createdLabIds.length === 0 ? 'No labs available. Create a lab in Stage 1 first.' : 'Please select a Lab ID from the dropdown.';
       addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
       toast.error(errorMsg);
       return;
@@ -1173,7 +1175,7 @@ export default function Prototype() {
     
     // Validate Data ID selection
     if (!enrichmentDataId || enrichmentDataId === '0') {
-      const errorMsg = 'Please select a Data ID from the dropdown.';
+      const errorMsg = createdDataIds.length === 0 ? 'No data available. Create data in Stage 2 first.' : 'Please select a Data ID from the dropdown.';
       addLog('error', 'Stage 3: Enrichment', `❌ ${errorMsg}`);
       toast.error(errorMsg);
       return;
@@ -1445,7 +1447,7 @@ export default function Prototype() {
           );
           
           // Refresh blockchain labs to update UI
-          await loadBlockchainLabs();
+          await loadBlockchainLabsAndData();
           
           setLoading(null);
           return;
@@ -1486,7 +1488,7 @@ export default function Prototype() {
       
       // Refresh marketplace data and blockchain labs to show the new curve and price
       await loadMarketplaceLabs();
-      await loadBlockchainLabs();
+      await loadBlockchainLabsAndData();
       
     } catch (error: any) {
       console.error('Deploy bonding curve error:', error);
@@ -1497,7 +1499,7 @@ export default function Prototype() {
         toast.info('Bonding curve already deployed for this lab!');
         
         // Refresh blockchain labs to update UI
-        await loadBlockchainLabs();
+        await loadBlockchainLabsAndData();
       } else {
         addLog('error', 'Bonding Curve', `❌ ${error.message || 'Failed to deploy bonding curve'}`);
         toast.error('Failed to deploy bonding curve');
@@ -1873,7 +1875,7 @@ export default function Prototype() {
       toast.success(`Successfully bought ${lab.symbol} H1!`);
 
       // Refresh blockchain labs data
-      await loadBlockchainLabs();
+      await loadBlockchainLabsAndData();
     } catch (error: any) {
       console.error('Buy H1 error:', error);
       addLog('error', 'Buy H1', `❌ ${error.message || 'Failed to buy H1'}`);
@@ -1957,14 +1959,65 @@ export default function Prototype() {
     }
   };
 
+  // Load all labs from blockchain for dropdowns
+  const loadBlockchainLabsAndData = async () => {
+    if (!sdk || !address) return;
+    
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
+      
+      // Try to load labs by querying lab IDs (1-100 range for demo)
+      const labs: number[] = [];
+      for (let labId = 1; labId <= 50; labId++) {
+        try {
+          const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
+          if (owner !== ethers.ZeroAddress) {
+            labs.push(labId);
+          }
+        } catch {
+          // Lab doesn't exist, continue
+        }
+      }
+      setCreatedLabIds(labs);
+      
+      // Try to load data IDs by querying data records
+      const dataValidationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, provider);
+      const dataRecords: Array<{dataId: number, labId: number}> = [];
+      
+      for (let dataId = 1; dataId <= 100; dataId++) {
+        try {
+          const record = await dataValidationDiamond.getDataRecord(dataId);
+          if (record && record[0] !== 0n) { // dataId is not 0
+            dataRecords.push({
+              dataId: Number(record[0]),
+              labId: Number(record[1])
+            });
+          }
+        } catch {
+          // Data doesn't exist, continue
+        }
+      }
+      
+      setBlockchainDataIds(dataRecords);
+      setCreatedDataIds(dataRecords.map(d => d.dataId));
+      
+    } catch (error) {
+      console.error('Error loading blockchain labs and data:', error);
+    }
+  };
+  
   useEffect(() => {
     if (isConnected && address) {
-      loadFaucetBalance();
-      loadUserLabsBalance();
-      loadMarketplaceLabs();
-      loadBlockchainLabs(); // Load blockchain labs on connect
+      loadBlockchainLabsAndData();
     }
   }, [isConnected, address]);
+  // Progress bar calculation: fills up to the completed step
+  // 1 step complete (step1) = 25% (bar fills to step 1)
+  // 2 steps complete (step1+step2) = 50% (bar fills to step 2)
+  // 3 steps complete (step1+step2+step3) = 75% (bar fills to step 3)
+  // 4 steps complete (all) = 100% (bar fills to step 4)
   const completedCount = Object.values(completedSteps).filter(Boolean).length;
   const progressPercentage = completedCount / 4 * 100;
   const allStepsComplete = completedCount === 4;
@@ -2364,11 +2417,14 @@ export default function Prototype() {
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
                         {createdLabIds.length === 0 ? (
-                          <option value="">No labs created</option>
+                          <option value="">Loading labs from blockchain...</option>
                         ) : (
-                          createdLabIds.map(labId => (
-                            <option key={labId} value={labId}>Lab #{labId}</option>
-                          ))
+                          <>
+                            <option value="">Select lab...</option>
+                            {createdLabIds.map(labId => (
+                              <option key={labId} value={labId}>Lab #{labId}</option>
+                            ))}
+                          </>
                         )}
                       </select>
                     </div>
@@ -2380,10 +2436,16 @@ export default function Prototype() {
                         onChange={e => setEnrichmentDataId(e.target.value)}
                         className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background file:border-0 file:bg-transparent file:text-sm file:font-medium placeholder:text-muted-foreground focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                       >
-                        <option value="0">Select data...</option>
-                        {createdDataIds.map(dataId => (
-                          <option key={dataId} value={dataId}>Data #{dataId}</option>
-                        ))}
+                        {createdDataIds.length === 0 ? (
+                          <option value="0">Loading data from blockchain...</option>
+                        ) : (
+                          <>
+                            <option value="0">Select data...</option>
+                            {createdDataIds.map(dataId => (
+                              <option key={dataId} value={dataId}>Data #{dataId} (Lab #{blockchainDataIds.find(d => d.dataId === dataId)?.labId || '?'})</option>
+                            ))}
+                          </>
+                        )}
                       </select>
                     </div>
                     <div>
