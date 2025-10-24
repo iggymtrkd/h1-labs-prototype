@@ -1,9 +1,13 @@
 // H1 Labs Contract Configuration
 // Auto-generated from deployed contracts on Base Sepolia
+// 
+// ⚠️ IMPORTANT: This application ONLY supports Base Sepolia testnet (chainId: 84532)
+// All smart contracts are deployed exclusively on Base Sepolia
+// Users will be automatically prompted to switch networks if on a different chain
 
 export const CONTRACTS = {
-  // Network Configuration
-  CHAIN_ID: 84532, // Base Sepolia
+  // Network Configuration - Base Sepolia ONLY
+  CHAIN_ID: 84532, // Base Sepolia testnet (REQUIRED)
   RPC_URL: "https://sepolia.base.org",
   RPC_FALLBACKS: [
     "https://base-sepolia.publicnode.com",
@@ -24,15 +28,18 @@ export const CONTRACTS = {
   DiamondLoupeFacet: "0x94c4868d99590e247ff48de19cd7be385a2b5e58",
   OwnershipFacet: "0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9",
   SecurityFacet: "0x330c418951a0237d4c28685c0a7dbdb5b42eb441",
-  LABSCoreFacet: "0x913c667ac9df73e3d3db920bce156feaf0179d60", // ✅ CURRENT: with onchain level validation
+  LABSCoreFacet: "0x4345a4ae14a1111b921a74868033d90f268c24bb", // ✅ Staking + Queries only, 14KB
+  LabVaultDeploymentFacet: "0x60320c6afd8118dd374a6407babc690fd5bcb599", // ✅ Lab creation + vault deployment
+  LabDistributionFacet: "0x34662d29c5995890cc24c3020a41ea1379da7669", // ✅ Curve + H1 distribution
   VaultFacet: "0xd6157e381ec5c1d06aca995fa77c5d0a388ff512",
-  BondingCurveFacet: "0x400b47355be05bbe21f5660016b50b93ab6c9267",
+  BondingCurveFacet: "0x90c81d864d4d71af2449153091733cb1249706c6",
   LabPassFacet: "0x799cb349e8feec8ce0155abe0a2f258307a66834",
   RevenueFacet: "0xbe14097af4ad6f9ffd9ec39b404121ab44a5b112",
   TreasuryFacet: "0x65c38321d60b3e2fdbf30a474ff7063eadc9f509",
   DataValidationFacet: "0xb607b954ed414bcdba321a02f487991518a795c0",
   CredentialFacet: "0x3ffab9fa9568c68bf60c88891f238556f8d99387",
-  TestingFacet: "0xb44e262cb6039689873e9a721c1495fa1028cbbb", // ✅ NEW: with defaults + init function
+  TestingFacet: "0xb44e262cb6039689873e9a721c1495fa1028cbbb",
+  H1VestingFacet: "0x084c94e1f226393df32a6662abb4fdb75b3da54b", // ✅ H1 vesting schedules
   
   // Uniswap V3 (Base Sepolia)
   WETH: "0x4200000000000000000000000000000000000006",
@@ -69,6 +76,7 @@ export const FEATURES = {
   FAUCET: true,
   ADMIN_TESTING: true, // Set to false in production
   MULTI_WALLET_REVENUE: true, // Enable multi-wallet distribution
+  H1_VESTING: true, // ✅ NEW (2025-10-23): H1 vesting schedules for owners/scholars/devs
 } as const;
 
 // Contract Event Topics (for filtering)

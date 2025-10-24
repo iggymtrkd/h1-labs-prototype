@@ -55,10 +55,65 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
         // Ensure address is properly checksummed and valid
         const rawAddress = accounts[0];
         const userAddress = rawAddress.toLowerCase(); // Use lowercase for consistency
-        const balance = "8,320";
         
         console.log('🔍 Raw address from wallet:', rawAddress, `(${rawAddress.length} chars)`);
         console.log('🔍 Normalized address:', userAddress, `(${userAddress.length} chars)`);
+        
+        // Check current network and switch to Base Sepolia if needed
+        try {
+          const chainIdHex = await provider.request({ method: 'eth_chainId' }) as string;
+          const currentChainId = parseInt(chainIdHex, 16);
+          console.log('🌐 Current network chainId:', currentChainId);
+          
+          // Base Sepolia chainId is 84532
+          if (currentChainId !== 84532) {
+            console.log('🔄 Wrong network detected, switching to Base Sepolia...');
+            toast.info("Switching to Base Sepolia...", {
+              description: "Please approve the network switch in your wallet",
+            });
+            
+            try {
+              // Try to switch to Base Sepolia
+              await provider.request({
+                method: 'wallet_switchEthereumChain',
+                params: [{ chainId: '0x14a34' }], // 84532 in hex
+              });
+              console.log('✅ Switched to Base Sepolia');
+            } catch (switchError: any) {
+              // Chain not added yet (error code 4902)
+              if (switchError.code === 4902) {
+                console.log('📝 Base Sepolia not added, adding now...');
+                await provider.request({
+                  method: 'wallet_addEthereumChain',
+                  params: [{
+                    chainId: '0x14a34',
+                    chainName: 'Base Sepolia',
+                    nativeCurrency: {
+                      name: 'ETH',
+                      symbol: 'ETH',
+                      decimals: 18,
+                    },
+                    rpcUrls: ['https://sepolia.base.org'],
+                    blockExplorerUrls: ['https://sepolia.basescan.org'],
+                  }],
+                });
+                console.log('✅ Base Sepolia added and switched');
+              } else {
+                throw switchError;
+              }
+            }
+          } else {
+            console.log('✅ Already on Base Sepolia');
+          }
+        } catch (networkError) {
+          console.error('⚠️ Network check/switch error:', networkError);
+          toast.error("Failed to switch network", {
+            description: "Please manually switch to Base Sepolia in your wallet",
+          });
+          return;
+        }
+        
+        const balance = "8,320";
         
         setAddress(userAddress);
         setIsConnected(true);
@@ -180,7 +235,7 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
     toast.info("Wallet Disconnected");
   };
 
-  // Check for existing connection on mount
+  // Check for existing connection on mount and monitor network changes
   useEffect(() => {
     const checkConnection = async () => {
       const storedConnected = localStorage.getItem("wallet_connected") === "true";
@@ -194,6 +249,16 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
           if (!accounts || accounts.length === 0) {
             // Connection lost, reset state
             disconnectWallet();
+          } else {
+            // Check if still on Base Sepolia
+            const chainIdHex = await provider.request({ method: 'eth_chainId' }) as string;
+            const currentChainId = parseInt(chainIdHex, 16);
+            if (currentChainId !== 84532) {
+              console.warn('⚠️ Wallet is not on Base Sepolia');
+              toast.error("Wrong Network", {
+                description: "Please switch to Base Sepolia testnet to use this app",
+              });
+            }
           }
         } catch (error) {
           console.log("Connection check error:", error);
@@ -202,7 +267,54 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
     };
 
     checkConnection();
-  }, [sdk]);
+    
+    // Listen for network changes
+    const provider = sdk.getProvider();
+    const handleChainChanged = (chainIdHex: string) => {
+      const newChainId = parseInt(chainIdHex, 16);
+      console.log('🌐 Network changed to chainId:', newChainId);
+      
+      if (newChainId !== 84532) {
+        toast.error("Wrong Network Detected", {
+          description: "Please switch back to Base Sepolia (chainId 84532)",
+          duration: 5000,
+        });
+      } else {
+        toast.success("Network Switched", {
+          description: "Connected to Base Sepolia",
+        });
+        // Reload the page to refresh provider connections
+        window.location.reload();
+      }
+    };
+    
+    const handleAccountsChanged = (accounts: string[]) => {
+      if (!accounts || accounts.length === 0) {
+        console.log('🔌 Wallet disconnected');
+        disconnectWallet();
+      } else if (accounts[0].toLowerCase() !== address?.toLowerCase()) {
+        console.log('👤 Account changed');
+        toast.info("Account Changed", {
+          description: "Please reconnect your wallet",
+        });
+        disconnectWallet();
+      }
+    };
+    
+    // Add event listeners if provider supports them
+    if (provider.on) {
+      provider.on('chainChanged', handleChainChanged);
+      provider.on('accountsChanged', handleAccountsChanged);
+    }
+    
+    // Cleanup listeners on unmount
+    return () => {
+      if (provider.removeListener) {
+        provider.removeListener('chainChanged', handleChainChanged);
+        provider.removeListener('accountsChanged', handleAccountsChanged);
+      }
+    };
+  }, [sdk, address]);
 
   return (
     <BaseAccountContext.Provider
