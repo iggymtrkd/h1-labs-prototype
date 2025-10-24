@@ -1192,6 +1192,12 @@ export default function Prototype() {
         await verifyTx.wait();
         
         addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialId} created and verified`);
+        
+        // Store the credential ID for future use
+        setEnrichmentSupervisorCredentialId(credentialId.toString());
+      } else {
+        // Credential ID provided - use existing credential
+        addLog('info', 'Stage 3: Enrichment', `🔍 Using existing credential ID: ${credentialId}`);
       }
       
       // Step 3: Submit data for review (using same user as supervisor for demo)
@@ -1242,9 +1248,21 @@ export default function Prototype() {
           errorMessage = 'Invalid Lab ID: Create a lab first in Stage 1.';
         } else if (errorData.includes('e27034e7')) {
           errorMessage = 'Invalid Data ID: Create data first in Stage 2.';
-        } else if (errorMessage.includes('Unauthorized')) {
-          errorMessage = 'You must be the creator of the data.';
+        } else if (errorData.includes('e138fc29')) {
+          errorMessage = 'Unauthorized: You must be the creator of the data.';
+        } else if (errorData.includes('e5aaacea')) {
+          errorMessage = 'Invalid Status: Credential is not in PENDING status (may already be verified).';
+        } else if (errorData.includes('38e4ebbb')) {
+          errorMessage = 'Invalid Credential ID: Check your credential ID.';
+        } else if (errorData.includes('8baa579f')) {
+          errorMessage = 'Unverified Credential: Supervisor credential must be verified first.';
         }
+      }
+      
+      // Also check for standard error messages
+      const errorMsg = error?.message || '';
+      if (errorMsg.includes('user rejected')) {
+        errorMessage = 'Transaction was cancelled by user.';
       }
       
       addLog('error', 'Stage 3: Enrichment', `❌ ${errorMessage}`);
