@@ -707,23 +707,50 @@ export default function Prototype() {
       
       // STEP 2: Deploy bonding curve + distribute H1
       addLog('info', 'Stage 1: Create Lab', '💎 Step 2/2: Deploying bonding curve and distributing H1 tokens...');
-      const diamond2 = new ethers.Contract(CONTRACTS.H1Diamond, LabDistributionFacet_ABI, signer);
-      const tx2 = await diamond2.createLabStep2(labId);
-      addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 2 transaction...');
-      const receipt2 = await tx2.wait();
       
-      // Log Step 2 completion
-      const iface2 = new ethers.Interface(LabDistributionFacet_ABI);
-      for (const log of receipt2.logs) {
-        try {
-          const decoded = iface2.parseLog(log);
-          if (decoded && decoded.name === "LabDistributionComplete") {
-            console.log('✅ LabDistributionComplete event decoded');
-            addLog('success', 'Stage 1: Create Lab', `✅ Step 2 Complete: Bonding curve deployed and H1 tokens distributed!`);
-            break;
+      let step2Success = false;
+      let bondingCurveAddress = '';
+      
+      try {
+        const diamond2 = new ethers.Contract(CONTRACTS.H1Diamond, LabDistributionFacet_ABI, signer);
+        const tx2 = await diamond2.createLabStep2(labId);
+        addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 2 transaction...');
+        const receipt2 = await tx2.wait();
+        
+        console.log('✅ Step 2 transaction mined:', tx2.hash);
+        
+        // Log Step 2 completion
+        const iface2 = new ethers.Interface(LabDistributionFacet_ABI);
+        for (const log of receipt2.logs) {
+          try {
+            const decoded = iface2.parseLog(log);
+            if (decoded && decoded.name === "LabDistributionComplete") {
+              bondingCurveAddress = decoded.args[1]; // Second arg is curve address
+              console.log('✅ LabDistributionComplete event decoded, curve:', bondingCurveAddress);
+              addLog('success', 'Stage 1: Create Lab', `✅ Step 2 Complete: Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, tx2.hash);
+              step2Success = true;
+              break;
+            }
+          } catch (e) {
+            continue;
           }
-        } catch (e) {
-          continue;
+        }
+        
+        if (!step2Success) {
+          addLog('warning', 'Stage 1: Create Lab', '⚠️ Step 2 transaction mined but LabDistributionComplete event not found. Bonding curve may have already existed.');
+          step2Success = true; // Still consider it a success if tx didn't revert
+        }
+      } catch (step2Error: any) {
+        console.error('❌ Step 2 Error:', step2Error);
+        
+        // Check if error is because curve already exists
+        if (step2Error?.message?.includes('EXISTS') || step2Error?.data?.includes('EXISTS')) {
+          addLog('warning', 'Stage 1: Create Lab', '⚠️ Bonding curve already exists for this lab (this is OK - continuing...)');
+          step2Success = true; // Not a fatal error
+        } else {
+          addLog('error', 'Stage 1: Create Lab', `❌ Step 2 Failed: ${step2Error.message || 'Unknown error'}. Bonding curve NOT deployed!`);
+          toast.error('Lab created but bonding curve deployment failed. You can deploy it manually later.');
+          // Don't throw - lab was still created successfully in Step 1
         }
       }
       
@@ -1106,104 +1133,131 @@ export default function Prototype() {
     }
   };
 
+  /**
+   * Simplified enrichment flow for demo - automatically handles all requirements
+   * Creates credential if needed, uses same user as supervisor, auto-approves
+   */
   const handleSubmitForReview = async () => {
-    if (!isConnected) {
+    if (!isConnected || !sdk || !address) {
       toast.error('Please connect your wallet first');
       return;
     }
-    if (!sdk) {
-      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
-      return;
-    }
-    setLoading('submitForReview');
-    addLog('info', 'Stage 3: Enrichment', `📋 STARTING: Submit data ${enrichmentDataId} for supervisor review`);
+    
+    setLoading('enrichment');
+    addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Auto-enriching data workflow...`);
+    
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
-      let signer = await provider.getSigner(address);
-      try {
-        const signerAddr = await signer.getAddress();
-        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
-          signer = await provider.getSigner(address);
-        }
-      } catch {}
-
-      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      const signer = await provider.getSigner(address);
       
-      addLog('info', 'Stage 3: Enrichment', '📡 Broadcasting submitForReview to DataValidationFacet...');
-      const tx = await diamond.submitForReview(
+      // Step 1: Ensure user has a credential (create if needed)
+      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
+      
+      addLog('info', 'Stage 3: Enrichment', '🔍 Checking for user credential...');
+      let userId = await credentialDiamond.getUserId(address);
+      
+      if (userId === 0n) {
+        addLog('info', 'Stage 3: Enrichment', '📝 Creating user ID...');
+        const createUserTx = await credentialDiamond.createUserId(address, credentialDomain);
+        await createUserTx.wait();
+        userId = await credentialDiamond.getUserId(address);
+        addLog('success', 'Stage 3: Enrichment', `✅ User ID created: ${userId}`);
+      }
+      
+      // Step 2: Ensure user has a verified credential (create and verify if needed)
+      let credentialId = enrichmentSupervisorCredentialId;
+      
+      if (!credentialId || credentialId === '0' || credentialId === '1') {
+        addLog('info', 'Stage 3: Enrichment', '📝 Creating and verifying credential...');
+        
+        // Issue credential
+        const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`demo-credential-${Date.now()}`));
+        const issueTx = await credentialDiamond.issueCredential(
+          userId, 
+          credentialType, 
+          credentialDomain, 
+          verificationHash
+        );
+        const issueReceipt = await issueTx.wait();
+        
+        // Extract credential ID from event
+        const credIssuedEvent = issueReceipt.logs.find((log: any) => 
+          log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
+        );
+        credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[1]) : '1';
+        
+        // Auto-verify the credential
+        const verifyTx = await credentialDiamond.verifyCredential(credentialId, 'Demo auto-verified');
+        await verifyTx.wait();
+        
+        addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialId} created and verified`);
+      }
+      
+      // Step 3: Submit data for review (using same user as supervisor for demo)
+      const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      
+      addLog('info', 'Stage 3: Enrichment', `📋 Submitting data ${enrichmentDataId} for review...`);
+      const submitTx = await validationDiamond.submitForReview(
         enrichmentDataId,
-        enrichmentSupervisor || (await signer.getAddress()),
-        enrichmentSupervisorCredentialId
+        address, // Use same user as supervisor for demo
+        credentialId
       );
-      addLog('info', 'Stage 3: Enrichment', '⏳ Mining transaction & assigning supervisor...');
-      const receipt = await tx.wait();
-
-      addLog('success', 'Stage 3: Enrichment', `✅ Data submitted for review! Supervisor assigned.`, tx.hash);
-      toast.success('Data submitted for enrichment review!');
-    } catch (error: any) {
-      console.error('Submit for review error:', error);
-      addLog('error', 'Stage 3: Enrichment', `❌ ${error.message || 'Failed to submit for review'}`);
-      toast.error('Failed to submit for review');
-    } finally {
-      setLoading(null);
-    }
-  };
-
-  const handleApproveData = async () => {
-    if (!isConnected) {
-      toast.error('Please connect your wallet first');
-      return;
-    }
-    if (!sdk) {
-      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
-      return;
-    }
-    setLoading('approveData');
-    addLog('info', 'Stage 3: Enrichment', `✅ STARTING: Approve enriched data ${enrichmentDataId} with ${enrichmentDeltaGain} bps delta-gain`);
-    try {
-      const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
-      let signer = await provider.getSigner(address);
-      try {
-        const signerAddr = await signer.getAddress();
-        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
-          signer = await provider.getSigner(address);
-        }
-      } catch {}
-
-      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      await submitTx.wait();
+      addLog('success', 'Stage 3: Enrichment', `✅ Data submitted for review`);
       
-      // Generate approval signature
-      const approvalSig = ethers.keccak256(
-        ethers.toUtf8Bytes(`approval-${enrichmentDataId}-${Date.now()}`)
-      );
-      
-      addLog('info', 'Stage 3: Enrichment', '📡 Broadcasting approveData to DataValidationFacet...');
-      const tx = await diamond.approveData(
+      // Step 4: Auto-approve the data
+      addLog('info', 'Stage 3: Enrichment', '✅ Auto-approving data...');
+      const approvalSignature = ethers.keccak256(ethers.toUtf8Bytes(`approval-${enrichmentDataId}-${Date.now()}`));
+      const approveTx = await validationDiamond.approveData(
         enrichmentDataId,
-        enrichmentDeltaGain,
-        approvalSig
+        parseInt(enrichmentDeltaGain), // Use the delta gain from input
+        approvalSignature
       );
-      addLog('info', 'Stage 3: Enrichment', '⏳ Mining transaction & recording enrichment approval...');
-      const receipt = await tx.wait();
-
-      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT APPROVED! Delta-gain: ${enrichmentDeltaGain} bps. Revenue attribution configured.`, tx.hash);
-      toast.success(`Enrichment approved! Delta-gain: ${(parseInt(enrichmentDeltaGain) / 100).toFixed(0)}%`);
+      const approveReceipt = await approveTx.wait();
       
-      // Update progress bar
-      setCompletedSteps(prev => ({
+      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data ${enrichmentDataId} approved with ${enrichmentDeltaGain/100}% delta-gain!`, approveTx.hash);
+      toast.success(`Enrichment complete! Data approved with ${enrichmentDeltaGain/100}% improvement.`);
+      
+      setCompletedSteps(prev => ({ ...prev, step3: true }));
+      setDatasetMetadata(prev => ({
         ...prev,
-        step3: true
+        step3: {
+          credentialId: typeof credentialId === 'number' ? credentialId : parseInt(credentialId as string),
+          timestamp: new Date(),
+          txHash: approveTx.hash,
+          walletAddress: address,
+          domain: credentialDomain
+        }
       }));
+      
     } catch (error: any) {
-      console.error('Approve data error:', error);
-      addLog('error', 'Stage 3: Enrichment', `❌ ${error.message || 'Failed to approve data'}`);
-      toast.error('Failed to approve data');
+      console.error('Enrichment error:', error);
+      
+      let errorMessage = 'Enrichment failed';
+      const errorData = error?.data || error?.error?.data || '';
+      
+      if (typeof errorData === 'string') {
+        if (errorData.includes('82b42900')) {
+          errorMessage = 'Invalid Lab ID: Create a lab first in Stage 1.';
+        } else if (errorData.includes('e27034e7')) {
+          errorMessage = 'Invalid Data ID: Create data first in Stage 2.';
+        } else if (errorMessage.includes('Unauthorized')) {
+          errorMessage = 'You must be the creator of the data.';
+        }
+      }
+      
+      addLog('error', 'Stage 3: Enrichment', `❌ ${errorMessage}`);
+      toast.error(errorMessage);
     } finally {
       setLoading(null);
     }
   };
+
+  /**
+   * Alias - both enrichment buttons now use the same simplified auto-flow
+   */
+  const handleApproveData = handleSubmitForReview;
 
   const handlePurchaseDataset = async () => {
     if (!isConnected) {
@@ -1301,6 +1355,34 @@ export default function Prototype() {
         signer
       );
 
+      // CHECK if bonding curve already exists BEFORE attempting deployment
+      addLog('info', 'Bonding Curve', '🔍 Checking if bonding curve already exists...');
+      try {
+        const existingCurve = await diamond.getBondingCurve(labId);
+        
+        if (existingCurve && existingCurve !== '0x0000000000000000000000000000000000000000') {
+          addLog('info', 'Bonding Curve', `✅ Bonding curve already deployed at ${existingCurve}`);
+          toast.info('Bonding curve already deployed for this lab!');
+          
+          // Update the lab in state with the existing curve address
+          setUserCreatedLabs(prev => 
+            prev.map(lab => 
+              lab.labId === labId 
+                ? { ...lab, curveAddress: existingCurve }
+                : lab
+            )
+          );
+          
+          // Refresh blockchain labs to update UI
+          await loadBlockchainLabs();
+          
+          setLoading(null);
+          return;
+        }
+      } catch (checkError) {
+        console.log('Could not check existing curve, proceeding with deployment:', checkError);
+      }
+
       addLog('info', 'Bonding Curve', '📝 Deploying bonding curve...');
       const tx = await diamond.deployBondingCurve(labId);
       addLog('info', 'Bonding Curve', '⏳ Mining transaction...');
@@ -1331,13 +1413,24 @@ export default function Prototype() {
         )
       );
       
-      // Refresh marketplace data to show the new curve and price
+      // Refresh marketplace data and blockchain labs to show the new curve and price
       await loadMarketplaceLabs();
+      await loadBlockchainLabs();
       
     } catch (error: any) {
       console.error('Deploy bonding curve error:', error);
-      addLog('error', 'Bonding Curve', `❌ ${error.message || 'Failed to deploy bonding curve'}`);
-      toast.error('Failed to deploy bonding curve');
+      
+      // Check if error is because curve already exists
+      if (error?.message?.includes('EXISTS') || error?.data?.includes('EXISTS') || error?.reason === 'EXISTS') {
+        addLog('info', 'Bonding Curve', `✅ Bonding curve already exists for Lab #${labId}`);
+        toast.info('Bonding curve already deployed for this lab!');
+        
+        // Refresh blockchain labs to update UI
+        await loadBlockchainLabs();
+      } else {
+        addLog('error', 'Bonding Curve', `❌ ${error.message || 'Failed to deploy bonding curve'}`);
+        toast.error('Failed to deploy bonding curve');
+      }
     } finally {
       setLoading(null);
     }
@@ -2224,25 +2317,19 @@ export default function Prototype() {
                     />
                   </div>
 
-                  <div className="grid grid-cols-2 gap-3">
-                    <Button 
-                      onClick={handleSubmitForReview} 
-                      disabled={loading === 'submitForReview'} 
-                      variant="outline"
-                      className="w-full"
-                    >
-                      {loading === 'submitForReview' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      Submit for Review
-                    </Button>
-                    
-                    <Button 
-                      onClick={handleApproveData} 
-                      disabled={loading === 'approveData'} 
-                      className="w-full bg-accent hover:bg-accent/90"
-                    >
-                      {loading === 'approveData' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
-                      Approve Data
-                    </Button>
+                  {/* Simplified one-click enrichment for demo */}
+                  <Button 
+                    onClick={handleSubmitForReview} 
+                    disabled={loading === 'enrichment'} 
+                    className="w-full bg-accent hover:bg-accent/90"
+                  >
+                    {loading === 'enrichment' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : '✨ '}
+                    Enrich Data (Auto-Complete)
+                  </Button>
+                  
+                  <p className="text-xs text-muted-foreground text-center mt-2">
+                    💡 Demo mode: Automatically handles credential creation, review, and approval in one transaction flow
+                  </p>
                   </div>
 
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
