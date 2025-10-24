@@ -1185,69 +1185,10 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner(address);
       
-      // Step 1: Setup placeholder credential for demo (avoids all credential errors)
-      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
-      let credentialId = '1'; // Safe default
-      
-      try {
-        // Try to get or create a simple user ID and credential
-        let userId = await credentialDiamond.getUserId(address);
-        
-        if (userId === 0n) {
-          // Try to create user ID, but don't fail if it exists
-          try {
-            const createUserTx = await credentialDiamond.createUserId(address, credentialDomain);
-            await createUserTx.wait();
-            userId = await credentialDiamond.getUserId(address);
-            addLog('info', 'Stage 3: Enrichment', `✅ User ID created: ${userId}`);
-          } catch (userErr: any) {
-            // User already exists, that's fine
-            userId = await credentialDiamond.getUserId(address);
-            addLog('info', 'Stage 3: Enrichment', `📋 Using existing user ID: ${userId}`);
-          }
-        }
-        
-        // If we have a userId, try to create a credential
-        if (userId !== 0n) {
-          try {
-            const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`demo-enrichment-${Date.now()}`));
-            const issueTx = await credentialDiamond.issueCredential(
-              userId, 
-              'Demo Enrichment Credential', 
-              credentialDomain, 
-              verificationHash
-            );
-            const issueReceipt = await issueTx.wait();
-            
-            const credIssuedEvent = issueReceipt.logs.find((log: any) => 
-              log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
-            );
-            
-            if (credIssuedEvent) {
-              credentialId = ethers.toNumber(credIssuedEvent.topics[1]).toString();
-              
-              // Auto-verify the credential
-              try {
-                const verifyTx = await credentialDiamond.verifyCredential(credentialId, 'Auto-verified for demo');
-                await verifyTx.wait();
-                addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialId} created & verified`);
-                setEnrichmentSupervisorCredentialId(credentialId);
-              } catch (verifyErr) {
-                // Already verified, that's OK
-                addLog('info', 'Stage 3: Enrichment', `📋 Credential ${credentialId} ready (already verified)`);
-              }
-            }
-          } catch (credErr: any) {
-            // Credential might already exist, use provided or default
-            credentialId = enrichmentSupervisorCredentialId || '1';
-            addLog('info', 'Stage 3: Enrichment', `📋 Using credential ID: ${credentialId}`);
-          }
-        }
-      } catch (setupErr) {
-        // All credential setup failed, use safe default
-        credentialId = '1';
-        addLog('info', 'Stage 3: Enrichment', `📋 Using default credential for demo`);
-      }
+      // Step 1: Use safe default credential (demo mode - no credential creation)
+      // For a production demo, credentials should be created in the dedicated credential section
+      const credentialId = enrichmentSupervisorCredentialId || '1';
+      addLog('info', 'Stage 3: Enrichment', `📋 Using credential ID: ${credentialId} (demo mode - credential validation bypassed)`);
       
       // Step 2: Submit data for review (using same user as supervisor for demo)
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
