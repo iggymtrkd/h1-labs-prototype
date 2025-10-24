@@ -1,9 +1,9 @@
 # 🧬 H1 Labs
-### Making AI Data Legally Defensible
+### The AI Data Economy Will Be Onchain
 
-> **The Problem:** AI companies in regulated markets (healthcare, finance, defense) can't prove their training data is compliant. When audited, "we bought data from a vendor" doesn't hold up.
+> **The Problem:** AI companies need quality data. Validators need fair pay. Contributors want ownership. Data brokers serve none of these—they just extract rent.
 
-> **Our Solution:** Every dataset is created by an AI agent AND reviewed by a credentialed expert, both signing on-chain. Regulators get an immutable audit trail. Contributors get paid automatically.
+> **Our Solution:** Aligned incentives through tokenized ownership. Validators stake credentials and earn yield. Contributors get revenue share. Buyers get provenance guarantees. Economics that actually work.
 
 ---
 
@@ -56,6 +56,8 @@ When data sells, smart contracts automatically split payments:
 - Lab: 40%
 
 No manual invoicing. No delays. Fair compensation baked into the protocol.
+
+**(numbers subject to change)**
 
 ---
 
