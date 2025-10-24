@@ -1192,23 +1192,56 @@ export default function Prototype() {
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner(address);
       
-      // Step 1: Simple credential handling - use provided ID or default
+      // Step 1: Auto-create credential that satisfies contract requirements
+      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
-      const credentialId = enrichmentSupervisorCredentialId || '1';
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Using credential ID: ${credentialId}`);
-      
-      // Step 2: Submit data for review (using same user as supervisor for demo)
-      
-      // Always use connected wallet as supervisor for demo
       const supervisorAddress = address as string;
-      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${enrichmentDataId} for review (supervisor: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)})...`);
+      const dataIdNum = parseInt(enrichmentDataId, 10);
       
-      // Convert string IDs to numbers for the contract
-      const dataIdNum = parseInt(enrichmentDataId);
-      const credentialIdNum = parseInt(credentialId);
+      if (isNaN(dataIdNum) || dataIdNum <= 0) {
+        throw new Error(`Invalid data ID: "${enrichmentDataId}". Please select valid data.`);
+      }
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Parameters: dataId=${dataIdNum}, supervisor=${supervisorAddress}, credentialId=${credentialIdNum}`);
+      addLog('info', 'Stage 3: Enrichment', `📋 Auto-creating credential for enrichment...`);
+      
+      // Get or create user ID
+      let userId = await credentialDiamond.getUserId(supervisorAddress);
+      if (userId === 0n) {
+        const createUserTx = await credentialDiamond.createUserId(supervisorAddress, credentialDomain);
+        await createUserTx.wait();
+        userId = await credentialDiamond.getUserId(supervisorAddress);
+        addLog('success', 'Stage 3: Enrichment', `✅ User ID created: ${userId}`);
+      }
+      
+      // Issue credential in the required domain
+      const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`auto-enrichment-${Date.now()}`));
+      const issueTx = await credentialDiamond.issueCredential(
+        userId,
+        'Auto-generated Enrichment Credential',
+        credentialDomain,
+        verificationHash
+      );
+      const issueReceipt = await issueTx.wait();
+      
+      // Get credential ID from event
+      const credIssuedEvent = issueReceipt.logs.find((log: any) => 
+        log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
+      );
+      
+      let credentialIdNum = 1;
+      if (credIssuedEvent) {
+        credentialIdNum = ethers.toNumber(credIssuedEvent.topics[1]);
+        addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialIdNum} issued`);
+      }
+      
+      // Verify the credential immediately
+      const verifyTx = await credentialDiamond.verifyCredential(credentialIdNum, 'Auto-verified for demo');
+      await verifyTx.wait();
+      addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialIdNum} verified`);
+      
+      // Step 2: Submit data for review
+      addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${dataIdNum} for review...`);
       
       const submitTx = await validationDiamond.submitForReview(
         dataIdNum,
@@ -1237,7 +1270,7 @@ export default function Prototype() {
       setDatasetMetadata(prev => ({
         ...prev,
         step3: {
-          credentialId: typeof credentialId === 'number' ? credentialId : parseInt(credentialId as string),
+          credentialId: credentialIdNum,
           timestamp: new Date(),
           txHash: approveTx.hash,
           walletAddress: address,
@@ -2383,19 +2416,6 @@ export default function Prototype() {
                     </div>
                   </div>
 
-                  <div>
-                    <Label htmlFor="enrichmentSupervisorCredentialId" className="text-xs">Supervisor Credential ID (demo)</Label>
-                    <Input 
-                      id="enrichmentSupervisorCredentialId" 
-                      value={enrichmentSupervisorCredentialId} 
-                      onChange={e => setEnrichmentSupervisorCredentialId(e.target.value)} 
-                      placeholder="1" 
-                      className="text-sm"
-                    />
-                    <p className="text-xs text-muted-foreground mt-1">
-                      Supervisor: Your connected wallet (auto)
-                    </p>
-                  </div>
 
                   {/* Simplified one-click enrichment for demo */}
                   <Button 
@@ -2407,12 +2427,9 @@ export default function Prototype() {
                     Enrich Data (Auto-Complete)
                   </Button>
                   
-                  <p className="text-xs text-muted-foreground text-center mt-2">
-                    💡 Demo mode: Automatically handles credential creation, review, and approval in one transaction flow
-                  </p>
-
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
-                    💡 <span className="font-semibold">Tip:</span> Select Data from dropdown (data already has lab info). Delta-gain in basis points (5000 = 50%). Enrichment can be done multiple times on same data. {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold"> Create data first in Stage 2!</span>}
+                    💡 <span className="font-semibold">One-Click Enrichment:</span> Automatically creates credentials, submits for review, and approves data. Just select data and click! Delta-gain in basis points (5000 = 50%).
+                    {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold block mt-1">⚠️ Create data first in Stage 2!</span>}
                   </div>
                 </div>
               </div>
