@@ -1,7 +1,5 @@
 # **H1 Labs — Litepaper**  
-> Status: Aligned with smart contracts as of 2025-10-19 | **UPDATED 2025-10-20: Enhanced accuracy on level thresholds, ownership mechanics, validator rewards, and detailed economic flywheel example**
-> 
-> **✨ MAJOR UPDATE 2025-10-23: New Tokenomics - Automatic H1 distribution on lab creation with vesting schedules. Labs now auto-deploy bonding curves with 10% liquidity. Owners receive 30% H1 (vested 6 months), 40% reserved for scholars, 15% for devs, 5% to treasury.**
+> Status: Current as of 2025-10-24 | Aligned with latest smart contract implementation and tokenomics
 
 ### Advancing AI through provable, human‑validated data — powered by blockchain.
 
@@ -10,18 +8,40 @@
 ## 1. Mission, Goals, and Why Now
 
 **Mission**  
-H1 Labs is building the human‑first protocol for AI — a decentralized system where verified people enrich, validate, and monetize datasets with onchain provenance, compliance, and transparent economics.
-Through our Dual‑Intelligence SDK, every app pairs an agent with a credentialed human, ensuring compliant data for regulated and semi‑regulated markets.
+H1 Labs is building the infrastructure for the AI data economy — transforming data into a **verified, monetizable, compliant asset** through on-chain provenance, credentialed validation, and automated revenue sharing.
+
+Through our Dual-Intelligence SDK, every dataset combines AI efficiency with human expertise, both signing on-chain to create immutable audit trails that satisfy regulators and enterprise buyers.
+
+**The Problem We Solve**  
+AI companies need quality data. Validators need fair pay. Contributors want ownership. Data brokers serve none of these—they just extract rent.
+
+Today's data pipelines are fundamentally broken in regulated markets:
+- **No Audit Trail** → Companies can't prove HIPAA/GDPR compliance when regulators ask
+- **Anonymous Data** → "Who validated this?" is a question nobody can answer
+- **Legal Liability** → Healthcare AI companies face fines and shutdowns for using unverified data
+- **Zero Provenance** → No cryptographic proof that a credentialed expert reviewed the data
+- **Exploitation** → Data contributors have no stake in the value they create
+
+**Our Solution: Aligned Incentives Through Tokenized Ownership**
+- Data Creators earn 20% (direct payment to contributors)
+- Validators earn 20% (credentialed experts who approve quality)
+- Developers earn 15% (SDK/app builders)
+- H1 Holders earn via 40% buyback (proportional distribution to all holders)
+- Protocol Treasury receives 5% (sustainable operations)
+- Buyers get provenance guarantees and regulatory defensibility
+- Economics that actually work—no middlemen extracting rent
 
 **Goals**  
-- Launch a verifiable data economy spanning healthcare, robotics, law, art, and gaming.  
-- Align incentives between contributors, validators, labs, and AI buyers through crypto‑native mechanics.  
-- Make provenance, credentialing, and compliance default infrastructure for AI.
+- Launch a verifiable data economy spanning healthcare, robotics, law, art, and gaming  
+- Align incentives between contributors, validators, labs, and AI buyers through transparent on-chain mechanics  
+- Make provenance, credentialing, and compliance the default infrastructure for AI
 
 **Why Now**  
-AI models demand trustworthy data. Today's pipelines are opaque, legally risky, and misaligned with human contributors. H1 Labs merges blockchain guarantees (provenance, payments, programmable policy) with human expertise to create compliant, auditable datasets that enterprises can trust.
+- 85% of enterprise AI projects fail due to compliance issues
+- Companies spend $500K–$2M annually on data ops and compliance lawyers
+- When sued, weak data provenance becomes exhibit A against you
 
-We target regulated and semi‑regulated markets — starting with healthcare — and expanding to finance (AML/KYC), legal (privacy/privilege), defense (ITAR/EAR), robotics/industrial (safety standards), and media/creative (C2PA).
+H1 Labs provides the cryptographic proof, regulatory defensibility, and fair economics that the AI industry desperately needs. We target regulated markets (healthcare, finance, defense) where compliance is non-negotiable and expand to semi-regulated markets (legal, robotics, creative) where rules are evolving.
 
 ---
 
@@ -47,6 +67,8 @@ We target regulated and semi‑regulated markets — starting with healthcare �
 ---
 
 ## 3.5 Investor Playbook — The Simple $LABS → H1 Path
+
+> **⚠️ Note:** This is a comprehensive investor guide. For a quick overview, see the [README](../README.md#-tokenomics). Full documentation will be moved to `/docs/INVESTOR_GUIDE.md` in a future update.
 
 > **For crypto investors**: Here's your path to H1 Labs yields in simple steps.
 
@@ -258,6 +280,8 @@ A: Redeem H1 for $LABS anytime (subject to cooldown). Convert $LABS back to stab
 ---
 
 ## 3.6 Buy H1 Button — What Happens Behind the Scenes
+
+> **⚠️ Note:** This section contains detailed technical implementation details. For high-level mechanics, see Section 6. Full technical documentation will be moved to `/docs/VAULT_MECHANICS.md` in a future update.
 
 > **For developers**: This section details the complete flow when users click "Buy H1" and the smart contract mechanics involved.
 
@@ -981,13 +1005,15 @@ This section provides detailed mechanics of how $LABS and H1 interact within the
 - **Bonding Curve (Optional)**: `BondingCurveSale` buys H1 at NAV + 0.5% premium, routing fees/POL to treasury and depositing net $LABS to the lab's vault.  
 - **Levels & App Slots**: LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.  
 - **Revenue Split (Current Implementation - 100% Allocation)**: 
-   - 40% → Lab's H1 Holders (via buyback that reduces supply)
-   - 15% → App Developer incentive (protocol treasury)
-   - 20% → Data Creators/Collectors (protocol treasury)
-   - 20% → Scholars/Supervisors (protocol treasury)
-   - 5% → H1 Protocol Treasury
+   - 40% → H1 Buyback (benefits all H1 holders proportionally)
+   - 20% → Data Creators (direct payment to contributors)
+   - 20% → Validators/Supervisors (direct payment to credentialed experts)
+   - 15% → App Developers (SDK/app builders)
+   - 5% → Protocol Treasury (operations & infrastructure)
    
-   All treasury allocations handled via centralized distribution from protocol treasury.
+   All payments automated via smart contract; transparent and auditable on-chain.
+   
+   **Key Principle:** Buyback distributes proportionally to all H1 holders (including vested stakes). Hold H1 = benefit from appreciation. Sell H1 = miss future gains.
 
 Economic intent: AI demand for verified datasets drives onchain payments that flow to Labs and treasury, with retained buyback budgets enabling future buy pressure mechanisms without dividend semantics.
 
@@ -1007,50 +1033,55 @@ When a dataset sells (e.g., $100K), revenue is split as follows:
 ```
 $100K Dataset Sale → Revenue Distribution (100% Allocation)
 
-├─ Lab's H1 Holders Buyback (40% = $40K)
-│  └─ Treasury executes H1 token repurchase
-│     └─ Reduces H1 supply on the market
-│     └─ Benefits ALL H1 holders via increased ownership % and scarcity appreciation
-│     └─ Example: 40K H1 tokens bought and burned
-│        ├─ Previous supply: 1M H1
-│        ├─ New supply: 960K H1
-│        └─ Your ownership %: Increased without any action
+├─ H1 Buyback (40% = $40K)
+│  └─ Sent to buyback wallet
+│     └─ Buyback bot repurchases H1 tokens from market
+│     └─ H1 distributed proportionally to ALL H1 holders
+│     └─ Benefits: Lab owner (staked), validators (staked), investors, anyone holding H1
+│     └─ Example: If you hold 2% of H1 supply, you get 2% of buyback benefit
+│        ├─ Lab owner with 30% vested stake: receives 30% of buyback ($12K)
+│        ├─ Early investor with 10% stake: receives 10% of buyback ($4K)
+│        ├─ Validator who staked 5%: receives 5% of buyback ($2K)
+│        └─ Hold H1 = participate in appreciation | Sell H1 = miss future gains
 │
-├─ App Developer Incentive (15% = $15K)
-│  └─ Allocated from treasury for SDK builders and app creators
-│     └─ Encourages development ecosystem growth
-│     └─ Paid in H1 or $LABS based on protocol designation
-│     └─ Example: Scrubber developer earns recognition for healthcare apps
-│
-├─ Data Creators/Collectors (20% = $20K)
-│  └─ Allocated from treasury to contributors who collected/enriched data
-│     └─ Proportional to quality and contribution score
-│     └─ Paid directly to data collectors
+├─ Data Creators (20% = $20K)
+│  └─ Sent to creator pool wallet
+│     └─ Distributed proportionally to contributors who collected/enriched data
 │     └─ Example: 50 data collectors share $20K based on contribution quality
+│        ├─ High-quality contributor (10% of work): $2,000
+│        ├─ Medium contributor (5% of work): $1,000
+│        └─ All contributions tracked on-chain
 │
-├─ Scholars/Supervisors (20% = $20K)
-│  └─ Allocated from treasury to validators and supervisors who reviewed/approved
-│     └─ Proportional to quality of validation and expertise
-│     └─ Paid directly to validators
+├─ Validators/Supervisors (20% = $20K)
+│  └─ Sent to scholar pool wallet
+│     └─ Distributed proportionally to credentialed experts who validated
 │     └─ Example: Board-certified clinicians earn based on rigor of approval
+│        ├─ Primary supervisor (60% of validation): $12,000
+│        ├─ Secondary reviewer (40% of validation): $8,000
+│        └─ All tracked via CredentialFacet
 │
-└─ H1 Protocol Treasury (5% = $5K)
-   └─ Retained for protocol operations, infrastructure, and future initiatives
-      └─ Covers development, audit, and ecosystem grants
+├─ App Developers (15% = $15K)
+│  └─ Sent to developer wallet
+│     └─ Rewards SDK builders, app creators
+│     └─ Example: Team that built Scrubber app for healthcare
+│
+└─ Protocol Treasury (5% = $5K)
+   └─ Sent to treasury wallet
+      └─ Protocol operations, audits, infrastructure, grants
 ```
 
-**How This Differs From Old Model:**
-- **Old**: 50% Lab Owner + 25% Treasury + 25% Buyback (conceptually confusing)
-- **New**: 40% Buyback (benefits ALL H1 holders) + 15% Dev + 20% Creators + 20% Scholars + 5% Treasury (100% clear allocation)
+**Key Principle:**
+Contributors, validators, and developers receive **direct payment** based on verified on-chain attribution. H1 holders benefit **proportionally** through buyback distribution—not by role, but by stake size. This aligns incentives: hold H1 long-term → maximize gains from all future dataset sales.
 
 **Contributor Roles & Reward Streams**
 
 || Role | Function | Reward Mechanism | Payment Token | Examples |
 ||------|----------|------------------|---------------|----------|
-|| **Data Creators** | Collect, enrich, and annotate dataset entries | 20% of dataset sale revenue, proportional to contribution quality | Direct payment from treasury | Healthcare startup collects de-identified records; robotics team gathers motion data |
-|| **Scholar/Validator** | Review, validate, and approve dataset for compliance | 20% of dataset sale revenue, quality-bonus multiplier for rigorous oversight | Direct payment from treasury | Board-certified radiologist approves imaging dataset; roboticist signs off on safety data |
-|| **Developer** | Build apps using H1 SDK, integrate compliance, manage operations | 15% of dataset sale revenue + future app-specific revenue splits | H1 or $LABS from treasury | Healthcare startup builds Scrubber app; robotics firm integrates DataValidationFacet |
-|| **App User/Buyer** | Purchase datasets, integrate into production models | Access to verified, compliant data with onchain provenance proof | Transparent pricing; dataset economics determined by supply/demand | AI company downloads healthcare dataset with full audit trail for FDA defense |
+|| **H1 Holders** | Stake $LABS to fund lab operations, provide liquidity | 40% of dataset sale revenue via buyback (proportional to stake) | H1 token appreciation (hold = gain, sell = miss) | Lab owner with 30% vested stake; early investors; validators who staked in their domain |
+|| **Data Creators** | Collect, enrich, and annotate dataset entries | 20% of dataset sale revenue, proportional to contribution quality | Direct payment via smart contract | Healthcare startup collects de-identified records; robotics team gathers motion data |
+|| **Validators/Supervisors** | Review, validate, and approve dataset for compliance | 20% of dataset sale revenue, quality-bonus multiplier for rigorous oversight | Direct payment via smart contract | Board-certified radiologist approves imaging dataset; roboticist signs off on safety data |
+|| **App Developers** | Build apps using H1 SDK, integrate compliance | 15% of dataset sale revenue for SDK/app builders | Direct payment via smart contract | Team that built Scrubber app; robotics firm integrates DataValidationFacet |
+|| **Data Buyers** | Purchase datasets, integrate into production models | Access to verified, compliant data with onchain provenance proof | Pay in ETH, USDC, or $LABS | AI company downloads healthcare dataset with full audit trail for FDA defense |
 
 **Attribution & Credentialing**
 
@@ -1219,6 +1250,8 @@ setFees(
 ---
 
 ### 6.91 Unstaking Flow — The Three Phases & Backfill Mechanism
+
+> **⚠️ Note:** This section contains extensive technical details about redemption mechanics. For a high-level overview, see Section 6.92. Full documentation will be moved to `/docs/REDEMPTION_GUIDE.md` in a future update.
 
 **Why the Three-Phase Flow?**
 
@@ -1705,72 +1738,91 @@ MONTHS 3-6: Dataset Revenue Phase
 
 Month 3: First Dataset Sale
 ├─ Dataset sold: $50,000
-├─ Revenue split:
-│  ├─ Lab Owner/Validators: $25K (50%)
-│  │  └─ Split among validators by contribution score (500 validators)
-│  ├─ Protocol Treasury: $12.5K (25%)
-│  └─ Buyback Reserve: $12.5K (25%)
-├─ Lab assets now: $187.5K + $25K = $212.5K
-├─ H1 NAV now: $212.5K / 187.5K = $1.133/share (+13.3% appreciation)
-├─ Founder's value: 50K shares × $1.133 = $56,650 (+$6,650 gain)
-└─ Validator 1's value: 25K shares × $1.133 = $28,325 (+$3,325 gain)
+├─ Revenue split (per smart contract):
+│  ├─ H1 Buyback: $20K (40%)
+│  │  └─ Distributed proportionally to all H1 holders (including vested)
+│  ├─ Data Creators: $10K (20%)
+│  │  └─ Split among contributors by contribution score (paid directly)
+│  ├─ Validators/Supervisors: $10K (20%)
+│  │  └─ Split among validators by validation work (paid directly)
+│  ├─ App Developers: $7.5K (15%)
+│  │  └─ Paid to SDK/app builders
+│  └─ Protocol Treasury: $2.5K (5%)
+│     └─ Operations & infrastructure
+├─ Lab assets now (from buyback): $187.5K + $20K = $207.5K
+├─ H1 NAV now: $207.5K / 187.5K = $1.107/share (+10.7% appreciation)
+├─ Founder's value: 50K shares × $1.107 = $55,350 (+$5,350 gain from buyback)
+├─ Validator 1's value: 25K shares × $1.107 = $27,675 (+$2,675 gain from buyback)
+└─ Plus: Validator 1 earned direct payment from 20% validators pool ($10K)
 
 Month 4: Buyback Execution (optional, protocol-controlled)
-├─ Buyback budget: $12.5K accumulated
+├─ Buyback budget: $8K accumulated (40% of $20K lab revenue)
 ├─ Market price of H1: ~$1.10/share
-├─ H1 repurchased: $12.5K / $1.10 = 11,364 shares burned
-├─ New H1 supply: 187.5K - 11.364K = 176.136K shares
-├─ Lab assets: still $212.5K (unchanged)
-├─ New NAV: $212.5K / 176.136K = $1.206/share (+6.4% from previous)
-├─ Founder's new value: 50K × $1.206 = $60,300 (+$7,300 total)
-│  (Gain comes from: $6,650 NAV growth + $1,650 buyback scarcity)
-└─ Validator 1's new value: 25K × $1.206 = $30,150 (+$3,650 total)
+├─ H1 repurchased: $8K / $1.10 = 7,273 shares burned
+├─ New H1 supply: 187.5K - 7.273K = 180.227K shares
+├─ Lab assets: still $207.5K (unchanged)
+├─ New NAV: $207.5K / 180.227K = $1.151/share (+4% from buyback scarcity)
+├─ Founder's new value: 50K × $1.151 = $57,550 (+$4,550 total from NAV + buyback)
+└─ Validator 1's new value: 25K × $1.151 = $28,775 (+$2,275 total from NAV + buyback)
 
 Month 5: Second Dataset Sale
 ├─ Dataset sold: $75,000 (higher value, more validators)
-├─ Revenue split:
-│  ├─ Lab Owner/Validators: $37.5K (50%)
-│  │  └─ Split among validators by contribution score (500 validators)
-│  ├─ Protocol Treasury: $18.75K (25%)
-│  └─ Buyback Reserve: $18.75K (25%)
-├─ Lab assets: $212.5K + $37.5K = $250K
-├─ NAV: $250K / 176.136K = $1.420/share (+17.7% appreciation)
-├─ Founder's value: 50K × $1.420 = $71,000 (+$10,700 from Month 4)
-└─ Validator 1's value: 25K × $1.420 = $35,500 (+$5,350 from Month 4)
+├─ Revenue split (per smart contract):
+│  ├─ H1 Buyback: $30K (40%)
+│  │  └─ Distributed proportionally to all H1 holders
+│  ├─ Data Creators: $15K (20%)
+│  │  └─ Split among contributors (paid directly)
+│  ├─ Validators/Supervisors: $15K (20%)
+│  │  └─ Split among validators (paid directly)
+│  ├─ App Developers: $11.25K (15%)
+│  │  └─ Paid to SDK/app builders
+│  └─ Protocol Treasury: $3.75K (5%)
+│     └─ Operations & infrastructure
+├─ Lab assets: $207.5K + $30K = $237.5K
+├─ NAV: $237.5K / 180.227K = $1.318/share (+14.5% appreciation from Month 4)
+├─ Founder's value: 50K × $1.318 = $65,900 (+$8,350 from Month 4 buyback)
+├─ Validator 1's value: 25K × $1.318 = $32,950 (+$4,175 from Month 4 buyback)
+└─ Plus: Validator 1 earned from 20% validators pool ($15K shared)
 
 Month 6: Buyback Round 2
-├─ Cumulative buyback budget: $12.5K (Month 3) + $18.75K (Month 5) = $31.25K
-├─ Market price: ~$1.35/share
-├─ H1 repurchased: $31.25K / $1.35 = 23,148 shares
-├─ New supply: 176.136K - 23.148K = 152.988K shares
-├─ NAV: $250K / 152.988K = $1.634/share (+15% scarcity gain)
-├─ Founder's value: 50K × $1.634 = $81,700 (+$10,700 from Month 5)
-└─ Validator 1's value: 25K × $1.634 = $40,850 (+$5,350 from Month 5)
+├─ Cumulative buyback budget: $8K (Month 3) + $12K (Month 5) = $20K
+├─ Market price: ~$1.30/share
+├─ H1 repurchased: $20K / $1.30 = 15,385 shares burned
+├─ New supply: 180.227K - 15.385K = 164.842K shares
+├─ NAV: $237.5K / 164.842K = $1.441/share (+9.3% scarcity gain from Month 5)
+├─ Founder's value: 50K × $1.441 = $72,050 (+$6,150 from Month 5)
+└─ Validator 1's value: 25K × $1.441 = $36,025 (+$3,075 from Month 5)
 
 
 YEAR 1 SUMMARY: Compounding Effects
 
 Cumulative Performance:
 ├─ Founder's investment: $50K initial
-├─ Founder's value after Year 1: $81,700
-├─ Total gain: +$31,700 (+63.4% ROI)
+├─ Founder's value after Year 1: $72,050
+├─ Total gain: +$22,050 (+44.1% ROI)
 ├─ Breakdown:
-│  ├─ NAV appreciation: From $1.00 → $1.634 per share = +63.4%
-│  ├─ Ownership dilution: 100% → 32.7% of lab
+│  ├─ NAV appreciation: From $1.00 → $1.441 per share = +44.1%
+│  ├─ Ownership dilution: 100% → 30.3% of lab (from community growth)
 │  └─ Counterbalance: Buybacks reduce supply, offsetting dilution
 │
 ├─ Validator 1's investment: $25K (Month 1)
-├─ Validator 1's value after Year 1: $40,850
-├─ Total gain: +$15,850 (+63.4% ROI, same rate as founder)
+├─ Validator 1's value after Year 1: $36,025
+├─ Total gain: +$11,025 (+44.1% ROI, same rate as founder)
 └─ Proportional rewards apply to all stakeholders
 
 H1-Healthcare Lab Status (End of Year 1):
-├─ Total TVL: $250K
-├─ H1 NAV: $1.634/share
-├─ H1 Supply: 152,988 shares (reduced from 187,500, 18.4% buyback)
-├─ Revenue generated: $125K+ (3 datasets sold)
-├─ Level: L2 reached ($250K ≥ $250K → 2 app slots unlocked)
-├─ Next milestone: $500K TVL → L3 (3 app slots)
+├─ Total TVL: $237.5K
+├─ H1 NAV: $1.441/share
+├─ H1 Supply: 164,842 shares (reduced from 187,500 via buybacks)
+├─ Revenue generated: $125K total (2 datasets sold at $50K and $75K)
+├─ Revenue distribution (per smart contract):
+│  ├─ H1 Buyback: $50K (40%) → distributed proportionally to all holders
+│  ├─ Data Creators: $25K (20%) → paid directly to contributors
+│  ├─ Validators: $25K (20%) → paid directly to credentialed experts
+│  ├─ Developers: $18.75K (15%) → paid to SDK/app builders
+│  └─ Treasury: $6.25K (5%) → protocol operations
+├─ Level: L2 approaching ($237.5K approaching $250K → 2 app slots soon)
+├─ Next milestone: $250K TVL → L2, then $500K TVL → L3 (3 app slots)
 └─ Platform metrics:
    ├─ Validators participating: 500+
    ├─ Apps deployed: 2 active
@@ -1780,10 +1832,11 @@ H1-Healthcare Lab Status (End of Year 1):
 ### **Key Mechanics at Work**
 
 1. **Ownership is Fractional**: H1 shares represent % ownership of lab treasury; dilutes with new deposits
-2. **Revenue Drives NAV**: Lab revenue ($50%+) flows to vault → increases backing → increases NAV for all
-3. **Buyback Creates Scarcity**: Reserve ($25K per sale) repurchases H1 → reduces supply → increases price
-4. **Compounding Growth**: NAV ↑ + Supply ↓ = exponential appreciation (63.4% Year 1 shown above)
-5. **Sustainability Loop**: Real dataset sales → real revenue → real token appreciation (no inflation)
+2. **Buyback Benefits All Holders**: 40% of revenue → buyback → distributed proportionally to all H1 holders (not by role)
+3. **Direct Payments by Role**: Creators (20%), validators (20%), developers (15%) paid immediately via smart contract
+4. **Hold Incentive**: Hold H1 = participate in all future buybacks; Sell H1 = miss appreciation
+5. **Compounding Growth**: NAV ↑ + Supply ↓ = exponential appreciation (44.1% Year 1 shown above)
+6. **Sustainability Loop**: Real dataset sales → real revenue → real token appreciation (no inflation)
 
 ---
 
@@ -1930,6 +1983,8 @@ Notes (current state):
 ---
 
 ## 17.5 H1 Token Mechanics — Frequently Asked Questions
+
+> **⚠️ Note:** This comprehensive FAQ section will be moved to `/docs/H1_TOKEN_FAQ.md` in a future update. For quick answers, see the tokenomics overview in Section 6.
 
 ### **H1 Token Supply & Creation**
 
@@ -2229,18 +2284,19 @@ When a dataset is purchased, the revenue is distributed **per-dataset to that sp
 
 ```
 Purchase Price: $X
-Distribution:
+Distribution (per RevenueFacet.sol):
 
-├─ Lab Owners:        50% ($0.50X)        → Direct to lab owner's wallet
-├─ Data Creators:      40% ($0.40X)        → Treasury (for later distribution to creators)
-├─ Supervisors:        10% ($0.10X)        → Treasury (for later distribution to supervisors)
-├─ Buyback Reserve:    20% ($0.20X)        → Treasury (to repurchase H1 tokens)
-└─ H1 Protocol Fee:     5% ($0.05X)        → Treasury (operational costs)
+├─ H1 Buyback:         40% ($0.40X)        → Buyback wallet (distributed proportionally to all H1 holders)
+├─ Data Creators:      20% ($0.20X)        → Creator pool wallet (direct payment to contributors)
+├─ Validators:         20% ($0.20X)        → Scholar pool wallet (direct payment to credentialed experts)
+├─ App Developers:     15% ($0.15X)        → Developer wallet (SDK/app builders)
+└─ Protocol Treasury:   5% ($0.05X)        → Treasury wallet (operations & infrastructure)
                        ─────────────
-Total:                 125% ($1.25X)*
+Total:                 100% ($1.00X)
 
-* Note: The percentages represent allocation of revenue where creators/supervisors/buyback/H1 
-  are tracked in the protocol treasury for distribution. Lab owners receive 50% directly.
+All payments automated, transparent, and auditable on-chain.
+
+**Key:** Buyback benefits all H1 holders proportionally (not by role). Hold H1 = earn from all future sales.
 ```
 
 ### **Example: $10,000 Dataset Purchase**
@@ -2251,18 +2307,30 @@ Creator: Cleveland Clinic (Lab ID: 1)
 Supervisor: ACR Standards Board
 Purchase Price: $10,000
 
-Revenue Breakdown:
-├─ Cleveland Clinic (Lab Owner, 50%):    $5,000 ✓ Sent immediately
-├─ Data Creators (40%):                  $4,000 → Treasury
-├─ Supervisors (10%):                    $1,000 → Treasury
-├─ Buyback Reserve (20%):                $2,000 → Treasury
-└─ H1 Protocol Fee (5%):                   $500 → Treasury
+Revenue Breakdown (per RevenueFacet.sol):
+├─ H1 Buyback (40%):                     $4,000 → Buyback wallet
+│  └─ Repurchases H1 tokens from market
+│     └─ Distributes proportionally to all H1 holders (including vested)
+│     └─ Example: Lab owner (30% stake) gets 30% × $4K = $1,200 worth
+│              Early investor (10% stake) gets 10% × $4K = $400 worth
+│              Validator (5% stake) gets 5% × $4K = $200 worth
+│
+├─ Data Creators (20%):                  $2,000 ✓ Paid directly via smart contract
+│  └─ Distributed to contributors who collected/enriched data
+│
+├─ Validators/Supervisors (20%):         $2,000 ✓ Paid directly via smart contract
+│  └─ Distributed to credentialed experts who validated
+│
+├─ App Developers (15%):                 $1,500 ✓ Paid directly via smart contract
+│  └─ Paid to SDK/app builders
+│
+└─ Protocol Treasury (5%):                 $500 ✓ Paid to treasury wallet
+   └─ Protocol operations & infrastructure
 
-Lab Vault Impact:
-├─ Lab's H1 shareholders gain:           50% NAV appreciation ($5,000)
-├─ Buyback pressure:                     $2,000 in H1 buyback capacity
-├─ Protocol revenue:                     $500
-└─ Creator/Supervisor future payouts:    $5,000 reserved
+H1 Holder Impact:
+├─ All H1 holders benefit from buyback (proportional to stake)
+├─ Hold H1 = participate in this + all future dataset sales
+└─ Sell H1 = miss future appreciation
 ```
 
 ### **Per-Dataset, Per-Lab Mechanics**
@@ -2302,25 +2370,25 @@ Step 2: Single On-Chain Transaction
 Revenue Distribution (per-dataset, per-lab):
 
 Dataset 1 ($4,500 to Lab 1):
-├─ Lab 1 Owner:       $2,250
-├─ Creators:          $1,800 → Treasury
-├─ Supervisors:         $450 → Treasury
-├─ Buyback:             $900 → Treasury
-└─ H1 Fee:             $225 → Treasury
+├─ H1 Buyback (40%):      $1,800 → Buyback wallet (proportional to all Lab 1 H1 holders)
+├─ Creators (20%):          $900 → Direct payment
+├─ Validators (20%):        $900 → Direct payment
+├─ Developers (15%):        $675 → Direct payment
+└─ Treasury (5%):          $225 → Treasury wallet
 
 Dataset 2 ($3,500 to Lab 3):
-├─ Lab 3 Owner:       $1,750
-├─ Creators:          $1,400 → Treasury
-├─ Supervisors:         $350 → Treasury
-├─ Buyback:             $700 → Treasury
-└─ H1 Fee:             $175 → Treasury
+├─ H1 Buyback (40%):      $1,400 → Buyback wallet (proportional to all Lab 3 H1 holders)
+├─ Creators (20%):          $700 → Direct payment
+├─ Validators (20%):        $700 → Direct payment
+├─ Developers (15%):        $525 → Direct payment
+└─ Treasury (5%):          $175 → Treasury wallet
 
 Dataset 3 ($2,000 to Lab 4):
-├─ Lab 4 Owner:       $1,000
-├─ Creators:            $800 → Treasury
-├─ Supervisors:         $200 → Treasury
-├─ Buyback:             $400 → Treasury
-└─ H1 Fee:             $100 → Treasury
+├─ H1 Buyback (40%):        $800 → Buyback wallet (proportional to all Lab 4 H1 holders)
+├─ Creators (20%):          $400 → Direct payment
+├─ Validators (20%):        $400 → Direct payment
+├─ Developers (15%):        $300 → Direct payment
+└─ Treasury (5%):          $100 → Treasury wallet
 
 Bulk Discount Applied:
 ├─ Total before discount: $12,000
@@ -2330,26 +2398,30 @@ Bulk Discount Applied:
 
 Step 3: Automatic H1 Impact
 
-Lab 1 Shareholders:
-├─ Gain: 50% revenue ($2,250) added to vault → NAV appreciation
-├─ Benefit: Buyback capacity (+$900)
-└─ Effect: H1-Healthcare shares increase in value
+Lab 1 H1 Holders:
+├─ Buyback allocation: $1,800 (40% of Lab 1 dataset revenue)
+├─ Distributed proportionally: All Lab 1 H1 holders benefit based on stake %
+├─ Example: Holder with 15% of Lab 1 H1 → gets 15% × $1,800 = $270 worth
+└─ Effect: All Lab 1 H1 holders increase in value automatically
 
-Lab 3 Shareholders:
-├─ Gain: 50% revenue ($1,750) added to vault → NAV appreciation
-├─ Benefit: Buyback capacity (+$700)
-└─ Effect: H1-Legal shares increase in value
+Lab 3 H1 Holders:
+├─ Buyback allocation: $1,400 (40% of Lab 3 dataset revenue)
+├─ Distributed proportionally: All Lab 3 H1 holders benefit based on stake %
+├─ Example: Holder with 10% of Lab 3 H1 → gets 10% × $1,400 = $140 worth
+└─ Effect: All Lab 3 H1 holders increase in value automatically
 
-Lab 4 Shareholders:
-├─ Gain: 50% revenue ($1,000) added to vault → NAV appreciation
-├─ Benefit: Buyback capacity (+$400)
-└─ Effect: H1-Robotics shares increase in value
+Lab 4 H1 Holders:
+├─ Buyback allocation: $800 (40% of Lab 4 dataset revenue)
+├─ Distributed proportionally: All Lab 4 H1 holders benefit based on stake %
+├─ Example: Holder with 20% of Lab 4 H1 → gets 20% × $800 = $160 worth
+└─ Effect: All Lab 4 H1 holders increase in value automatically
 
-Treasury (Protocol):
-├─ Creator payouts reserved: $5,000
-├─ Supervisor payouts reserved: $1,000
-├─ Buyback execution capacity: $2,000
-└─ Protocol operations: $500
+Direct Payments (Automated via Smart Contract):
+├─ Total creators paid: $2,000 (20% × $10K total, distributed proportionally)
+├─ Total validators paid: $2,000 (20% × $10K total, distributed proportionally)
+├─ Total developers paid: $1,500 (15% × $10K total)
+├─ Total treasury: $500 (5% × $10K total)
+└─ All payments traceable on-chain via CredentialFacet attribution
 ```
 
 ### **Transparency & On-Chain Verification**
@@ -2360,11 +2432,11 @@ Every dataset purchase emits events that can be verified on the blockchain:
 event RevenueDistributed(
   uint256 indexed datasetId,
   uint256 indexed labId,
-  uint256 labOwnerAmount,
-  uint256 creatorAmount,
-  uint256 supervisorAmount,
-  uint256 buybackAmount,
-  uint256 h1FeeAmount
+  uint256 buybackAmount,      // 40% - H1 buyback (proportional to all holders)
+  uint256 developerAmount,    // 15% - App/SDK developers
+  uint256 creatorAmount,      // 20% - Data creators/collectors
+  uint256 scholarAmount,      // 20% - Validators/supervisors
+  uint256 treasuryAmount      // 5% - Protocol treasury
 )
 ```
 
@@ -2379,37 +2451,45 @@ event RevenueDistributed(
 
 ```
 Day 0: User purchases $10,000 dataset
-├─ Lab owner receives: $5,000 immediately
-└─ Treasury receives: $5,000 (creators/supervisors/buyback/fees)
+├─ H1 Buyback wallet receives: $4,000 (40%)
+├─ Creators receive: $2,000 immediately (20%)
+├─ Validators receive: $2,000 immediately (20%)
+├─ Developers receive: $1,500 immediately (15%)
+└─ Treasury receives: $500 (5%)
 
-Day 1-7: Creator/Supervisor Payout Phase
-├─ Protocol calculates: Which creators/supervisors worked on this dataset
-├─ Attribution Facet retrieves: On-chain credential records
-├─ Payout queue: Ready to distribute via batched transactions
+Day 0-1: Attribution & Distribution
+├─ DataValidationFacet identifies: Which creators/validators/developers contributed
+├─ Attribution records: Retrieved from on-chain credential records
+├─ Smart contract executes: Automatic proportional distribution
+├─ Buyback wallet: Prepares H1 repurchase from market
+└─ All payments: Traceable on-chain via transaction hash
 
-Day 7-14: Buyback Execution
-├─ H1 buyback bot monitors: $2,000 in buyback capacity (from example)
-├─ Market conditions: Execute buyback when price < NAV
-├─ H1 supply decreases: All existing H1 holders gain scarcity value
-└─ Effect: H1-Healthcare shares increase in value automatically
+Day 1-14: Buyback Execution
+├─ Buyback bot: Repurchases H1 tokens from market using $4,000
+├─ H1 distribution: Proportionally to all H1 holders (including vested)
+├─ Example breakdown (if 200K H1 outstanding):
+│  ├─ Lab owner (60K H1, 30%) gets: 30% × $4K = $1,200 worth
+│  ├─ Early investor (20K H1, 10%) gets: 10% × $4K = $400 worth
+│  └─ Validators (10K H1, 5%) get: 5% × $4K = $200 worth
+└─ Effect: All H1 holders gain value automatically (no action needed)
 
-Ongoing: NAV Appreciation
-├─ Lab vault grows: +$5,000 added to vault assets
-├─ H1 NAV increases: Assets / Shares = higher value per share
-├─ Dividend effect: Without selling, H1 holders gain value
-└─ Compounding: Next purchase = higher NAV base
+Ongoing: Compounding Value
+├─ More datasets sold: More buyback allocations → more H1 distributed
+├─ Hold H1: Participate in all future dataset sale buybacks
+├─ Sell H1: Miss all future appreciation opportunities
+└─ Incentive: Long-term holding maximizes gains from compounding revenue
 ```
 
 ### **Why This Model Works**
 
 | Stakeholder | Incentive |
 |-------------|-----------|
-| **Lab Owners** | Direct 50% of revenue; benefit from producing high-quality datasets |
-| **Data Creators** | 40% allocated; reputation and payment tied to dataset quality & sales |
-| **Supervisors** | 10% allocated; incentivized to approve only high-quality data |
-| **H1 Holders** | Automatic buyback pressure + NAV appreciation; passive yield |
+| **H1 Holders** | 40% buyback distributed proportionally; hold = earn from all sales, sell = miss gains |
+| **Data Creators** | Direct 20% of revenue; reputation and payment tied to dataset quality & sales |
+| **Validators** | Direct 20% of revenue; incentivized to approve only high-quality, compliant data |
+| **Developers** | Direct 15% of revenue; rewards for building apps/SDK that generate dataset sales |
 | **Buyers** | Bulk discounts, transparent pricing, on-chain provenance verification |
-| **Protocol** | 5% operational fee; sustainable growth without rug-pull risk |
+| **Protocol** | 5% treasury ensures sustainable operations; no inflationary tokenomics |
 
 ### **Compliance & Auditability**
 

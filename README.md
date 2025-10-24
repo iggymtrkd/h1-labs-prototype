@@ -51,13 +51,15 @@ Every action is recorded with cryptographic proof:
 
 ### 3. Automated Revenue Sharing
 When data sells, smart contracts automatically split payments:
-- Creator: 45%
-- Validator: 15%
-- Lab: 40%
+- Data Creators: 20% (direct payment to contributors)
+- Validators: 20% (direct payment to credentialed experts)
+- Developers: 15% (SDK/app builders)
+- H1 Buyback: 40% (benefits all H1 holders proportionally)
+- Protocol Treasury: 5% (operations & infrastructure)
+
+**How Buyback Works:** The 40% buyback allocation repurchases H1 tokens from the market and distributes them proportionally to all H1 holders (including vested stakes). Hold H1 → benefit from appreciation. Sell H1 → miss future gains. This creates strong incentive to hold long-term.
 
 No manual invoicing. No delays. Fair compensation baked into the protocol.
-
-**(numbers subject to change)**
 
 ---
 
@@ -212,11 +214,12 @@ Result:
 ├─ Compliance: FDA can audit entire chain
 └─ Monetizable: Enterprise pays premium for enriched data
 
-Revenue Split:
-├─ AI Provider: 10%
-├─ MD Validator: 15%
-├─ Data Creator: 35%
-├─ Lab: 40%
+Revenue Split (Smart Contract):
+├─ Data Creators: 20% (contributors)
+├─ Validators: 20% (MD who signed off)
+├─ Developers: 15% (app/SDK builders)
+├─ H1 Buyback: 40% (all H1 holders benefit proportionally)
+├─ Protocol Treasury: 5% (operations)
 ```
 
 ### Key Features
