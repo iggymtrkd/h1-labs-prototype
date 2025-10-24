@@ -1196,36 +1196,11 @@ export default function Prototype() {
         throw new Error(`Invalid data ID: "${enrichmentDataId}". Please select valid data.`);
       }
       
-      // Step 1: Validate data exists and has valid lab
-      const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
-      const coreDiamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
+      addLog('info', 'Stage 3: Enrichment', `📋 Processing Data #${dataIdNum}...`);
       
-      // Check if data exists and get its lab ID
-      let dataLabId;
-      try {
-        const dataRecord = await validationDiamond.getDataRecord(dataIdNum);
-        dataLabId = Number(dataRecord.labId);
-        
-        if (!dataLabId || dataLabId === 0) {
-          throw new Error(`Data #${dataIdNum} has no associated lab. Please create data with a valid lab ID in Stage 2.`);
-        }
-        
-        // Verify the lab exists
-        const labDetails = await coreDiamond.getLabDetails(dataLabId);
-        if (labDetails.owner === ethers.ZeroAddress) {
-          throw new Error(`Lab #${dataLabId} doesn't exist. Please create a lab first in Stage 1, then create data associated with that lab.`);
-        }
-        
-        addLog('info', 'Stage 3: Enrichment', `📋 Data #${dataIdNum} belongs to Lab #${dataLabId}`);
-      } catch (checkErr: any) {
-        if (checkErr.message && checkErr.message.includes('doesn\'t exist')) {
-          throw checkErr;
-        }
-        throw new Error(`Cannot verify data #${dataIdNum}. Please ensure the data exists and was created with a valid lab ID.`);
-      }
-      
-      // Step 2: Auto-create credential that satisfies contract requirements
+      // Step 1: Auto-create credential that satisfies contract requirements
       const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
+      const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
       // Get or create user ID
       let userId = await credentialDiamond.getUserId(supervisorAddress);
@@ -1346,15 +1321,15 @@ export default function Prototype() {
       
       if (typeof errorData === 'string') {
         if (errorData.includes('82b42900')) {
-          errorMessage = 'Invalid Lab ID: Create a lab first in Stage 1.';
+          errorMessage = 'Invalid Lab ID: The data you\'re trying to enrich has no valid lab. Workflow: Create lab (Stage 1) → Create data WITH that lab (Stage 2) → Then enrich.';
         } else if (errorData.includes('e27034e7')) {
-          errorMessage = 'Invalid Data ID: Create data first in Stage 2.';
+          errorMessage = 'Invalid Data ID: Data not found. Please create data in Stage 2 first.';
         } else if (errorData.includes('e138fc29')) {
-          errorMessage = 'Unauthorized: You must be the creator of the data.';
+          errorMessage = 'Unauthorized: You must be the creator of the data to enrich it.';
         } else if (errorData.includes('e5aaacea')) {
           errorMessage = 'Invalid Status: Credential is not in PENDING status (may already be verified).';
         } else if (errorData.includes('38e4ebbb')) {
-          errorMessage = 'Invalid Credential ID: Check your credential ID.';
+          errorMessage = 'Invalid Credential: The credential does not exist or is invalid.';
         } else if (errorData.includes('8baa579f')) {
           errorMessage = 'Unverified Credential: Supervisor credential must be verified first.';
         } else if (errorData.includes('165ca92b')) {
