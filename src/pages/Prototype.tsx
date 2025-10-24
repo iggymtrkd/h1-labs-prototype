@@ -1196,14 +1196,27 @@ export default function Prototype() {
       const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
-      const supervisorAddress = address as string;
+      // Get supervisor address - use connected wallet or hardcoded fallback
+      let supervisorAddress = address as string;
+      
+      // Validate and log the address
+      console.log('Raw address from hook:', address);
+      console.log('Supervisor address:', supervisorAddress);
+      console.log('Is valid address?', ethers.isAddress(supervisorAddress || ''));
+      
+      if (!supervisorAddress || supervisorAddress === ethers.ZeroAddress || !ethers.isAddress(supervisorAddress)) {
+        // Hardcode user's address as fallback for demo
+        supervisorAddress = '0xCe14A5BE71c31b730947EaEFE24266F5384fadB4';
+        addLog('info', 'Stage 3: Enrichment', `⚠️ Using hardcoded demo address: ${supervisorAddress}`);
+      }
+      
       const dataIdNum = parseInt(enrichmentDataId, 10);
       
       if (isNaN(dataIdNum) || dataIdNum <= 0) {
         throw new Error(`Invalid data ID: "${enrichmentDataId}". Please select valid data.`);
       }
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Auto-creating credential for enrichment...`);
+      addLog('info', 'Stage 3: Enrichment', `📋 Using supervisor: ${supervisorAddress}`);
       
       // Get or create user ID
       let userId = await credentialDiamond.getUserId(supervisorAddress);
@@ -1242,6 +1255,14 @@ export default function Prototype() {
       
       // Step 2: Submit data for review
       addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${dataIdNum} for review...`);
+      
+      // Final validation and logging before contract call
+      console.log('=== CONTRACT CALL PARAMETERS ===');
+      console.log('dataIdNum:', dataIdNum, typeof dataIdNum);
+      console.log('supervisorAddress:', supervisorAddress, typeof supervisorAddress);
+      console.log('credentialIdNum:', credentialIdNum, typeof credentialIdNum);
+      console.log('Is supervisor valid?', ethers.isAddress(supervisorAddress));
+      console.log('================================');
       
       const submitTx = await validationDiamond.submitForReview(
         dataIdNum,
