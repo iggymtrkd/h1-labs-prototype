@@ -1181,34 +1181,14 @@ export default function Prototype() {
     addLog('info', 'Stage 3: Enrichment', `🎯 DEMO: Enriching Data #${enrichmentDataId} (Lab #${dataLabId})...`);
     
     try {
-      // Ensure we have a valid wallet address first
-      if (!address || address === ethers.ZeroAddress) {
-        throw new Error('Wallet address is invalid. Please reconnect your wallet.');
-      }
-      
-      addLog('info', 'Stage 3: Enrichment', `📋 Using wallet: ${address.substring(0, 6)}...${address.substring(38)}`);
-      
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const signer = await provider.getSigner(address);
       
-      // Step 1: Auto-create credential that satisfies contract requirements
-      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
-      const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      // Get supervisor address directly from signer (guaranteed to be valid)
+      const supervisorAddress = await signer.getAddress();
       
-      // Get supervisor address - use connected wallet or hardcoded fallback
-      let supervisorAddress = address as string;
-      
-      // Validate and log the address
-      console.log('Raw address from hook:', address);
-      console.log('Supervisor address:', supervisorAddress);
-      console.log('Is valid address?', ethers.isAddress(supervisorAddress || ''));
-      
-      if (!supervisorAddress || supervisorAddress === ethers.ZeroAddress || !ethers.isAddress(supervisorAddress)) {
-        // Hardcode user's address as fallback for demo
-        supervisorAddress = '0xCe14A5BE71c31b730947EaEFE24266F5384fadB4';
-        addLog('info', 'Stage 3: Enrichment', `⚠️ Using hardcoded demo address: ${supervisorAddress}`);
-      }
+      addLog('info', 'Stage 3: Enrichment', `📋 Auto-enrichment with wallet: ${supervisorAddress.substring(0, 6)}...${supervisorAddress.substring(38)}`);
       
       const dataIdNum = parseInt(enrichmentDataId, 10);
       
@@ -1216,7 +1196,9 @@ export default function Prototype() {
         throw new Error(`Invalid data ID: "${enrichmentDataId}". Please select valid data.`);
       }
       
-      addLog('info', 'Stage 3: Enrichment', `📋 Using supervisor: ${supervisorAddress}`);
+      // Step 1: Auto-create credential that satisfies contract requirements
+      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
+      const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
       
       // Get or create user ID
       let userId = await credentialDiamond.getUserId(supervisorAddress);
