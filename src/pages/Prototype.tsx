@@ -99,6 +99,12 @@ export default function Prototype() {
   // Step 3: Credentials (Scholars)
   const [credentialType, setCredentialType] = useState('Medical Degree');
   const [credentialDomain, setCredentialDomain] = useState('healthcare');
+  
+  // Step 3: Enrichment workflow
+  const [enrichmentDataId, setEnrichmentDataId] = useState('0');
+  const [enrichmentSupervisor, setEnrichmentSupervisor] = useState('');
+  const [enrichmentSupervisorCredentialId, setEnrichmentSupervisorCredentialId] = useState('1');
+  const [enrichmentDeltaGain, setEnrichmentDeltaGain] = useState('5000'); // 50%
 
   // Step 4: Purchase Dataset (AI Companies)
   const [purchaseDatasetId, setPurchaseDatasetId] = useState('1');
@@ -788,8 +794,8 @@ export default function Prototype() {
       addLog('info', 'Stage 2: Create Data', '⏳ Mining transaction & recording de-identified record hash to blockchain...');
       const receipt = await createTx.wait();
 
-      // Parse DataCreated event
-      const dataCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("DataCreated(uint256,uint256,bytes32,string,address)"));
+      // Parse DataCreated event with correct signature
+      const dataCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("DataCreated(uint256,uint256,address,bytes32,string,address,uint256)"));
       const dataId = dataCreatedEvent ? ethers.toNumber(dataCreatedEvent.topics[1]) : "unknown";
       addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedTagger.`, createTx.hash);
       toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
@@ -861,9 +867,9 @@ export default function Prototype() {
       addLog('info', 'Stage 3: Credentials', '⏳ Mining transaction & recording enrichment verification to blockchain...');
       const receipt = await issueTx.wait();
 
-      // Parse CredentialIssued event
-      const credIssuedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("CredentialIssued(uint256,uint256,string,string)"));
-      const credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[2]) : "unknown";
+      // Parse CredentialIssued event with correct signature
+      const credIssuedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)"));
+      const credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[1]) : "unknown";
       addLog('success', 'Stage 3: Credentials', `✅ STEP 3 COMPLETE: Enrichment verified! Credential issued (ID: ${credentialId}). Scholar reputation recorded onchain + revenue distribution triggered.`, issueTx.hash);
       toast.success(`Step 3 Complete! Credential ID: ${credentialId}`);
       setCompletedSteps(prev => ({
@@ -888,6 +894,106 @@ export default function Prototype() {
       setLoading(null);
     }
   };
+
+  const handleSubmitForReview = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
+      return;
+    }
+    setLoading('submitForReview');
+    addLog('info', 'Stage 3: Enrichment', `📋 STARTING: Submit data ${enrichmentDataId} for supervisor review`);
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      let signer = await provider.getSigner(address);
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
+
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      
+      addLog('info', 'Stage 3: Enrichment', '📡 Broadcasting submitForReview to DataValidationFacet...');
+      const tx = await diamond.submitForReview(
+        enrichmentDataId,
+        enrichmentSupervisor || (await signer.getAddress()),
+        enrichmentSupervisorCredentialId
+      );
+      addLog('info', 'Stage 3: Enrichment', '⏳ Mining transaction & assigning supervisor...');
+      const receipt = await tx.wait();
+
+      addLog('success', 'Stage 3: Enrichment', `✅ Data submitted for review! Supervisor assigned.`, tx.hash);
+      toast.success('Data submitted for enrichment review!');
+    } catch (error: any) {
+      console.error('Submit for review error:', error);
+      addLog('error', 'Stage 3: Enrichment', `❌ ${error.message || 'Failed to submit for review'}`);
+      toast.error('Failed to submit for review');
+    } finally {
+      setLoading(null);
+    }
+  };
+
+  const handleApproveData = async () => {
+    if (!isConnected) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+    if (!sdk) {
+      toast.error('Wallet SDK not initialized. Please reconnect your wallet.');
+      return;
+    }
+    setLoading('approveData');
+    addLog('info', 'Stage 3: Enrichment', `✅ STARTING: Approve enriched data ${enrichmentDataId} with ${enrichmentDeltaGain} bps delta-gain`);
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      let signer = await provider.getSigner(address);
+      try {
+        const signerAddr = await signer.getAddress();
+        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
+          signer = await provider.getSigner(address);
+        }
+      } catch {}
+
+      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      
+      // Generate approval signature
+      const approvalSig = ethers.keccak256(
+        ethers.toUtf8Bytes(`approval-${enrichmentDataId}-${Date.now()}`)
+      );
+      
+      addLog('info', 'Stage 3: Enrichment', '📡 Broadcasting approveData to DataValidationFacet...');
+      const tx = await diamond.approveData(
+        enrichmentDataId,
+        enrichmentDeltaGain,
+        approvalSig
+      );
+      addLog('info', 'Stage 3: Enrichment', '⏳ Mining transaction & recording enrichment approval...');
+      const receipt = await tx.wait();
+
+      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT APPROVED! Delta-gain: ${enrichmentDeltaGain} bps. Revenue attribution configured.`, tx.hash);
+      toast.success(`Enrichment approved! Delta-gain: ${(parseInt(enrichmentDeltaGain) / 100).toFixed(0)}%`);
+      
+      // Update progress bar
+      setCompletedSteps(prev => ({
+        ...prev,
+        step3: true
+      }));
+    } catch (error: any) {
+      console.error('Approve data error:', error);
+      addLog('error', 'Stage 3: Enrichment', `❌ ${error.message || 'Failed to approve data'}`);
+      toast.error('Failed to approve data');
+    } finally {
+      setLoading(null);
+    }
+  };
+
   const handlePurchaseDataset = async () => {
     if (!isConnected) {
       toast.error('Please connect your wallet first');
@@ -1651,6 +1757,88 @@ export default function Prototype() {
                   {loading === 'createCredential' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
                   Issue Credential
                 </Button>
+
+                <Separator className="my-4" />
+
+                {/* Enrichment Workflow */}
+                <div className="space-y-4">
+                  <div className="rounded-lg bg-accent/5 border border-accent/10 p-3">
+                    <h3 className="text-sm font-semibold text-accent mb-3">📊 Data Enrichment Workflow</h3>
+                    <p className="text-xs text-muted-foreground mb-3">
+                      Submit data for supervisor review and approve enriched datasets with quality scores.
+                    </p>
+                  </div>
+                  
+                  <div className="grid grid-cols-2 gap-3">
+                    <div>
+                      <Label htmlFor="enrichmentDataId" className="text-xs">Data ID</Label>
+                      <Input 
+                        id="enrichmentDataId" 
+                        value={enrichmentDataId} 
+                        onChange={e => setEnrichmentDataId(e.target.value)} 
+                        placeholder="0" 
+                        className="text-sm"
+                      />
+                    </div>
+                    <div>
+                      <Label htmlFor="enrichmentDeltaGain" className="text-xs">Delta-Gain (bps)</Label>
+                      <Input 
+                        id="enrichmentDeltaGain" 
+                        value={enrichmentDeltaGain} 
+                        onChange={e => setEnrichmentDeltaGain(e.target.value)} 
+                        placeholder="5000" 
+                        className="text-sm"
+                      />
+                    </div>
+                  </div>
+
+                  <div>
+                    <Label htmlFor="enrichmentSupervisor" className="text-xs">Supervisor Address (optional)</Label>
+                    <Input 
+                      id="enrichmentSupervisor" 
+                      value={enrichmentSupervisor} 
+                      onChange={e => setEnrichmentSupervisor(e.target.value)} 
+                      placeholder="Leave empty to use your address" 
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div>
+                    <Label htmlFor="enrichmentSupervisorCredentialId" className="text-xs">Supervisor Credential ID</Label>
+                    <Input 
+                      id="enrichmentSupervisorCredentialId" 
+                      value={enrichmentSupervisorCredentialId} 
+                      onChange={e => setEnrichmentSupervisorCredentialId(e.target.value)} 
+                      placeholder="1" 
+                      className="text-sm"
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-3">
+                    <Button 
+                      onClick={handleSubmitForReview} 
+                      disabled={loading === 'submitForReview'} 
+                      variant="outline"
+                      className="w-full"
+                    >
+                      {loading === 'submitForReview' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Submit for Review
+                    </Button>
+                    
+                    <Button 
+                      onClick={handleApproveData} 
+                      disabled={loading === 'approveData'} 
+                      className="w-full bg-accent hover:bg-accent/90"
+                    >
+                      {loading === 'approveData' ? <Loader2 className="h-4 w-4 animate-spin mr-2" /> : null}
+                      Approve Data
+                    </Button>
+                  </div>
+
+                  <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
+                    💡 <span className="font-semibold">Tip:</span> Use dataId from Stage 2. Delta-gain in basis points (5000 = 50%). These actions are independent.
+                  </div>
+                </div>
               </div>
             </Card>
 
