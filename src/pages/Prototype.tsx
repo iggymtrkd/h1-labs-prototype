@@ -2518,7 +2518,6 @@ export default function Prototype() {
                               <p className="text-xs text-muted-foreground mb-2 font-semibold">Data Status:</p>
                               <div className="space-y-1 text-xs">
                                 <p className="text-green-500">✓ Real (onchain) - Data from blockchain transactions</p>
-                                <p className="text-yellow-500">⚠ Placeholder - Will be populated from contract events</p>
                               </div>
                             </div>
                           </div>
@@ -3633,7 +3632,7 @@ export default function Prototype() {
                   </div>
                   <div className={`flex items-center gap-1 ${completedSteps.step3 ? 'text-green-500' : 'text-muted-foreground'}`}>
                     {completedSteps.step3 ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border-2 border-current" />}
-                    <span>Credential</span>
+                    <span>Credential & Enrichment</span>
                   </div>
                   <div className={`flex items-center gap-1 ${completedSteps.step4 ? 'text-green-500' : 'text-muted-foreground'}`}>
                     {completedSteps.step4 ? <CheckCircle2 className="h-3 w-3" /> : <div className="h-3 w-3 rounded-full border-2 border-current" />}
