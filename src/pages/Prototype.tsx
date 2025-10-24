@@ -1203,37 +1203,65 @@ export default function Prototype() {
       // Get or create user ID
       let userId = await credentialDiamond.getUserId(supervisorAddress);
       if (userId === 0n) {
-        const createUserTx = await credentialDiamond.createUserId(supervisorAddress, credentialDomain);
-        await createUserTx.wait();
-        userId = await credentialDiamond.getUserId(supervisorAddress);
-        addLog('success', 'Stage 3: Enrichment', `✅ User ID created: ${userId}`);
+        try {
+          const createUserTx = await credentialDiamond.createUserId(supervisorAddress, credentialDomain);
+          await createUserTx.wait();
+          userId = await credentialDiamond.getUserId(supervisorAddress);
+          addLog('success', 'Stage 3: Enrichment', `✅ User ID created: ${userId}`);
+        } catch (userErr: any) {
+          // User might already exist, try to get it again
+          userId = await credentialDiamond.getUserId(supervisorAddress);
+          if (userId === 0n) {
+            throw userErr; // Real error, rethrow
+          }
+          addLog('info', 'Stage 3: Enrichment', `📋 Using existing user ID: ${userId}`);
+        }
+      } else {
+        addLog('info', 'Stage 3: Enrichment', `📋 Using existing user ID: ${userId}`);
       }
       
       // Issue credential in the required domain
-      const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`auto-enrichment-${Date.now()}`));
-      const issueTx = await credentialDiamond.issueCredential(
-        userId,
-        'Auto-generated Enrichment Credential',
-        credentialDomain,
-        verificationHash
-      );
-      const issueReceipt = await issueTx.wait();
-      
-      // Get credential ID from event
-      const credIssuedEvent = issueReceipt.logs.find((log: any) => 
-        log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
-      );
-      
       let credentialIdNum = 1;
-      if (credIssuedEvent) {
-        credentialIdNum = ethers.toNumber(credIssuedEvent.topics[1]);
-        addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialIdNum} issued`);
+      try {
+        const verificationHash = ethers.keccak256(ethers.toUtf8Bytes(`auto-enrichment-${Date.now()}`));
+        const issueTx = await credentialDiamond.issueCredential(
+          userId,
+          'Auto-generated Enrichment Credential',
+          credentialDomain,
+          verificationHash
+        );
+        const issueReceipt = await issueTx.wait();
+        
+        // Get credential ID from event
+        const credIssuedEvent = issueReceipt.logs.find((log: any) => 
+          log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
+        );
+        
+        if (credIssuedEvent) {
+          credentialIdNum = ethers.toNumber(credIssuedEvent.topics[1]);
+          addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialIdNum} issued`);
+        }
+      } catch (issueErr: any) {
+        // Credential might already exist - use a default or prompt user
+        addLog('info', 'Stage 3: Enrichment', `📋 Using credential ID from input: ${enrichmentSupervisorCredentialId || '1'}`);
+        credentialIdNum = parseInt(enrichmentSupervisorCredentialId || '1', 10);
       }
       
-      // Verify the credential immediately
-      const verifyTx = await credentialDiamond.verifyCredential(credentialIdNum, 'Auto-verified for demo');
-      await verifyTx.wait();
-      addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialIdNum} verified`);
+      // Verify the credential immediately (skip if already verified)
+      try {
+        const verifyTx = await credentialDiamond.verifyCredential(credentialIdNum, 'Auto-verified for demo');
+        await verifyTx.wait();
+        addLog('success', 'Stage 3: Enrichment', `✅ Credential ${credentialIdNum} verified`);
+      } catch (verifyErr: any) {
+        // Check if already verified
+        const errData = verifyErr?.data || '';
+        if (typeof errData === 'string' && errData.includes('e5aaacea')) {
+          addLog('info', 'Stage 3: Enrichment', `📋 Credential ${credentialIdNum} already verified`);
+        } else {
+          // Some other error, rethrow it
+          throw verifyErr;
+        }
+      }
       
       // Step 2: Submit data for review
       addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${dataIdNum} for review...`);
