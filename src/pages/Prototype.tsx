@@ -1196,9 +1196,36 @@ export default function Prototype() {
         throw new Error(`Invalid data ID: "${enrichmentDataId}". Please select valid data.`);
       }
       
-      // Step 1: Auto-create credential that satisfies contract requirements
-      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
+      // Step 1: Validate data exists and has valid lab
       const validationDiamond = new ethers.Contract(CONTRACTS.H1Diamond, DataValidationFacet_ABI, signer);
+      const coreDiamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
+      
+      // Check if data exists and get its lab ID
+      let dataLabId;
+      try {
+        const dataRecord = await validationDiamond.getDataRecord(dataIdNum);
+        dataLabId = Number(dataRecord.labId);
+        
+        if (!dataLabId || dataLabId === 0) {
+          throw new Error(`Data #${dataIdNum} has no associated lab. Please create data with a valid lab ID in Stage 2.`);
+        }
+        
+        // Verify the lab exists
+        const labDetails = await coreDiamond.getLabDetails(dataLabId);
+        if (labDetails.owner === ethers.ZeroAddress) {
+          throw new Error(`Lab #${dataLabId} doesn't exist. Please create a lab first in Stage 1, then create data associated with that lab.`);
+        }
+        
+        addLog('info', 'Stage 3: Enrichment', `📋 Data #${dataIdNum} belongs to Lab #${dataLabId}`);
+      } catch (checkErr: any) {
+        if (checkErr.message && checkErr.message.includes('doesn\'t exist')) {
+          throw checkErr;
+        }
+        throw new Error(`Cannot verify data #${dataIdNum}. Please ensure the data exists and was created with a valid lab ID.`);
+      }
+      
+      // Step 2: Auto-create credential that satisfies contract requirements
+      const credentialDiamond = new ethers.Contract(CONTRACTS.H1Diamond, CredentialFacet_ABI, signer);
       
       // Get or create user ID
       let userId = await credentialDiamond.getUserId(supervisorAddress);
@@ -2459,8 +2486,8 @@ export default function Prototype() {
                   </Button>
                   
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
-                    💡 <span className="font-semibold">One-Click Enrichment:</span> Automatically creates credentials, submits for review, and approves data. Just select data and click! Delta-gain in basis points (5000 = 50%).
-                    {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold block mt-1">⚠️ Create data first in Stage 2!</span>}
+                    💡 <span className="font-semibold">One-Click Enrichment:</span> Automatically creates credentials, submits for review, and approves data. Select data (shows Lab ID) and click! Delta-gain in basis points (5000 = 50%).
+                    {createdDataIds.length === 0 && <span className="text-amber-500 font-semibold block mt-1">⚠️ Create lab (Stage 1) → Create data with that lab (Stage 2) → Then enrich!</span>}
                   </div>
                 </div>
               </div>
