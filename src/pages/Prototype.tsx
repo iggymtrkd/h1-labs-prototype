@@ -737,7 +737,7 @@ export default function Prototype() {
         }
         
         if (!step2Success) {
-          addLog('warning', 'Stage 1: Create Lab', '⚠️ Step 2 transaction mined but LabDistributionComplete event not found. Bonding curve may have already existed.');
+          addLog('info', 'Stage 1: Create Lab', '⚠️ Step 2 transaction mined but LabDistributionComplete event not found. Bonding curve may have already existed.');
           step2Success = true; // Still consider it a success if tx didn't revert
         }
       } catch (step2Error: any) {
@@ -745,7 +745,7 @@ export default function Prototype() {
         
         // Check if error is because curve already exists
         if (step2Error?.message?.includes('EXISTS') || step2Error?.data?.includes('EXISTS')) {
-          addLog('warning', 'Stage 1: Create Lab', '⚠️ Bonding curve already exists for this lab (this is OK - continuing...)');
+          addLog('info', 'Stage 1: Create Lab', '⚠️ Bonding curve already exists for this lab (this is OK - continuing...)');
           step2Success = true; // Not a fatal error
         } else {
           addLog('error', 'Stage 1: Create Lab', `❌ Step 2 Failed: ${step2Error.message || 'Unknown error'}. Bonding curve NOT deployed!`);
@@ -1185,7 +1185,7 @@ export default function Prototype() {
         const credIssuedEvent = issueReceipt.logs.find((log: any) => 
           log.topics[0] === ethers.id("CredentialIssued(uint256,address,address,string,string,bytes32,uint256)")
         );
-        credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[1]) : '1';
+        credentialId = credIssuedEvent ? ethers.toNumber(credIssuedEvent.topics[1]).toString() : '1';
         
         // Auto-verify the credential
         const verifyTx = await credentialDiamond.verifyCredential(credentialId, 'Demo auto-verified');
@@ -1216,8 +1216,8 @@ export default function Prototype() {
       );
       const approveReceipt = await approveTx.wait();
       
-      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data ${enrichmentDataId} approved with ${enrichmentDeltaGain/100}% delta-gain!`, approveTx.hash);
-      toast.success(`Enrichment complete! Data approved with ${enrichmentDeltaGain/100}% improvement.`);
+      addLog('success', 'Stage 3: Enrichment', `✅ ENRICHMENT COMPLETE: Data ${enrichmentDataId} approved with ${parseInt(enrichmentDeltaGain)/100}% delta-gain!`, approveTx.hash);
+      toast.success(`Enrichment complete! Data approved with ${parseInt(enrichmentDeltaGain)/100}% improvement.`);
       
       setCompletedSteps(prev => ({ ...prev, step3: true }));
       setDatasetMetadata(prev => ({
