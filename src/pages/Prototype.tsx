@@ -2741,7 +2741,6 @@ export default function Prototype() {
                           <h3 className="font-bold text-sm mb-2">Data Status Legend</h3>
                           <div className="space-y-1 text-xs">
                             <p className="text-green-500">✓ Real (onchain) - This data comes directly from blockchain transactions</p>
-                            <p className="text-yellow-500">⚠ Placeholder - This field will be populated from contract events in production</p>
                           </div>
                         </div>
                         </TabsContent>
@@ -3612,7 +3611,6 @@ export default function Prototype() {
                               <h3 className="font-bold text-sm mb-2">Data Status Legend</h3>
                               <div className="space-y-1 text-xs">
                                 <p className="text-green-500">✓ Real (onchain) - This data comes directly from blockchain transactions</p>
-                                <p className="text-yellow-500">⚠ Placeholder - This field will be populated from contract events in production</p>
                               </div>
                             </div>
                           </div>
