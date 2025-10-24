@@ -237,6 +237,12 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
 
   // Check for existing connection on mount and monitor network changes
   useEffect(() => {
+    // Skip provider access in iframe (Lovable preview)
+    if (isInIframe()) {
+      console.log("⚠️ Running in iframe, skipping wallet provider initialization");
+      return;
+    }
+
     const checkConnection = async () => {
       const storedConnected = localStorage.getItem("wallet_connected") === "true";
       const storedAddress = localStorage.getItem("wallet_address");
@@ -269,51 +275,55 @@ export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
     checkConnection();
     
     // Listen for network changes
-    const provider = sdk.getProvider();
-    const handleChainChanged = (chainIdHex: string) => {
-      const newChainId = parseInt(chainIdHex, 16);
-      console.log('🌐 Network changed to chainId:', newChainId);
+    try {
+      const provider = sdk.getProvider();
+      const handleChainChanged = (chainIdHex: string) => {
+        const newChainId = parseInt(chainIdHex, 16);
+        console.log('🌐 Network changed to chainId:', newChainId);
+        
+        if (newChainId !== 84532) {
+          toast.error("Wrong Network Detected", {
+            description: "Please switch back to Base Sepolia (chainId 84532)",
+            duration: 5000,
+          });
+        } else {
+          toast.success("Network Switched", {
+            description: "Connected to Base Sepolia",
+          });
+          // Reload the page to refresh provider connections
+          window.location.reload();
+        }
+      };
       
-      if (newChainId !== 84532) {
-        toast.error("Wrong Network Detected", {
-          description: "Please switch back to Base Sepolia (chainId 84532)",
-          duration: 5000,
-        });
-      } else {
-        toast.success("Network Switched", {
-          description: "Connected to Base Sepolia",
-        });
-        // Reload the page to refresh provider connections
-        window.location.reload();
+      const handleAccountsChanged = (accounts: string[]) => {
+        if (!accounts || accounts.length === 0) {
+          console.log('🔌 Wallet disconnected');
+          disconnectWallet();
+        } else if (accounts[0].toLowerCase() !== address?.toLowerCase()) {
+          console.log('👤 Account changed');
+          toast.info("Account Changed", {
+            description: "Please reconnect your wallet",
+          });
+          disconnectWallet();
+        }
+      };
+      
+      // Add event listeners if provider supports them
+      if (provider.on) {
+        provider.on('chainChanged', handleChainChanged);
+        provider.on('accountsChanged', handleAccountsChanged);
       }
-    };
-    
-    const handleAccountsChanged = (accounts: string[]) => {
-      if (!accounts || accounts.length === 0) {
-        console.log('🔌 Wallet disconnected');
-        disconnectWallet();
-      } else if (accounts[0].toLowerCase() !== address?.toLowerCase()) {
-        console.log('👤 Account changed');
-        toast.info("Account Changed", {
-          description: "Please reconnect your wallet",
-        });
-        disconnectWallet();
-      }
-    };
-    
-    // Add event listeners if provider supports them
-    if (provider.on) {
-      provider.on('chainChanged', handleChainChanged);
-      provider.on('accountsChanged', handleAccountsChanged);
+      
+      // Cleanup listeners on unmount
+      return () => {
+        if (provider.removeListener) {
+          provider.removeListener('chainChanged', handleChainChanged);
+          provider.removeListener('accountsChanged', handleAccountsChanged);
+        }
+      };
+    } catch (error) {
+      console.log("⚠️ Provider access blocked (likely in iframe):", error);
     }
-    
-    // Cleanup listeners on unmount
-    return () => {
-      if (provider.removeListener) {
-        provider.removeListener('chainChanged', handleChainChanged);
-        provider.removeListener('accountsChanged', handleAccountsChanged);
-      }
-    };
   }, [sdk, address]);
 
   return (
