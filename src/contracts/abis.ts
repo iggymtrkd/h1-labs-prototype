@@ -43,7 +43,7 @@ export const CredentialFacet_ABI = [
   "function issueCredential(uint256 userId, string calldata credentialType, string calldata domain, bytes32 offChainVerificationHash) external returns (uint256 credentialId)",
   "function verifyCredential(uint256 credentialId, string calldata verificationDetails) external",
   "function getUserId(address user) external view returns (uint256)",
-  "function getCredential(uint256 credentialId) external view returns (tuple(uint256 id, uint256 userId, string credentialType, string domain, bytes32 offChainVerificationHash, uint256 status, uint256 issuedAt, uint256 verifiedAt))"
+  "function getCredential(uint256 credentialId) external view returns (tuple(uint256 credentialId, address holder, uint256 userId, address issuer, string credentialType, string domain, uint256 status, bytes32 offChainVerificationHash, uint256 issuedAt, uint256 verifiedAt, uint256 revokedAt))"
 ];
 
 export const RevenueFacet_ABI = [

@@ -1268,6 +1268,31 @@ export default function Prototype() {
       // Step 2: Submit data for review
       addLog('info', 'Stage 3: Enrichment', `📋 Submitting Data #${dataIdNum} for review...`);
       
+      // CRITICAL: Validate credential before submitting
+      try {
+        const credentialCheck = await credentialDiamond.getCredential(credentialIdNum);
+        console.log('=== CREDENTIAL VALIDATION ===');
+        console.log('Credential ID:', credentialIdNum);
+        console.log('Holder:', credentialCheck.holder);
+        console.log('Holder is zero?', credentialCheck.holder === ethers.ZeroAddress);
+        console.log('Status:', credentialCheck.status);
+        console.log('Domain:', credentialCheck.domain);
+        console.log('=============================');
+        
+        if (credentialCheck.holder === ethers.ZeroAddress) {
+          throw new Error(`Credential ${credentialIdNum} has zero address holder! This credential is invalid.`);
+        }
+        
+        if (credentialCheck.holder.toLowerCase() !== supervisorAddress.toLowerCase()) {
+          throw new Error(`Credential holder (${credentialCheck.holder}) doesn't match supervisor (${supervisorAddress})`);
+        }
+        
+        addLog('success', 'Stage 3: Enrichment', `✅ Credential validation passed`);
+      } catch (credErr: any) {
+        addLog('error', 'Stage 3: Enrichment', `❌ Credential validation failed: ${credErr.message}`);
+        throw credErr;
+      }
+      
       // Final validation and logging before contract call
       console.log('=== CONTRACT CALL PARAMETERS ===');
       console.log('dataIdNum:', dataIdNum, typeof dataIdNum);
