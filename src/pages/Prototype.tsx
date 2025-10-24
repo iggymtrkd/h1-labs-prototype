@@ -2330,7 +2330,6 @@ export default function Prototype() {
                   <p className="text-xs text-muted-foreground text-center mt-2">
                     💡 Demo mode: Automatically handles credential creation, review, and approval in one transaction flow
                   </p>
-                  </div>
 
                   <div className="text-xs text-muted-foreground bg-accent/5 rounded p-2">
                     💡 <span className="font-semibold">Tip:</span> Use dataId from Stage 2. Delta-gain in basis points (5000 = 50%). These actions are independent.
