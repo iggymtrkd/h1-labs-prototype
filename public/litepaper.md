@@ -5,6 +5,40 @@
 
 ---
 
+## Table of Contents
+
+### Main Sections
+1. [The Problem It Solves](#1-the-problem-it-solves)
+2. [Technical Architecture](#2-technical-architecture)
+   - 2.1 [Credentialing & Data Validation](#21-credentialing--data-validation)
+   - 2.2 [Smart Contract Architecture](#22-smart-contract-architecture)
+   - 2.3 [Lab Creation & Growth Mechanics](#23-lab-creation--growth-mechanics)
+   - 2.4 [Technical Features & Security](#24-technical-features--security)
+3. [Developer SDK](#3-developer-sdk)
+4. [Tokenomics & Economic Model](#4-tokenomics--economic-model)
+   - 4.1 [Automatic H1 Distribution](#41-automatic-h1-distribution-on-lab-creation)
+   - 4.2 [Revenue Distribution Model](#42-revenue-distribution-model)
+   - 4.3 [Staking & Scholar Rewards](#43-staking--scholar-rewards)
+   - 4.4 [H1 Tokens — Per-Lab Economies](#44-h1-tokens--per-lab-economies)
+   - 4.5 [Bonding Curves](#45-bonding-curves--automatic-deployment--bootstrap-mechanics)
+   - 4.6 [H1 Swap Fees](#46-h1-swap-fees--staking--unstaking-costs)
+   - 4.7 [Unstaking Flow](#47-unstaking-flow--overview)
+5. [Economic Flywheel](#5-economic-flywheel)
+6. [Roadmap](#6-roadmap-condensed)
+7. [Dataset Marketplace](#7-dataset-marketplace)
+8. [Closing](#8-closing)
+
+### Appendix
+- [A. Our Edge — Strengths at a Glance](#a-our-edge--strengths-at-a-glance)
+- [B. What You Can Do on H1](#b-what-you-can-do-on-h1)
+- [C. Competitive Positioning](#c-competitive-positioning--h1-vs-the-field)
+- [D. Risks & Mitigations](#d-risks--mitigations)
+- [E. User Flows](#e-user-flows)
+- [F. Use Cases & Scenarios](#f-use-cases--scenarios)
+- [G. Micro Flywheel: Healthcare Lab Year 1](#g-micro-flywheel-healthcare-lab-year-1-detailed-example)
+
+---
+
 ## 1. The Problem It Solves
 
 **H1 Labs makes AI training data trustworthy, compliant, and economically fair** — solving the provenance crisis that puts companies at legal, compliance, and financial risk.
