@@ -1,5 +1,5 @@
 # **H1 Labs — Litepaper**  
-> Status: Updated 2025-10-24 | Main body: 1,204 lines | Appendix: 94 lines | Total: 1,300 lines | Condensed & organized with TOC
+> Status: Updated 2025-10-24 | Main body: 1,203 lines | Appendix: 108 lines | Total: 1,311 lines | Condensed & organized with TOC
 
 ### Advancing AI through provable, human‑validated data — powered by blockchain.
 
@@ -36,6 +36,7 @@
 - [E. User Flows](#e-user-flows)
 - [F. Use Cases & Scenarios](#f-use-cases--scenarios)
 - [G. Micro Flywheel: Healthcare Lab Year 1](#g-micro-flywheel-healthcare-lab-year-1-detailed-example)
+- [K. Healthcare Lab H1 Token Appreciation (Year 1)](#k-healthcare-lab-h1-token-appreciation-year-1)
 
 ---
 
@@ -293,8 +294,9 @@ H1Diamond (Proxy Router)
     ├─ DiamondLoupeFacet (inspect facet functions)
     ├─ OwnershipFacet (admin controls)
     ├─ SecurityFacet (access control)
-    ├─ LABSCoreFacet (create labs)
-    ├─ VaultFacet (deploy per-lab vaults)
+    ├─ LABSCoreFacet (LABS token staking)
+    ├─ LabVaultDeploymentFacet (Step 1: create lab + deploy vault)
+    ├─ LabDistributionFacet (Step 2: deploy bonding curve + distribute H1)
     ├─ LabPassFacet (deploy per-lab passes)
     ├─ BondingCurveFacet (bonding curve deposits)
     ├─ CredentialFacet (user credentials & identity)
@@ -364,24 +366,44 @@ While facets are **global and deployed once** to the H1Diamond, each Lab gets it
 
 #### **How It Works: Per-Lab Deployment Flow**
 
-**When a user creates a lab:**
+**When a user creates a lab (Two-Step Process):**
 
+**Step 1: Lab Creation + Vault Deployment**
 ```
-User calls: createLab("MediTrust", "MEDI", "medical")
+User calls: createLabStep1("MediTrust", "MEDI", "medical")
      ↓
-LABSCoreFacet.createLab() (global facet on H1Diamond)
+LabVaultDeploymentFacet.createLabStep1() (global facet on H1Diamond)
+     ├─ Validates: name, symbol, domain, minimum 100K LABS staked
      ├─ Creates Lab record (stored in LibH1Storage)
+     │  └─ Assigns labId, owner, domain, level (based on stake)
      ├─ Deploys NEW LabVault contract
      │  └─ Location: /contracts/vaults/LabVault.sol
      │  └─ Instance: 0xABC123... (unique per lab)
      │  └─ Contains: ERC20-style H1 token logic, deposit/redemption mechanics
      │  └─ Features: Cooldown periods, exit caps, level tracking, fee management
-     ├─ Deploys NEW BondingCurveSale contract (optional)
-     │  └─ Location: /contracts/sales/BondingCurveSale.sol
-     │  └─ Enables: Accelerated capital raise with 0.5% premium
-     └─ Stores addresses: labIdToVault[labId] = LabVault, labIdToPass[labId] = null
+     └─ Stores addresses: labIdToVault[labId] = LabVault
 
-Result: Lab now has its own vault + optional bonding curve
+Result: Lab created with vault, ready for Step 2
+```
+
+**Step 2: Bonding Curve + H1 Distribution**
+```
+User calls: createLabStep2(labId)
+     ↓
+LabDistributionFacet.createLabStep2() (global facet on H1Diamond)
+     ├─ Retrieves vault from Step 1
+     ├─ Deploys NEW BondingCurveSale contract
+     │  └─ Location: /contracts/sales/BondingCurveSale.sol
+     │  └─ Enables: Immediate H1 trading with 0.5% premium
+     │  └─ Pre-allocated: 10% of initial H1 supply
+     └─ Distributes H1 tokens automatically:
+        ├─ 30% → Lab Owner (vested, 6 months)
+        ├─ 10% → Bonding Curve (liquid immediately)
+        ├─ 40% → Scholar Reserve (vested)
+        ├─ 15% → Dev Reserve (vested)
+        └─ 5% → Protocol Treasury (instant)
+
+Result: Lab fully operational with bonding curve and H1 distributed
 ```
 
 **When LabPassFacet.deployLabPass() is called:**
@@ -494,11 +516,11 @@ contract LabPass is ERC721 {
 
 Creating a Lab unlocks automatic tokenomics with built-in distribution:
 
-**Stage 1: Lab Creation & Automatic H1 Distribution** ✨ **NEW**  
-Lab creator calls `createLab(name, symbol, domain)` with **minimum 100,000 LABS staked**. The system automatically:
+**Stage 1: Lab Creation & Automatic H1 Distribution** ✨ **NEW - Two-Step Process**  
+Lab creator calls `createLabStep1(name, symbol, domain)` then `createLabStep2(labId)` with **minimum 100,000 LABS staked**. The system automatically:
 
-1. **Deploys LabVault** (H1 token contract)
-2. **Deploys Bonding Curve** (enables immediate H1 trading)
+1. **Step 1 - Creates Lab & Deploys LabVault** (H1 token contract)
+2. **Step 2 - Deploys Bonding Curve** (enables immediate H1 trading)
 3. **Mints H1 tokens** (1:1 with staked LABS, capped at 500,000 H1 per lab)
 4. **Distributes H1 automatically**:
 
@@ -827,31 +849,7 @@ H1 is **not a single token.** Each lab deploys its own H1 token (LabVault shares
 - Claim on future dataset sale revenue
 - Participation in that domain's ecosystem
 
-**Example — Healthcare Lab after Year 1:**
-
-```
-Initial: $5M TVL, 1M H1 shares, $5.00/share
-├─ Dataset revenue: $5M annually (50 datasets sold)
-├─ Buyback budget deployed: $1.25M (25% of revenue)
-├─ Lab revenue retained: $2.5M (50%)
-├─ New TVL: ~$8.5M
-├─ New NAV: $8.50/share (+70%)
-└─ If buybacks reduce supply 5%: $8.88/share (+77.6% total)
-
-Result: Early H1 holders gain from:
-✓ Increasing NAV (more datasets sold)
-✓ Supply reduction (buybacks)
-✓ Sustainable token economy (real revenue, not inflation)
-```
-
-**Why H1 ≠ Traditional Stake-Reward Models:**
-
-| Mechanic | H1 Labs | Competitors (Bittensor, Ocean) |
-|----------|---------|--------|
-| **Value Source** | Real dataset sales | Inflationary rewards |
-| **Supply** | Decreases (buybacks) | Increases (new issuance) |
-| **Price Pressure** | Buy pressure from revenue | Sell pressure from inflation |
-| **Sustainability** | Revenue-driven (durable) | Reward-dependent (temporary) |
+> **📊 Detailed Example**: For Healthcare Lab H1 Token Appreciation (Year 1) and comparison with traditional stake-reward models, see **Appendix K**.
 
 ---
 
@@ -1230,16 +1228,6 @@ The dual-token model ($LABS + H1), combined with revenue-driven buybacks and lev
 
 H1 Labs uniquely combines **verified human intelligence, provenance, and compliance**. Unlike peers that focus on compute (Gensyn), model training (Bittensor), or data liquidity (Ocean), H1 targets regulated and semi-regulated markets with enterprise-grade trust.
 
-| Dimension | H1 Labs | Bittensor | Scale AI | Ocean | Gensyn |
-|-----------|---------|------------|----------|--------|---------|
-| **Focus** | Human-validated datasets | Model training | Centralized data | Data liquidity | Compute network |
-| **Compliance** | HIPAA, GDPR, C2PA, EU AI Act | None | Corporate | Optional | None |
-| **Credentialing** | Verified NFTs + KYC | None | Manual | None | None |
-| **Provenance** | Full onchain audit trail | None | Internal | Metadata only | None |
-| **Revenue Model** | Onchain splits + buybacks | Inflationary | Fiat only | Stake-reward | Stake-reward |
-| **Target Market** | Healthcare, Legal, Defense, Finance | General AI | Enterprise labeling | General data | ML infrastructure |
-| **Value Driver** | Real dataset sales | Token inflation | Labor cost | Access licensing | Compute capacity |
-
 **Why it matters:** H1's compliance-first approach opens regulated markets (healthcare TAM ~$200B+ in data licensing) that competitors cannot access. Programmable compliance means SDKs launch in regulated sectors without custom legal wrangling.
 
 ---
@@ -1257,9 +1245,11 @@ H1 Labs uniquely combines **verified human intelligence, provenance, and complia
 
 1) **Lab Founder**  
 \`\`\`
-Connect Wallet → createLab(name, symbol, domain)
-Auto-deploys: LabVault, BondingCurve, LabPass
-Deposit $LABS → mint H1 shares → reach Level thresholds → unlock app slots
+Connect Wallet → Stake 100K+ LABS
+Step 1: createLabStep1(name, symbol, domain) → deploys LabVault
+Step 2: createLabStep2(labId) → deploys BondingCurve + distributes H1
+Result: Lab operational with vault, curve, and H1 distributed
+Optional: deployLabPass(labId) for membership NFTs
 \`\`\`
 
 2) **Contributor / Scholar (Data Creator or Enricher/Validator)**  
@@ -1287,5 +1277,35 @@ Auditable provenance & compliance artifacts for due diligence
 - **Robotics & Industrial**: Motion/vision datasets with validated safety metadata
 - **Legal & Financial**: Compliance-verified datasets (GDPR, AML/KYC aligned)
 - **Education & Research**: FERPA-compliant educational datasets with attribution
+
+---
+
+## K. Healthcare Lab H1 Token Appreciation (Year 1)
+
+**Example — Healthcare Lab after Year 1:**
+
+```
+Initial: $5M TVL, 1M H1 shares, $5.00/share
+├─ Dataset revenue: $5M annually (50 datasets sold)
+├─ Buyback budget deployed: $1.25M (25% of revenue)
+├─ Lab revenue retained: $2.5M (50%)
+├─ New TVL: ~$8.5M
+├─ New NAV: $8.50/share (+70%)
+└─ If buybacks reduce supply 5%: $8.88/share (+77.6% total)
+
+Result: Early H1 holders gain from:
+✓ Increasing NAV (more datasets sold)
+✓ Supply reduction (buybacks)
+✓ Sustainable token economy (real revenue, not inflation)
+```
+
+**Why H1 ≠ Traditional Stake-Reward Models:**
+
+| Mechanic | H1 Labs | Competitors (Bittensor, Ocean) |
+|----------|---------|--------|
+| **Value Source** | Real dataset sales | Inflationary rewards |
+| **Supply** | Decreases (buybacks) | Increases (new issuance) |
+| **Price Pressure** | Buy pressure from revenue | Sell pressure from inflation |
+| **Sustainability** | Revenue-driven (durable) | Reward-dependent (temporary) |
 
 ---
