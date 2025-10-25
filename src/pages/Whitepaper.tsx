@@ -350,7 +350,6 @@ export default function Whitepaper() {
                               {children}
                             </h3>
                             <H1TokenEconomies />
-                            <TokenAppreciationTimeline />
                           </>
                         );
                       }
@@ -445,6 +444,7 @@ export default function Whitepaper() {
                               {children}
                             </h2>
                             <UseCaseROIComparison />
+                            <TokenAppreciationTimeline />
                           </>
                         );
                       }
