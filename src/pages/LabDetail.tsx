@@ -13,12 +13,17 @@ import {
   ArrowLeft,
   MessageSquare,
   BarChart3,
+  Loader2,
 } from "lucide-react";
 import { LineChart, Line, AreaChart, Area, XAxis, YAxis, CartesianGrid, Tooltip, ResponsiveContainer } from "recharts";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Confetti from "react-confetti";
 import { useWindowSize } from "@/hooks/use-window-size";
 import { toast } from "sonner";
+import { ethers } from "ethers";
+import { CONTRACTS } from "@/config/contracts";
+import { LABSCoreFacet_ABI } from "@/contracts/abis";
+import { useLabEvents } from "@/hooks/useLabEvents";
 
 // Mock price data with extreme volatility
 const priceData = [
@@ -237,11 +242,118 @@ const labData = {
   },
 };
 
+interface LabData {
+  id: string;
+  name: string;
+  symbol: string;
+  category: string;
+  description: string;
+  owner: string;
+  h1Token: string;
+  domain: string;
+  active: boolean;
+  level: number;
+  bondingCurveAddress?: string;
+  h1Price?: string;
+  tvl?: string;
+  validators: number;
+  datasets: number;
+}
+
 export default function LabDetail() {
   const { id } = useParams();
-  const lab = labData[id as keyof typeof labData];
   const [showConfetti, setShowConfetti] = useState(false);
   const { width, height } = useWindowSize();
+  const { labs: labEvents, loading: labEventsLoading } = useLabEvents();
+  const [lab, setLab] = useState<LabData | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchLabDetails = async () => {
+      if (!id || labEvents.length === 0) return;
+      
+      setLoading(true);
+      try {
+        const labEvent = labEvents.find(l => l.labId === id);
+        if (!labEvent) {
+          setLoading(false);
+          return;
+        }
+
+        const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+        const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, rpc);
+
+        const labId = parseInt(id);
+        const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
+        
+        // Get bonding curve address
+        let bondingCurveAddress = ethers.ZeroAddress;
+        try {
+          bondingCurveAddress = await diamond.getLabBondingCurve(labId);
+        } catch {}
+
+        // Get H1 price if bonding curve exists
+        let h1Price = '0';
+        let tvl = '0';
+        if (bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress) {
+          try {
+            const curveContract = new ethers.Contract(
+              bondingCurveAddress,
+              ['function getCurrentPrice() view returns (uint256)', 'function getTotalDeposits() view returns (uint256)'],
+              rpc
+            );
+            const [price, deposits] = await Promise.all([
+              curveContract.getCurrentPrice(),
+              curveContract.getTotalDeposits()
+            ]);
+            h1Price = ethers.formatEther(price);
+            tvl = ethers.formatEther(deposits);
+          } catch {}
+        }
+
+        setLab({
+          id,
+          name: labEvent.name,
+          symbol: labEvent.symbol,
+          category: domain || "Uncategorized",
+          description: `${labEvent.name} - Level ${level} Lab on H1 Protocol`,
+          owner,
+          h1Token,
+          domain,
+          active,
+          level: Number(level),
+          bondingCurveAddress,
+          h1Price,
+          tvl,
+          validators: 0,
+          datasets: 0,
+        });
+      } catch (err) {
+        console.error('Error fetching lab details:', err);
+      } finally {
+        setLoading(false);
+      }
+    };
+
+    fetchLabDetails();
+  }, [id, labEvents]);
+
+  const handleBuy = () => {
+    setShowConfetti(true);
+    toast.success(`Successfully purchased ${lab?.symbol} tokens!`);
+    setTimeout(() => setShowConfetti(false), 5000);
+  };
+
+  if (loading || labEventsLoading) {
+    return (
+      <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
+        <div className="flex flex-col items-center gap-4">
+          <Loader2 className="h-12 w-12 animate-spin text-primary" />
+          <p className="text-muted-foreground">Loading lab details...</p>
+        </div>
+      </div>
+    );
+  }
 
   if (!lab) {
     return (
@@ -256,13 +368,8 @@ export default function LabDetail() {
     );
   }
 
-  const isPositive = lab.change24h >= 0;
-
-  const handleBuy = () => {
-    setShowConfetti(true);
-    toast.success(`Successfully purchased ${lab.symbol} tokens!`);
-    setTimeout(() => setShowConfetti(false), 5000);
-  };
+  const hasBondingCurve = lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress;
+  const isPositive = parseFloat(lab.h1Price || '0') > 0;
 
 
   return (
@@ -289,37 +396,50 @@ export default function LabDetail() {
                 <div className="flex items-center gap-3 mb-2">
                   <h1 className="text-4xl font-bold">{lab.name}</h1>
                   <Badge className="bg-primary/20 text-primary">{lab.category}</Badge>
+                  <Badge variant="outline">Level {lab.level}</Badge>
                 </div>
                 <p className="text-xl text-muted-foreground mb-4">{lab.symbol}</p>
-                <p className="text-muted-foreground">{lab.longDescription}</p>
+                <p className="text-muted-foreground">{lab.description}</p>
+                <div className="mt-3 space-y-1">
+                  <p className="text-xs text-muted-foreground">
+                    Owner: {lab.owner.slice(0, 6)}...{lab.owner.slice(-4)}
+                  </p>
+                  {hasBondingCurve && (
+                    <p className="text-xs text-muted-foreground">
+                      Bonding Curve: {lab.bondingCurveAddress!.slice(0, 6)}...{lab.bondingCurveAddress!.slice(-4)}
+                    </p>
+                  )}
+                </div>
               </div>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-4 gap-4">
               <div className="bg-muted/30 p-4 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Price</p>
-                <p className="text-2xl font-bold text-primary">${lab.price}</p>
+                <p className="text-xs text-muted-foreground mb-1">H1 Price</p>
+                <p className="text-2xl font-bold text-primary">
+                  {hasBondingCurve && lab.h1Price && lab.h1Price !== '0' 
+                    ? `${parseFloat(lab.h1Price).toFixed(4)} LABS`
+                    : 'Not Set'}
+                </p>
               </div>
               <div className="bg-muted/30 p-4 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">24h Change</p>
+                <p className="text-xs text-muted-foreground mb-1">TVL</p>
                 <div className="flex items-center gap-1">
-                  {isPositive ? (
-                    <TrendingUp className="h-4 w-4 text-primary" />
-                  ) : (
-                    <TrendingDown className="h-4 w-4 text-destructive" />
-                  )}
-                  <span className={`text-lg font-bold ${isPositive ? "text-primary" : "text-destructive"}`}>
-                    {isPositive ? "+" : ""}{lab.change24h.toFixed(2)}%
+                  <TrendingUp className="h-4 w-4 text-secondary" />
+                  <span className="text-lg font-bold text-secondary">
+                    {hasBondingCurve && lab.tvl 
+                      ? `${parseFloat(lab.tvl).toFixed(2)} LABS`
+                      : '0 LABS'}
                   </span>
                 </div>
               </div>
               <div className="bg-muted/30 p-4 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">Market Cap</p>
-                <p className="text-2xl font-bold">${lab.marketCap}</p>
+                <p className="text-xs text-muted-foreground mb-1">Lab Level</p>
+                <p className="text-2xl font-bold">{lab.level}</p>
               </div>
               <div className="bg-muted/30 p-4 rounded-lg">
-                <p className="text-xs text-muted-foreground mb-1">24h Volume</p>
-                <p className="text-2xl font-bold">${lab.volume24h}</p>
+                <p className="text-xs text-muted-foreground mb-1">Status</p>
+                <p className="text-2xl font-bold">{lab.active ? '✅ Active' : '⏸️ Inactive'}</p>
               </div>
             </div>
           </Card>
@@ -347,16 +467,16 @@ export default function LabDetail() {
 
             <div className="mt-6 pt-6 border-t border-border space-y-3">
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Total Supply</span>
-                <span className="font-semibold">{lab.totalSupply}</span>
+                <span className="text-muted-foreground">H1 Token</span>
+                <span className="font-mono text-xs">{lab.h1Token.slice(0, 10)}...</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Circulating</span>
-                <span className="font-semibold">{lab.circulatingSupply}</span>
+                <span className="text-muted-foreground">Domain</span>
+                <span className="font-semibold">{lab.domain}</span>
               </div>
               <div className="flex justify-between text-sm">
-                <span className="text-muted-foreground">Holders</span>
-                <span className="font-semibold">{lab.holders}</span>
+                <span className="text-muted-foreground">Bonding Curve</span>
+                <span className="font-semibold">{hasBondingCurve ? '✅ Deployed' : '❌ Not Deployed'}</span>
               </div>
             </div>
           </Card>
