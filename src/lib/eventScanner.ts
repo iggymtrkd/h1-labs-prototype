@@ -76,13 +76,9 @@ export async function fetchLabEvents(
     const response = await fetch(url.toString());
     const data = await response.json();
 
-    if (data.status === '0' && data.message === 'No records found') {
-      console.log('📭 No events found');
-      return { logs: [], success: true, source: 'Blockscout API' };
-    }
-
     if (data.status === '0') {
-      throw new Error(data.message || 'Blockscout API error');
+      console.log('📭 No events found or API returned status 0');
+      return { logs: [], success: true, source: 'Blockscout API' };
     }
 
     const results = data.result || [];
