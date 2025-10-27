@@ -18,7 +18,6 @@ library LibLabCreation {
   error InvalidName();
   error InvalidSymbol();
   error InvalidDomain();
-  error DomainTaken();
   error ConfigNotSet();
   error InsufficientStake();
 
@@ -37,9 +36,7 @@ library LibLabCreation {
       if (domainLen == 0 || domainLen > 100) revert InvalidDomain();
     }
     
-    bytes32 domainKey = keccak256(bytes(domain));
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
-    if (hs.domainTaken[domainKey]) revert DomainTaken();
     if (hs.labsToken == address(0) || hs.protocolTreasury == address(0)) revert ConfigNotSet();
     
     uint256 staked = hs.stakedBalances[sender];
@@ -52,7 +49,6 @@ library LibLabCreation {
     hs.labs[labId].domain = domain;
     hs.labs[labId].active = true;
     hs.labs[labId].level = labLevel;
-    hs.domainTaken[domainKey] = true;
 
     address vault;
     {
