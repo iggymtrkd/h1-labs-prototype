@@ -8,7 +8,6 @@ contract LabVaultDeploymentFacet {
     error InvalidInput();
     error InsufficientStake();
     error FactoryNotSet();
-    error DomainAlreadyExists();
     error VaultDeploymentFailed(string reason);
     error InvalidVaultAddress();
     
@@ -48,7 +47,6 @@ contract LabVaultDeploymentFacet {
 
         if (hs.stakedBalances[msg.sender] < 100_000e18) revert InsufficientStake();
         if (hs.vaultFactory == address(0)) revert FactoryNotSet();
-        if (hs.domainToLabId[domain] != 0) revert DomainAlreadyExists();
 
         labId = hs.nextLabId++;
         hs.labs[labId].owner = msg.sender;
@@ -75,7 +73,6 @@ contract LabVaultDeploymentFacet {
         if (vault == address(0)) revert InvalidVaultAddress();
 
         hs.labIdToVault[labId] = vault;
-        hs.domainToLabId[domain] = labId;
         hs.labs[labId].h1Token = vault;
 
         emit LabVaultDeployed(labId, msg.sender, vault);
