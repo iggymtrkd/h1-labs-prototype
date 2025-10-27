@@ -1,6 +1,5 @@
 import { useParams, Link } from "react-router-dom";
 import { useState, useEffect, useRef } from "react";
-import { useAccount } from "wagmi";
 import { Button } from "@/components/ui/button";
 import { Input } from "@/components/ui/input";
 import { Card } from "@/components/ui/card";
@@ -17,9 +16,8 @@ import {
   ExternalLink,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
-import { useXMTPContext } from "@/contexts/XMTPContext";
+import { useBaseAccount } from "@/hooks/useBaseAccount";
 import { useLabChat } from "@/hooks/useLabChat";
-import { XMTPWalletConnect } from "@/components/XMTPWalletConnect";
 import { toast } from "sonner";
 import { useENS, formatAddress as formatAddr } from "@/hooks/useENS";
 
@@ -74,8 +72,7 @@ const labInfoData: Record<string, {
 
 export default function LabChat() {
   const { id } = useParams();
-  const { client, isInitializing, isReady, error: xmtpError } = useXMTPContext();
-  const { address: wagmiAddress } = useAccount();
+  const { address } = useBaseAccount();
   const [messageInput, setMessageInput] = useState("");
   const [isHoldersOnly, setIsHoldersOnly] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -84,20 +81,20 @@ export default function LabChat() {
 
   const {
     messages,
-    isLoading,
-    isSending,
-    canSendMessages,
+    isLoadingMessages,
+    isSendingMessage,
     userRole,
     tokenBalance,
     sendMessage,
     error: chatError,
   } = useLabChat(
-    client,
     id || "",
-    wagmiAddress || null,
+    address || null,
     labInfo?.vaultAddress || null,
     isHoldersOnly
   );
+
+  const canSendMessages = !isHoldersOnly || userRole === 'holder';
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -106,7 +103,7 @@ export default function LabChat() {
   }, [messages]);
 
   const handleSendMessage = async () => {
-    if (!messageInput.trim() || isSending) return;
+    if (!messageInput.trim() || isSendingMessage) return;
 
     if (isHoldersOnly && !canSendMessages) {
       toast.error("You need to hold lab tokens to send messages in holders chat");
@@ -181,7 +178,7 @@ export default function LabChat() {
             </Tabs>
           </div>
           <div className="flex items-center gap-2">
-            {isReady && (
+            {address && (
               <Badge variant="outline" className="text-xs">
                 {userRole === "holder" ? "✓ Token Holder" : "Guest"}
               </Badge>
@@ -198,35 +195,10 @@ export default function LabChat() {
           </div>
         </div>
 
-        {!wagmiAddress && (
+        {!address && (
           <Alert className="m-4">
             <AlertDescription>
-              <div className="flex flex-col gap-3">
-                <span className="font-semibold">Connect Chat Wallet</span>
-                <p className="text-sm text-muted-foreground">
-                  XMTP chat requires a separate wallet connection (MetaMask, Rainbow, etc.) 
-                  for secure messaging. Your main Base wallet will still handle all transactions.
-                </p>
-                <XMTPWalletConnect />
-              </div>
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {isInitializing && (
-          <Alert className="m-4">
-            <Loader2 className="h-4 w-4 animate-spin" />
-            <AlertDescription>
-              Setting up secure messaging with XMTP... Please approve the signature request in your wallet to create your messaging identity.
-            </AlertDescription>
-          </Alert>
-        )}
-
-        {xmtpError && (
-          <Alert variant="destructive" className="m-4">
-            <AlertDescription>
-              <div className="font-semibold mb-1">Messaging Setup Failed</div>
-              <div className="text-sm">{xmtpError}</div>
+              Connect your Base wallet to access lab chat
             </AlertDescription>
           </Alert>
         )}
@@ -237,7 +209,7 @@ export default function LabChat() {
           </Alert>
         )}
 
-        {isHoldersOnly && !canSendMessages && isReady && (
+        {isHoldersOnly && !canSendMessages && address && (
           <Alert className="m-4">
             <AlertDescription>
               You need to hold {labInfo.symbol} tokens to access holders chat. Token Balance: {tokenBalance}
@@ -245,7 +217,7 @@ export default function LabChat() {
           </Alert>
         )}
 
-        <ScrollArea className={`flex-1 p-4 ${isHoldersOnly ? "bg-primary/5" : ""}`}>
+        <ScrollArea className={`flex-1 p-4 ${isHoldersOnly ? "bg-primary/5" : ""}`} ref={scrollRef}>
           {isHoldersOnly && (
             <div className="max-w-4xl mb-4 px-4 py-3 bg-primary/20 border border-primary/30 rounded-lg flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
@@ -256,7 +228,7 @@ export default function LabChat() {
           )}
 
           <div className="space-y-4 max-w-4xl">
-            {isLoading ? (
+            {isLoadingMessages ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
               </div>
@@ -266,45 +238,31 @@ export default function LabChat() {
               </div>
             ) : (
               messages.map((msg) => (
-                <div key={msg.id} className={`flex gap-2 ${msg.isOwn ? "justify-end" : ""}`}>
-                  {!msg.isOwn && (
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarFallback className="text-xs">
-                        {msg.senderAddress.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
-                  <div className={`flex flex-col ${msg.isOwn ? "items-end max-w-[75%]" : "items-start max-w-[75%]"}`}>
-                    {!msg.isOwn && (
-                      <div className="flex items-baseline gap-2 mb-1 px-1">
-                        <UserDisplay address={msg.senderAddress} />
-                        <span className="text-[10px] text-muted-foreground">
-                          {new Date(msg.timestamp).toLocaleTimeString()}
-                        </span>
-                      </div>
-                    )}
-                    <div
-                      className={`${
-                        msg.isOwn
-                          ? "bg-primary text-primary-foreground px-4 py-2.5 rounded-[18px] rounded-tr-sm shadow-sm"
-                          : "bg-muted px-4 py-2.5 rounded-[18px] rounded-tl-sm shadow-sm"
-                      }`}
-                    >
-                      <p className="text-[15px] leading-[1.4] whitespace-pre-wrap">{msg.content}</p>
+                <div
+                  key={msg.id}
+                  className={`flex ${
+                    msg.sender_address.toLowerCase() === address?.toLowerCase()
+                      ? "justify-end"
+                      : "justify-start"
+                  }`}
+                >
+                  <div
+                    className={`max-w-[70%] rounded-lg p-3 ${
+                      msg.sender_address.toLowerCase() === address?.toLowerCase()
+                        ? "bg-primary text-primary-foreground"
+                        : "bg-muted"
+                    }`}
+                  >
+                    <div className="flex items-center gap-2 mb-1">
+                      <span className="text-xs opacity-70">
+                        {msg.sender_address.slice(0, 6)}...{msg.sender_address.slice(-4)}
+                      </span>
+                      <span className="text-xs opacity-50">
+                        {new Date(msg.created_at).toLocaleTimeString()}
+                      </span>
                     </div>
-                    {msg.isOwn && (
-                      <div className="text-[10px] text-muted-foreground text-right mt-1 px-1">
-                        {new Date(msg.timestamp).toLocaleTimeString()}
-                      </div>
-                    )}
+                    <p className="text-sm">{msg.content}</p>
                   </div>
-                  {msg.isOwn && (
-                    <Avatar className="h-8 w-8 flex-shrink-0">
-                      <AvatarFallback className="text-xs">
-                        {msg.senderAddress.slice(0, 2).toUpperCase()}
-                      </AvatarFallback>
-                    </Avatar>
-                  )}
                 </div>
               ))
             )}
@@ -318,13 +276,13 @@ export default function LabChat() {
               onChange={(e) => setMessageInput(e.target.value)}
               onKeyPress={handleKeyPress}
               placeholder={
-                !isReady
-                  ? "Initializing chat..."
+                !address
+                  ? "Connect wallet to chat..."
                   : isHoldersOnly && !canSendMessages
                   ? "Hold tokens to send messages in holders chat"
                   : "Type your message"
               }
-              disabled={!isReady || (isHoldersOnly && !canSendMessages) || isSending}
+              disabled={!address || (isHoldersOnly && !canSendMessages) || isSendingMessage}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Button
@@ -332,9 +290,9 @@ export default function LabChat() {
               size="icon"
               className="h-8 w-8"
               onClick={handleSendMessage}
-              disabled={!isReady || (isHoldersOnly && !canSendMessages) || isSending || !messageInput.trim()}
+              disabled={!address || (isHoldersOnly && !canSendMessages) || isSendingMessage || !messageInput.trim()}
             >
-              {isSending ? (
+              {isSendingMessage ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
               ) : (
                 <Send className="h-5 w-5 text-muted-foreground" />
@@ -358,7 +316,7 @@ export default function LabChat() {
               <div className="text-3xl font-bold text-primary">
                 {labInfo.price} ${labInfo.symbol}
               </div>
-              {isReady && (
+              {address && (
                 <Badge variant="outline" className="text-xs">
                   Balance: {parseFloat(tokenBalance).toFixed(2)} tokens
                 </Badge>
@@ -388,7 +346,7 @@ export default function LabChat() {
 
             <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
               <p className="font-semibold text-foreground mb-2">Chat Info</p>
-              <p>🔐 End-to-end encrypted via XMTP</p>
+              <p>💬 Server-side messaging</p>
               <p>📊 Balance: {parseFloat(tokenBalance).toFixed(2)} tokens</p>
               <p>👤 Role: {userRole}</p>
               <p>💬 Mode: {isHoldersOnly ? "Holders Only" : "Open Chat"}</p>

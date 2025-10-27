@@ -1,164 +1,163 @@
-import { useState, useEffect, useCallback, useRef } from 'react';
-import { Client, type Group } from '@xmtp/browser-sdk';
+import { useState, useCallback, useEffect } from 'react';
+import { supabase } from '@/integrations/supabase/client';
 import { ethers } from 'ethers';
-import { LabVault_ABI } from '@/contracts/abis';
-import { useBaseAccount } from '@/hooks/useBaseAccount';
 
-export interface LabChatMessage {
+interface LabChatMessage {
   id: string;
+  sender_address: string;
   content: string;
-  senderAddress: string;
-  timestamp: Date;
-  isOwn: boolean;
+  created_at: string;
 }
 
-export interface UseLabChatReturn {
+interface UseLabChatReturn {
   messages: LabChatMessage[];
-  isLoading: boolean;
-  isSending: boolean;
-  canSendMessages: boolean;
-  userRole: 'owner' | 'holder' | 'guest';
+  isLoadingMessages: boolean;
+  isSendingMessage: boolean;
+  userRole: 'holder' | 'visitor';
   tokenBalance: string;
   sendMessage: (content: string) => Promise<void>;
   error: string | null;
 }
 
 export function useLabChat(
-  xmtpClient: Client | null,
   labId: string,
   userAddress: string | null,
   labVaultAddress: string | null,
-  isHoldersOnly: boolean = false
+  isHoldersOnly: boolean
 ): UseLabChatReturn {
-  const { sdk } = useBaseAccount();
   const [messages, setMessages] = useState<LabChatMessage[]>([]);
-  const [isLoading, setIsLoading] = useState(false);
-  const [isSending, setIsSending] = useState(false);
-  const [tokenBalance, setTokenBalance] = useState('0');
+  const [isLoadingMessages, setIsLoadingMessages] = useState(false);
+  const [isSendingMessage, setIsSendingMessage] = useState(false);
+  const [tokenBalance, setTokenBalance] = useState<string>('0');
   const [error, setError] = useState<string | null>(null);
-  const conversationRef = useRef<Group | null>(null);
-  const streamRef = useRef<any>(null);
 
-  // Check user's token balance to determine role
+  // Check token balance for access control
   const checkTokenBalance = useCallback(async () => {
-    if (!labVaultAddress || !userAddress || !sdk) {
-      setTokenBalance('0');
-      return;
-    }
-
-    // Skip balance check for mock addresses (testnet placeholder vaults)
-    if (labVaultAddress.match(/^0x0+[0-9]+$/)) {
+    if (!labVaultAddress || !userAddress || labVaultAddress === '0x0000000000000000000000000000000000000000') {
       console.log('[LabChat] Skipping balance check for mock vault address');
       setTokenBalance('0');
       return;
     }
 
     try {
-      const baseProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(baseProvider);
-      const vaultContract = new ethers.Contract(labVaultAddress, LabVault_ABI, provider);
-      const balance = await vaultContract.balanceOf(userAddress);
+      const provider = new ethers.BrowserProvider(window.ethereum);
+      const contract = new ethers.Contract(
+        labVaultAddress,
+        ['function balanceOf(address) view returns (uint256)'],
+        provider
+      );
+      const balance = await contract.balanceOf(userAddress);
       setTokenBalance(ethers.formatEther(balance));
     } catch (err) {
-      console.warn('[LabChat] Could not check token balance - vault may not exist yet:', err);
+      console.error('[LabChat] Error checking token balance:', err);
       setTokenBalance('0');
     }
-  }, [labVaultAddress, userAddress, sdk]);
+  }, [labVaultAddress, userAddress]);
 
-  // Determine user role based on token balance
-  const userRole: 'owner' | 'holder' | 'guest' = parseFloat(tokenBalance) > 0 ? 'holder' : 'guest';
-  const canSendMessages = parseFloat(tokenBalance) > 0;
+  const userRole = parseFloat(tokenBalance) > 0 ? 'holder' : 'visitor';
+  const canSendMessages = !isHoldersOnly || userRole === 'holder';
 
-  // Initialize conversation and start streaming messages
+  // Load messages from database
   useEffect(() => {
-    if (!xmtpClient || !labId) {
-      if (labId && !xmtpClient) {
-        setError('XMTP client not initialized. Please connect your wallet.');
-      }
-      return;
-    }
-    
-    // Reset messages when switching between open/gated
-    setMessages([]);
+    if (!labId) return;
 
-    const initConversation = async () => {
-      setIsLoading(true);
-      setError(null);
-
+    const loadMessages = async () => {
+      setIsLoadingMessages(true);
       try {
-        console.log('[LabChat] Initializing group chat for lab:', labId, 'holdersOnly:', isHoldersOnly);
-        
-        // For now, show a message that group chat is being set up
-        // In production, you would:
-        // 1. Create a group with the lab name
-        // 2. Add members based on token holdings
-        // 3. Use the group's inbox ID as the identifier
-        
-        setError('Lab group chat feature coming soon. XMTP is connected and ready!');
-        console.log('[LabChat] XMTP client ready, group chat implementation pending');
-        
-        // TODO: Implement group creation
-        // const group = await xmtpClient.conversations.newGroup(
-        //   [/* member inbox IDs */],
-        //   { name: `Lab ${labId}`, description: isHoldersOnly ? 'Holders Only' : 'Open Chat' }
-        // );
-        
-      } catch (err: any) {
-        console.error('[LabChat] Error initializing conversation:', err);
-        setError(err.message || 'Failed to initialize chat');
+        const { data, error } = await supabase.functions.invoke('lab-chat', {
+          body: { action: 'getMessages', labId }
+        });
+
+        if (error) throw error;
+        if (data?.messages) {
+          setMessages(data.messages);
+        }
+      } catch (err) {
+        console.error('[LabChat] Error loading messages:', err);
+        setError('Failed to load messages');
       } finally {
-        setIsLoading(false);
+        setIsLoadingMessages(false);
       }
     };
 
-    initConversation();
+    loadMessages();
+
+    // Subscribe to realtime updates
+    const channel = supabase
+      .channel(`lab-${labId}`)
+      .on(
+        'postgres_changes',
+        {
+          event: 'INSERT',
+          schema: 'public',
+          table: 'lab_messages',
+          filter: `lab_id=eq.${labId}`,
+        },
+        (payload) => {
+          console.log('[LabChat] New message received:', payload);
+          setMessages((prev) => [...prev, payload.new as LabChatMessage]);
+        }
+      )
+      .subscribe();
 
     return () => {
-      if (streamRef.current) {
-        streamRef.current.return?.();
-      }
+      channel.unsubscribe();
     };
-  }, [xmtpClient, labId, isHoldersOnly]);
+  }, [labId]);
 
-  // Check token balance on mount and periodically
+  // Check token balance periodically
   useEffect(() => {
     checkTokenBalance();
-    const interval = setInterval(checkTokenBalance, 30000); // Check every 30s
+    const interval = setInterval(checkTokenBalance, 30000);
     return () => clearInterval(interval);
   }, [checkTokenBalance]);
 
-  const sendMessage = useCallback(async (content: string) => {
-    if (!conversationRef.current) {
-      setError('Chat not initialized');
-      return;
-    }
-    
-    if (isHoldersOnly && !canSendMessages) {
-      setError('You need to hold lab tokens to send messages in holders chat');
-      return;
-    }
+  const sendMessage = useCallback(
+    async (content: string) => {
+      if (!userAddress) {
+        setError('Please connect your wallet');
+        return;
+      }
 
-    setIsSending(true);
-    setError(null);
+      if (isHoldersOnly && !canSendMessages) {
+        setError('Only token holders can send messages in this lab');
+        return;
+      }
 
-    try {
-      console.log('[LabChat] Sending message:', content);
-      await conversationRef.current.send(content);
-      console.log('[LabChat] Message sent successfully');
-    } catch (err: any) {
-      console.error('[LabChat] Error sending message:', err);
-      setError(err.message || 'Failed to send message');
-      throw err;
-    } finally {
-      setIsSending(false);
-    }
-  }, [canSendMessages, isHoldersOnly]);
+      if (!content.trim()) {
+        setError('Message cannot be empty');
+        return;
+      }
+
+      setIsSendingMessage(true);
+      setError(null);
+
+      try {
+        const { data, error: sendError } = await supabase.functions.invoke('lab-chat', {
+          body: {
+            action: 'send',
+            labId,
+            senderAddress: userAddress,
+            content: content.trim(),
+          }
+        });
+
+        if (sendError) throw sendError;
+        console.log('[LabChat] Message sent successfully:', data);
+      } catch (err: any) {
+        console.error('[LabChat] Error sending message:', err);
+        setError(err.message || 'Failed to send message');
+      } finally {
+        setIsSendingMessage(false);
+      }
+    },
+    [userAddress, labId, isHoldersOnly, canSendMessages]
+  );
 
   return {
     messages,
-    isLoading,
-    isSending,
-    canSendMessages,
+    isLoadingMessages,
+    isSendingMessage,
     userRole,
     tokenBalance,
     sendMessage,

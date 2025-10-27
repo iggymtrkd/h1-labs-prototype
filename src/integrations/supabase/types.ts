@@ -14,6 +14,30 @@ export type Database = {
   }
   public: {
     Tables: {
+      lab_messages: {
+        Row: {
+          content: string
+          created_at: string
+          id: string
+          lab_id: string
+          sender_address: string
+        }
+        Insert: {
+          content: string
+          created_at?: string
+          id?: string
+          lab_id: string
+          sender_address: string
+        }
+        Update: {
+          content?: string
+          created_at?: string
+          id?: string
+          lab_id?: string
+          sender_address?: string
+        }
+        Relationships: []
+      }
       profiles: {
         Row: {
           avatar_url: string | null
