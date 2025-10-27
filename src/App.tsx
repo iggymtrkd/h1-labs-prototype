@@ -47,17 +47,31 @@ const AppContent = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
   const isConnectingRef = useRef(false);
 
-  // Navigate to dashboard when wallet successfully connects from home page
+  // Navigate to choice page when wallet successfully connects from home page
   useEffect(() => {
+    console.log('[App] useEffect triggered', { 
+      isConnected, 
+      isConnecting: isConnectingRef.current, 
+      pathname: location.pathname 
+    });
+    
     if (isConnected && isConnectingRef.current && location.pathname === '/') {
+      console.log('[App] ✅ Wallet connected successfully, navigating to /get-started');
       isConnectingRef.current = false;
-      navigate("/dashboard");
+      navigate("/get-started");
     }
   }, [isConnected, location.pathname, navigate]);
 
   const handleConnectWallet = async () => {
+    console.log('[App] handleConnectWallet called');
     isConnectingRef.current = true;
-    await connectWallet();
+    try {
+      await connectWallet();
+      console.log('[App] connectWallet completed');
+    } catch (error) {
+      console.error('[App] ❌ connectWallet failed:', error);
+      isConnectingRef.current = false;
+    }
   };
 
   return (
