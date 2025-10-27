@@ -53,7 +53,7 @@ const AppContent = () => {
       if (location.pathname === '/') {
         // Wait longer to ensure wallet state is fully updated
         setTimeout(() => {
-          navigate("/get-started");
+          navigate("/dashboard");
         }, 500);
       }
     } catch (error) {
