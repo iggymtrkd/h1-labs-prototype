@@ -211,11 +211,6 @@ export default function LabChat() {
             <AlertDescription>
               <div className="font-semibold mb-1">Messaging Setup Failed</div>
               <div className="text-sm">{xmtpError}</div>
-              {xmtpError.includes('wallet is not compatible') && (
-                <div className="text-sm mt-2">
-                  Note: XMTP requires a standard Ethereum wallet signature. Some smart wallets may not be fully compatible yet.
-                </div>
-              )}
             </AlertDescription>
           </Alert>
         )}

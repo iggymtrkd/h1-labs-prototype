@@ -1,5 +1,5 @@
 import { useState, useEffect, useCallback, useRef } from 'react';
-import { Client, Conversation, DecodedMessage } from '@xmtp/xmtp-js';
+import { Client, type Group } from '@xmtp/browser-sdk';
 import { ethers } from 'ethers';
 import { LabVault_ABI } from '@/contracts/abis';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
@@ -36,7 +36,7 @@ export function useLabChat(
   const [isSending, setIsSending] = useState(false);
   const [tokenBalance, setTokenBalance] = useState('0');
   const [error, setError] = useState<string | null>(null);
-  const conversationRef = useRef<Conversation | null>(null);
+  const conversationRef = useRef<Group | null>(null);
   const streamRef = useRef<any>(null);
 
   // Check user's token balance to determine role
@@ -86,52 +86,23 @@ export function useLabChat(
       setError(null);
 
       try {
-        console.log('[LabChat] Initializing conversation for lab:', labId, 'holdersOnly:', isHoldersOnly);
+        console.log('[LabChat] Initializing group chat for lab:', labId, 'holdersOnly:', isHoldersOnly);
         
-        // Create a unique topic for this lab (separate for open vs gated)
-        const topic = isHoldersOnly ? `/h1labs/lab/${labId}/holders` : `/h1labs/lab/${labId}/open`;
+        // For now, show a message that group chat is being set up
+        // In production, you would:
+        // 1. Create a group with the lab name
+        // 2. Add members based on token holdings
+        // 3. Use the group's inbox ID as the identifier
         
-        // Get or create conversation with the lab topic
-        const conversations = await xmtpClient.conversations.list();
-        let conversation = conversations.find(c => c.topic === topic);
+        setError('Lab group chat feature coming soon. XMTP is connected and ready!');
+        console.log('[LabChat] XMTP client ready, group chat implementation pending');
         
-        if (!conversation) {
-          // For group chat, we'd need to create with multiple addresses
-          // For now, create a simple conversation (this is a simplified version)
-          console.log('[LabChat] Creating new conversation for lab');
-          // Note: In production, you'd use XMTP's group chat feature
-        }
+        // TODO: Implement group creation
+        // const group = await xmtpClient.conversations.newGroup(
+        //   [/* member inbox IDs */],
+        //   { name: `Lab ${labId}`, description: isHoldersOnly ? 'Holders Only' : 'Open Chat' }
+        // );
         
-        // Load existing messages
-        if (conversation) {
-          conversationRef.current = conversation;
-          const existingMessages = await conversation.messages();
-          
-          const formattedMessages: LabChatMessage[] = existingMessages.map((msg: DecodedMessage) => ({
-            id: msg.id,
-            content: msg.content as string,
-            senderAddress: msg.senderAddress,
-            timestamp: msg.sent,
-            isOwn: msg.senderAddress.toLowerCase() === xmtpClient.address.toLowerCase(),
-          }));
-          
-          setMessages(formattedMessages.reverse());
-          
-          // Start streaming new messages
-          const stream = await conversation.streamMessages();
-          streamRef.current = stream;
-          
-          for await (const message of stream) {
-            console.log('[LabChat] New message received:', message);
-            setMessages(prev => [...prev, {
-              id: message.id,
-              content: message.content as string,
-              senderAddress: message.senderAddress,
-              timestamp: message.sent,
-              isOwn: message.senderAddress.toLowerCase() === xmtpClient.address.toLowerCase(),
-            }]);
-          }
-        }
       } catch (err: any) {
         console.error('[LabChat] Error initializing conversation:', err);
         setError(err.message || 'Failed to initialize chat');

@@ -1,6 +1,5 @@
 import React, { createContext, useContext, useEffect } from 'react';
-import { Client } from '@xmtp/xmtp-js';
-import { ethers } from 'ethers';
+import { Client } from '@xmtp/browser-sdk';
 import { useXMTP } from '@/hooks/useXMTP';
 import { useBaseAccount } from '@/hooks/useBaseAccount';
 
@@ -23,12 +22,10 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
         try {
           console.log('[XMTPProvider] Initializing XMTP for address:', address);
           
-          // Use the Base SDK provider to create a signer
+          // Get the Base SDK provider
           const baseProvider = sdk.getProvider();
-          const ethersProvider = new ethers.BrowserProvider(baseProvider);
-          const signer = await ethersProvider.getSigner();
           
-          await initializeClient(signer);
+          await initializeClient(address, baseProvider);
         } catch (err) {
           console.error('[XMTPProvider] Failed to initialize XMTP:', err);
         }
