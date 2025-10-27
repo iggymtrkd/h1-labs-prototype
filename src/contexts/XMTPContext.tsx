@@ -1,7 +1,7 @@
 import React, { createContext, useContext, useEffect } from 'react';
 import { Client } from '@xmtp/browser-sdk';
 import { useXMTP } from '@/hooks/useXMTP';
-import { useBaseAccount } from '@/hooks/useBaseAccount';
+import { useAccount } from 'wagmi';
 
 interface XMTPContextValue {
   client: Client | null;
@@ -13,19 +13,15 @@ interface XMTPContextValue {
 const XMTPContext = createContext<XMTPContextValue | undefined>(undefined);
 
 export function XMTPProvider({ children }: { children: React.ReactNode }) {
-  const { address, isConnected, sdk } = useBaseAccount();
+  const { address, isConnected } = useAccount();
   const { client, isInitializing, isReady, error, initializeClient } = useXMTP();
 
   useEffect(() => {
-    if (isConnected && address && sdk && !client && !isInitializing && !error) {
+    if (isConnected && address && !client && !isInitializing && !error) {
       const initXMTP = async () => {
         try {
           console.log('[XMTPProvider] Initializing XMTP for address:', address);
-          
-          // Get the Base SDK provider
-          const baseProvider = sdk.getProvider();
-          
-          await initializeClient(address, baseProvider);
+          await initializeClient();
         } catch (err) {
           console.error('[XMTPProvider] Failed to initialize XMTP:', err);
         }
@@ -35,7 +31,7 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
       const timer = setTimeout(initXMTP, 500);
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, sdk, client, isInitializing, error, initializeClient]);
+  }, [isConnected, address, client, isInitializing, error, initializeClient]);
 
   const value: XMTPContextValue = {
     client,

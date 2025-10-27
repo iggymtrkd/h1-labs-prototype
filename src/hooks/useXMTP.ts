@@ -1,12 +1,13 @@
-import { useState, useEffect, useCallback } from 'react';
+import { useState, useCallback } from 'react';
 import { Client, type Signer } from '@xmtp/browser-sdk';
+import { useWalletClient } from 'wagmi';
 
 export interface UseXMTPReturn {
   client: Client | null;
   isInitializing: boolean;
   isReady: boolean;
   error: string | null;
-  initializeClient: (address: string, provider: any) => Promise<void>;
+  initializeClient: () => Promise<void>;
 }
 
 export function useXMTP(): UseXMTPReturn {
@@ -14,28 +15,33 @@ export function useXMTP(): UseXMTPReturn {
   const [isInitializing, setIsInitializing] = useState(false);
   const [isReady, setIsReady] = useState(false);
   const [error, setError] = useState<string | null>(null);
+  const { data: walletClient } = useWalletClient();
 
-  const initializeClient = useCallback(async (address: string, provider: any) => {
+  const initializeClient = useCallback(async () => {
+    if (!walletClient) {
+      setError('Please connect a wallet first');
+      return;
+    }
     if (isInitializing || client) return;
     
     setIsInitializing(true);
     setError(null);
     
     try {
-      console.log('[XMTP] Initializing client with Browser SDK...');
+      console.log('[XMTP] Initializing client with wagmi wallet...');
       
-      // Create XMTP Browser SDK signer for Smart Contract Wallet
+      // Create XMTP signer using wagmi wallet client
       const signer: Signer = {
-        type: 'SCW',
+        type: 'EOA', // Use EOA type for standard wallets
         getIdentifier: () => ({
-          identifier: address.toLowerCase(),
+          identifier: walletClient.account.address.toLowerCase(),
           identifierKind: 'Ethereum',
         }),
         signMessage: async (message: string): Promise<Uint8Array> => {
           console.log('[XMTP] Requesting signature from wallet...');
-          const signature = await provider.request({
-            method: 'personal_sign',
-            params: [message, address],
+          const signature = await walletClient.signMessage({
+            account: walletClient.account,
+            message,
           });
           
           // Convert hex string to Uint8Array
@@ -45,7 +51,6 @@ export function useXMTP(): UseXMTPReturn {
           );
           return bytes;
         },
-        getChainId: () => BigInt(84532), // Base Sepolia chain ID
       };
       
       // Create XMTP client with Browser SDK
@@ -58,19 +63,11 @@ export function useXMTP(): UseXMTPReturn {
       setIsReady(true);
     } catch (err: any) {
       console.error('[XMTP] Failed to initialize client:', err);
-      
-      // Handle specific SCW verification errors
-      if (err.message?.includes('Signature validation failed') || 
-          err.message?.includes('NoVerifier') ||
-          err.message?.includes('Smart contract wallet signature is invalid')) {
-        setError('XMTP chat requires a standard Ethereum wallet (MetaMask, Rainbow, etc). Base Smart Wallet support is coming soon!');
-      } else {
-        setError(err.message || 'Failed to initialize XMTP messaging');
-      }
+      setError(err.message || 'Failed to initialize XMTP messaging');
     } finally {
       setIsInitializing(false);
     }
-  }, [client, isInitializing]);
+  }, [walletClient, client, isInitializing]);
 
   return {
     client,
