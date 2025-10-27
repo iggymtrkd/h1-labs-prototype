@@ -34,15 +34,10 @@ contract LabVaultDeploymentFacet {
 
   function _deployVault(LibH1Storage.H1Storage storage hs, string calldata name, string calldata symbol) 
     private returns (address) {
-    address token = hs.labsToken;
-    uint64 cooldown = hs.defaultCooldown;
-    uint16 exitCap = hs.defaultExitCapBps;
-    address treasury = hs.protocolTreasury;
-    address factory = hs.vaultFactory;
-    (bool ok, bytes memory data) = factory.call(abi.encodeWithSignature(
+    (bool ok, bytes memory data) = hs.vaultFactory.call(abi.encodeWithSignature(
       "deployVault(address,string,string,string,uint64,uint16,address,address,address,address)",
-      token, name, symbol, name, cooldown, exitCap,
-      msg.sender, msg.sender, treasury, address(this)
+      hs.labsToken, name, symbol, name, hs.defaultCooldown, hs.defaultExitCapBps,
+      msg.sender, msg.sender, hs.protocolTreasury, address(this)
     ));
     require(ok, "deploy failed");
     return abi.decode(data, (address));
