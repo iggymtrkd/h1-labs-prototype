@@ -20,6 +20,11 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
   useEffect(() => {
     if (isConnected && address && !client && !isInitializing) {
       const initXMTP = async () => {
+        if (!window.ethereum) {
+          console.warn('[XMTPProvider] No ethereum provider available');
+          return;
+        }
+
         try {
           console.log('[XMTPProvider] Initializing XMTP for address:', address);
           const provider = new ethers.BrowserProvider(window.ethereum);

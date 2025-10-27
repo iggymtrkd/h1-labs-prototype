@@ -44,6 +44,12 @@ export function useLabChat(
       return;
     }
 
+    if (!window.ethereum) {
+      console.warn('[LabChat] No ethereum provider available');
+      setTokenBalance('0');
+      return;
+    }
+
     try {
       const provider = new ethers.BrowserProvider(window.ethereum);
       const vaultContract = new ethers.Contract(labVaultAddress, LabVault_ABI, provider);
@@ -61,7 +67,12 @@ export function useLabChat(
 
   // Initialize conversation and start streaming messages
   useEffect(() => {
-    if (!xmtpClient || !labId) return;
+    if (!xmtpClient || !labId) {
+      if (labId && !xmtpClient) {
+        setError('XMTP client not initialized. Please connect your wallet.');
+      }
+      return;
+    }
     
     // Reset messages when switching between open/gated
     setMessages([]);
