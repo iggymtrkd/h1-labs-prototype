@@ -1654,9 +1654,9 @@ export default function Prototype() {
 
             return {
               labId,
-              name: `Lab #${labId}`,
-              symbol: `H1L${labId}`,
-              domain: domain,
+              name: labEvent.name || `Lab #${labId}`,
+              symbol: labEvent.symbol || `H1L${labId}`,
+              domain: labEvent.domain || 'unknown',
               owner,
               level: Number(level),
               active,
@@ -1672,9 +1672,9 @@ export default function Prototype() {
             // Return basic data from event
             return {
               labId,
-              name: `Lab #${labId}`,
-              symbol: `H1L${labId}`,
-              domain: 'unknown',
+              name: labEvent.name || `Lab #${labId}`,
+              symbol: labEvent.symbol || `H1L${labId}`,
+              domain: labEvent.domain || 'unknown',
               owner: labEvent.owner,
               level: 1,
               active: true,
@@ -1755,9 +1755,9 @@ export default function Prototype() {
             
             return {
               labId: parseInt(lab.labId),
-              name: `Lab #${lab.labId}`,
-              symbol: `H1L${lab.labId}`,
-              domain: 'lab-domain',
+              name: lab.name || `Lab #${lab.labId}`,
+              symbol: lab.symbol || `H1L${lab.labId}`,
+              domain: lab.domain || 'unknown',
               h1Price: h1Price,
               tvl: tvl,
               curveAddress: curveAddress,

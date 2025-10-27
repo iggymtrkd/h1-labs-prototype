@@ -299,6 +299,18 @@ contract BondingCurveSale {
     admin = newAdmin;
     emit AdminUpdated(newAdmin);
   }
+  
+  /// @notice Get current bonding curve price for H1 tokens
+  /// @return Current price in LABS tokens
+  function getCurrentPrice() external view returns (uint256) {
+    return price();
+  }
+  
+  /// @notice Get LABS token balance held by the curve
+  /// @return Balance in wei
+  function getLabsBalance() external view returns (uint256) {
+    return IERC20(labsToken).balanceOf(address(this));
+  }
 }
 
 

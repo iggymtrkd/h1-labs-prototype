@@ -4,7 +4,7 @@ pragma solidity ^0.8.20;
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
 
 contract LabVaultDeploymentFacet {
-    event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault);
+    event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault, string name, string symbol, string domain);
     error InvalidInput();
     error InsufficientStake();
     error FactoryNotSet();
@@ -75,7 +75,14 @@ contract LabVaultDeploymentFacet {
         hs.labIdToVault[labId] = vault;
         hs.labs[labId].h1Token = vault;
 
-        emit LabVaultDeployed(labId, msg.sender, vault);
+        emit LabVaultDeployed(labId, msg.sender, vault, name, symbol, domain);
+    }
+    
+    /// @notice Get lab details (domain)
+    function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level) {
+        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+        LibH1Storage.Lab storage lab = hs.labs[labId];
+        return (lab.owner, lab.h1Token, lab.domain, lab.active, lab.level);
     }
 
     function _calcLevel(uint256 bal) private pure returns (uint8) {

@@ -8,7 +8,7 @@ import { useLabEvents } from "@/hooks/useLabEvents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ethers } from "ethers";
 import { CONTRACTS } from "@/config/contracts";
-import { LABSCoreFacet_ABI } from "@/contracts/abis";
+import { LABSCoreFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI } from "@/contracts/abis";
 
 // Fetch real labs from blockchain with bonding curve data
 export default function Dashboard() {
@@ -36,45 +36,48 @@ export default function Dashboard() {
         const labsWithDetails = await Promise.all(
           labEvents.map(async (event) => {
             try {
+              // Use data directly from event
               const labId = parseInt(event.labId);
-              const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
+              const name = event.name || `Lab #${labId}`;
+              const symbol = event.symbol || `H1L${labId}`;
+              const domain = event.domain || 'research';
               
               // Get bonding curve address
+              const bondingCurveFacet = new ethers.Contract(
+                CONTRACTS.H1Diamond,
+                BondingCurveFacet_ABI,
+                rpc
+              );
               let bondingCurveAddress = ethers.ZeroAddress;
               try {
-                bondingCurveAddress = await diamond.getLabBondingCurve(labId);
+                bondingCurveAddress = await bondingCurveFacet.getBondingCurve(labId);
               } catch {}
 
-              // Get H1 price if bonding curve exists
+              // Get H1 price and TVL if bonding curve exists
               let h1Price = '0';
               let tvl = '0';
               if (bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress) {
                 try {
                   const curveContract = new ethers.Contract(
                     bondingCurveAddress,
-                    ['function price() view returns (uint256)'],
+                    BondingCurveSale_ABI,
                     rpc
                   );
-                  const priceWei = await curveContract.price();
+                  const [priceWei, labsBalance] = await Promise.all([
+                    curveContract.getCurrentPrice(),
+                    curveContract.getLabsBalance()
+                  ]);
                   h1Price = ethers.formatEther(priceWei);
-                  
-                  // Get TVL from vault
-                  const vaultContract = new ethers.Contract(
-                    h1Token,
-                    ['function totalSupply() view returns (uint256)'],
-                    rpc
-                  );
-                  const totalSupply = await vaultContract.totalSupply();
-                  tvl = ethers.formatEther(totalSupply);
+                  tvl = ethers.formatEther(labsBalance);
                 } catch {}
               }
 
               return {
                 id: event.labId,
-                name: `Lab #${event.labId}`,
-                symbol: `H1L${event.labId}`,
-                category: domain || "Uncategorized",
-                description: `Lab #${event.labId} - Level ${level} Lab on H1 Protocol`,
+                name,
+                symbol,
+                category: domain,
+                description: `${name} - ${domain} lab on H1 Protocol`,
                 price: h1Price,
                 change24h: 0,
                 volume24h: tvl,
@@ -84,16 +87,16 @@ export default function Dashboard() {
                 bondingCurveAddress,
                 h1Price,
                 tvl,
-                owner: owner,
+                owner: event.owner,
               } as Lab;
             } catch (err) {
               console.error(`Error fetching details for lab ${event.labId}:`, err);
               return {
                 id: event.labId,
-                name: `Lab #${event.labId}`,
-                symbol: `H1L${event.labId}`,
-                category: "Uncategorized",
-                description: `Lab #${event.labId}`,
+                name: event.name || `Lab #${event.labId}`,
+                symbol: event.symbol || `H1L${event.labId}`,
+                category: event.domain || "Uncategorized",
+                description: event.name || `Lab #${event.labId}`,
                 price: "0",
                 change24h: 0,
                 volume24h: "0",

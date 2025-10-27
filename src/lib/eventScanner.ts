@@ -6,8 +6,8 @@ import { CONTRACTS } from '@/config/contracts';
 const BLOCKSCOUT_API = 'https://base-sepolia.blockscout.com/api';
 const LOGS_PER_REQUEST = 1000;
 
-// LabVaultDeployed event signature: LabVaultDeployed(uint256,address,address)
-const LAB_VAULT_DEPLOYED_SIGNATURE = 'LabVaultDeployed(uint256,address,address)';
+// LabVaultDeployed event signature: LabVaultDeployed(uint256,address,address,string,string,string)
+const LAB_VAULT_DEPLOYED_SIGNATURE = 'LabVaultDeployed(uint256,address,address,string,string,string)';
 const LAB_VAULT_DEPLOYED_TOPIC0 = keccak256(toHex(LAB_VAULT_DEPLOYED_SIGNATURE));
 
 // Define the LabVaultDeployed event ABI
@@ -19,6 +19,9 @@ const LAB_VAULT_DEPLOYED_ABI = [
       { name: 'labId', type: 'uint256', indexed: true },
       { name: 'owner', type: 'address', indexed: true },
       { name: 'vault', type: 'address', indexed: false },
+      { name: 'name', type: 'string', indexed: false },
+      { name: 'symbol', type: 'string', indexed: false },
+      { name: 'domain', type: 'string', indexed: false },
     ],
   },
 ] as const;
@@ -27,6 +30,9 @@ export interface ParsedLabEvent {
   labId: string;
   owner: string;
   vault: string;
+  name: string;
+  symbol: string;
+  domain: string;
   blockNumber: string;
   transactionHash: string;
   logIndex: number;
@@ -95,12 +101,18 @@ export async function fetchLabEvents(
           labId: bigint;
           owner: string;
           vault: string;
+          name: string;
+          symbol: string;
+          domain: string;
         };
 
         return {
           labId: args.labId.toString(),
           owner: args.owner.toLowerCase(),
           vault: args.vault.toLowerCase(),
+          name: args.name || `Lab #${args.labId.toString()}`,
+          symbol: args.symbol || `H1L${args.labId.toString()}`,
+          domain: args.domain || 'unknown',
           blockNumber: log.blockNumber,
           transactionHash: log.transactionHash,
           logIndex: parseInt(log.logIndex, 16),
