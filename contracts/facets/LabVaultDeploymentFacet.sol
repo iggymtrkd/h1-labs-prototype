@@ -11,7 +11,6 @@ contract LabVaultDeploymentFacet {
   event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault);
   
   error InvalidInput();
-  error DomainTaken();
   error InsufficientStake();
   
   uint256 constant MIN_STAKE = 100_000e18;
@@ -31,8 +30,6 @@ contract LabVaultDeploymentFacet {
     
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     
-    bytes32 domainKey = keccak256(bytes(domain));
-    if (hs.domainTaken[domainKey]) revert DomainTaken();
     if (hs.stakedBalances[msg.sender] < MIN_STAKE) revert InsufficientStake();
     
     // Calculate level
@@ -45,7 +42,6 @@ contract LabVaultDeploymentFacet {
     hs.labs[labId].domain = domain;
     hs.labs[labId].active = true;
     hs.labs[labId].level = level;
-    hs.domainTaken[domainKey] = true;
     
     // Deploy vault
     vault = LibLabVaultFactory.deployVault(

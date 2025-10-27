@@ -32,9 +32,9 @@ contract LABSCoreFacet {
   
   /// @notice Check if a domain is available for registration
   /// @param domain The domain to check
-  /// @return available True if the domain is available, false if taken
-  function isDomainAvailable(string calldata domain) external view returns (bool available) {
-    return !LibH1Storage.h1Storage().domainTaken[keccak256(bytes(domain))];
+  /// @return available Always returns true (domain exclusivity removed)
+  function isDomainAvailable(string calldata domain) external pure returns (bool available) {
+    return true;
   }
 
   /// @notice Get the level (1-3) of a lab based on its TVL
