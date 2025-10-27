@@ -201,14 +201,22 @@ export default function LabChat() {
           <Alert className="m-4">
             <Loader2 className="h-4 w-4 animate-spin" />
             <AlertDescription>
-              Initializing secure messaging... You may need to sign a message.
+              Setting up secure messaging with XMTP... Please approve the signature request in your wallet to create your messaging identity.
             </AlertDescription>
           </Alert>
         )}
 
         {xmtpError && (
           <Alert variant="destructive" className="m-4">
-            <AlertDescription>XMTP Error: {xmtpError}</AlertDescription>
+            <AlertDescription>
+              <div className="font-semibold mb-1">Messaging Setup Failed</div>
+              <div className="text-sm">{xmtpError}</div>
+              {xmtpError.includes('wallet is not compatible') && (
+                <div className="text-sm mt-2">
+                  Note: XMTP requires a standard Ethereum wallet signature. Some smart wallets may not be fully compatible yet.
+                </div>
+              )}
+            </AlertDescription>
           </Alert>
         )}
 

@@ -46,6 +46,13 @@ export function useLabChat(
       return;
     }
 
+    // Skip balance check for mock addresses (testnet placeholder vaults)
+    if (labVaultAddress.match(/^0x0+[0-9]+$/)) {
+      console.log('[LabChat] Skipping balance check for mock vault address');
+      setTokenBalance('0');
+      return;
+    }
+
     try {
       const baseProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(baseProvider);
@@ -53,7 +60,7 @@ export function useLabChat(
       const balance = await vaultContract.balanceOf(userAddress);
       setTokenBalance(ethers.formatEther(balance));
     } catch (err) {
-      console.error('[LabChat] Error checking token balance:', err);
+      console.warn('[LabChat] Could not check token balance - vault may not exist yet:', err);
       setTokenBalance('0');
     }
   }, [labVaultAddress, userAddress, sdk]);

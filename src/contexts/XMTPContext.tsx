@@ -18,7 +18,7 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
   const { client, isInitializing, isReady, error, initializeClient } = useXMTP();
 
   useEffect(() => {
-    if (isConnected && address && sdk && !client && !isInitializing) {
+    if (isConnected && address && sdk && !client && !isInitializing && !error) {
       const initXMTP = async () => {
         try {
           console.log('[XMTPProvider] Initializing XMTP for address:', address);
@@ -34,9 +34,11 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
         }
       };
 
-      initXMTP();
+      // Delay initialization slightly to ensure wallet is fully ready
+      const timer = setTimeout(initXMTP, 500);
+      return () => clearTimeout(timer);
     }
-  }, [isConnected, address, sdk, client, isInitializing, initializeClient]);
+  }, [isConnected, address, sdk, client, isInitializing, error, initializeClient]);
 
   const value: XMTPContextValue = {
     client,

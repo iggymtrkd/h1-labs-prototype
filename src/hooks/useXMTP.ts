@@ -27,7 +27,7 @@ export function useXMTP(): UseXMTPReturn {
       
       // Create XMTP client with the wallet signer
       const xmtpClient = await Client.create(signer, {
-        env: 'production' // Use 'dev' for testing
+        env: 'dev' // Use dev for Base testnet compatibility
       });
       
       console.log('[XMTP] Client initialized successfully');
@@ -35,7 +35,13 @@ export function useXMTP(): UseXMTPReturn {
       setIsReady(true);
     } catch (err: any) {
       console.error('[XMTP] Failed to initialize client:', err);
-      setError(err.message || 'Failed to initialize XMTP client');
+      
+      // Handle specific signature errors from incompatible wallets
+      if (err.message?.includes('CURVE.n') || err.message?.includes('signature')) {
+        setError('Your wallet is not compatible with XMTP messaging. Please try using MetaMask or another standard Ethereum wallet.');
+      } else {
+        setError(err.message || 'Failed to initialize XMTP messaging');
+      }
     } finally {
       setIsInitializing(false);
     }
