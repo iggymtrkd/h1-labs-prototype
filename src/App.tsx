@@ -45,32 +45,34 @@ const AppContent = () => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
   const [showHowItWorks, setShowHowItWorks] = useState(false);
-  const isConnectingRef = useRef(false);
-
   // Navigate to choice page when wallet successfully connects from home page
   useEffect(() => {
+    const wasConnecting = sessionStorage.getItem('wallet_connecting');
     console.log('[App] useEffect triggered', { 
       isConnected, 
-      isConnecting: isConnectingRef.current, 
+      wasConnecting,
       pathname: location.pathname 
     });
     
-    if (isConnected && isConnectingRef.current && location.pathname === '/') {
+    if (isConnected && wasConnecting === 'true' && location.pathname === '/') {
       console.log('[App] ✅ Wallet connected successfully, navigating to /get-started');
-      isConnectingRef.current = false;
+      sessionStorage.removeItem('wallet_connecting');
       navigate("/get-started");
+    } else if (!isConnected && wasConnecting === 'true') {
+      console.log('[App] ❌ Wallet connection failed, staying on home page');
+      sessionStorage.removeItem('wallet_connecting');
     }
   }, [isConnected, location.pathname, navigate]);
 
   const handleConnectWallet = async () => {
     console.log('[App] handleConnectWallet called');
-    isConnectingRef.current = true;
+    sessionStorage.setItem('wallet_connecting', 'true');
     try {
       await connectWallet();
       console.log('[App] connectWallet completed');
     } catch (error) {
       console.error('[App] ❌ connectWallet failed:', error);
-      isConnectingRef.current = false;
+      sessionStorage.removeItem('wallet_connecting');
     }
   };
 
