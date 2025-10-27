@@ -75,7 +75,7 @@ const labInfoData: Record<string, {
 export default function LabChat() {
   const { id } = useParams();
   const { client, isInitializing, isReady, error: xmtpError } = useXMTPContext();
-  const { address } = useAccount();
+  const { address: wagmiAddress } = useAccount();
   const [messageInput, setMessageInput] = useState("");
   const [isHoldersOnly, setIsHoldersOnly] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
@@ -94,7 +94,7 @@ export default function LabChat() {
   } = useLabChat(
     client,
     id || "",
-    address || null,
+    wagmiAddress || null,
     labInfo?.vaultAddress || null,
     isHoldersOnly
   );
@@ -198,11 +198,15 @@ export default function LabChat() {
           </div>
         </div>
 
-        {!address && (
+        {!wagmiAddress && (
           <Alert className="m-4">
             <AlertDescription>
-              <div className="flex items-center justify-between">
-                <span>Connect a wallet to access lab chat</span>
+              <div className="flex flex-col gap-3">
+                <span className="font-semibold">Connect Chat Wallet</span>
+                <p className="text-sm text-muted-foreground">
+                  XMTP chat requires a separate wallet connection (MetaMask, Rainbow, etc.) 
+                  for secure messaging. Your main Base wallet will still handle all transactions.
+                </p>
                 <XMTPWalletConnect />
               </div>
             </AlertDescription>

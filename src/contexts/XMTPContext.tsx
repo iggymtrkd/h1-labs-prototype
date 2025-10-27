@@ -2,6 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { Client } from '@xmtp/browser-sdk';
 import { useXMTP } from '@/hooks/useXMTP';
 import { useAccount } from 'wagmi';
+import { useBaseAccount } from '@/hooks/useBaseAccount';
 
 interface XMTPContextValue {
   client: Client | null;
@@ -13,14 +14,16 @@ interface XMTPContextValue {
 const XMTPContext = createContext<XMTPContextValue | undefined>(undefined);
 
 export function XMTPProvider({ children }: { children: React.ReactNode }) {
-  const { address, isConnected } = useAccount();
+  const { address: baseAddress } = useBaseAccount();
+  const { address: wagmiAddress, isConnected: wagmiConnected } = useAccount();
   const { client, isInitializing, isReady, error, initializeClient } = useXMTP();
 
+  // Use wagmi wallet for XMTP if connected, otherwise show connect prompt
   useEffect(() => {
-    if (isConnected && address && !client && !isInitializing && !error) {
+    if (wagmiConnected && wagmiAddress && !client && !isInitializing && !error) {
       const initXMTP = async () => {
         try {
-          console.log('[XMTPProvider] Initializing XMTP for address:', address);
+          console.log('[XMTPProvider] Initializing XMTP with wagmi wallet:', wagmiAddress);
           await initializeClient();
         } catch (err) {
           console.error('[XMTPProvider] Failed to initialize XMTP:', err);
@@ -31,7 +34,7 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
       const timer = setTimeout(initXMTP, 500);
       return () => clearTimeout(timer);
     }
-  }, [isConnected, address, client, isInitializing, error, initializeClient]);
+  }, [wagmiConnected, wagmiAddress, client, isInitializing, error, initializeClient]);
 
   const value: XMTPContextValue = {
     client,
