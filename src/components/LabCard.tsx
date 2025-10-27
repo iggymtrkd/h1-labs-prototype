@@ -9,7 +9,7 @@ import { useState } from "react";
 import { useBaseAccount } from "@/hooks/useBaseAccount";
 import { ethers } from "ethers";
 import { CONTRACTS } from "@/config/contracts";
-import { LABSToken_ABI, BondingCurveSale_ABI } from "@/contracts/abis";
+import { LABSToken_ABI, BondingCurveSale_ABI, LabDistributionFacet_ABI } from "@/contracts/abis";
 import { toast } from "sonner";
 
 export interface Lab {
@@ -28,6 +28,7 @@ export interface Lab {
   bondingCurveAddress?: string;
   h1Price?: string;
   tvl?: string;
+  owner?: string;
 }
 
 interface LabCardProps {
@@ -43,6 +44,43 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
   const [loading, setLoading] = useState(false);
 
   const hasBondingCurve = lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress;
+  const isOwner = address && lab.owner && address.toLowerCase() === lab.owner.toLowerCase();
+
+  const handleDeployBondingCurve = async () => {
+    if (!isConnected || !sdk || !address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!isOwner) {
+      toast.error('Only the lab owner can deploy the bonding curve');
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      const signer = await provider.getSigner(address);
+
+      const distributionFacet = new ethers.Contract(
+        CONTRACTS.LabDistributionFacet,
+        LabDistributionFacet_ABI,
+        signer
+      );
+
+      toast.info('Deploying bonding curve and distributing H1 tokens...');
+      const tx = await distributionFacet.createLabStep2(lab.id);
+      await tx.wait();
+
+      toast.success('Bonding curve deployed successfully! Refresh to see updates.');
+    } catch (error: any) {
+      console.error('Deploy bonding curve error:', error);
+      toast.error(error?.message || 'Failed to deploy bonding curve');
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleTrade = async () => {
     if (!isConnected || !sdk || !address) {
@@ -133,6 +171,22 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
           </p>
         </div>
       </div>
+
+      {!hasBondingCurve && isOwner && (
+        <div className="mb-4">
+          <Button 
+            onClick={handleDeployBondingCurve}
+            disabled={loading || !isConnected}
+            className="w-full bg-secondary text-secondary-foreground hover:opacity-90"
+          >
+            {loading ? (
+              <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Deploying...</>
+            ) : (
+              '🚀 Deploy Bonding Curve (Step 2)'
+            )}
+          </Button>
+        </div>
+      )}
 
       {hasBondingCurve && (
         <div className="mb-4 p-3 bg-muted/30 rounded-lg space-y-2">

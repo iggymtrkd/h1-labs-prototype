@@ -74,6 +74,7 @@ export default function Dashboard() {
                 bondingCurveAddress,
                 h1Price,
                 tvl,
+                owner: owner,
               } as Lab;
             } catch (err) {
               console.error(`Error fetching details for lab ${event.labId}:`, err);
@@ -89,6 +90,7 @@ export default function Dashboard() {
                 marketCap: "0",
                 validators: 0,
                 datasets: 0,
+                owner: event.owner,
               } as Lab;
             }
           })
