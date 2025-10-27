@@ -26,7 +26,8 @@ export function useLabChat(
   xmtpClient: Client | null,
   labId: string,
   userAddress: string | null,
-  labVaultAddress: string | null
+  labVaultAddress: string | null,
+  isHoldersOnly: boolean = false
 ): UseLabChatReturn {
   const [messages, setMessages] = useState<LabChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
@@ -61,16 +62,19 @@ export function useLabChat(
   // Initialize conversation and start streaming messages
   useEffect(() => {
     if (!xmtpClient || !labId) return;
+    
+    // Reset messages when switching between open/gated
+    setMessages([]);
 
     const initConversation = async () => {
       setIsLoading(true);
       setError(null);
 
       try {
-        console.log('[LabChat] Initializing conversation for lab:', labId);
+        console.log('[LabChat] Initializing conversation for lab:', labId, 'holdersOnly:', isHoldersOnly);
         
-        // Create a unique topic for this lab
-        const topic = `/h1labs/lab/${labId}`;
+        // Create a unique topic for this lab (separate for open vs gated)
+        const topic = isHoldersOnly ? `/h1labs/lab/${labId}/holders` : `/h1labs/lab/${labId}/open`;
         
         // Get or create conversation with the lab topic
         const conversations = await xmtpClient.conversations.list();
@@ -128,7 +132,7 @@ export function useLabChat(
         streamRef.current.return?.();
       }
     };
-  }, [xmtpClient, labId]);
+  }, [xmtpClient, labId, isHoldersOnly]);
 
   // Check token balance on mount and periodically
   useEffect(() => {
@@ -138,8 +142,13 @@ export function useLabChat(
   }, [checkTokenBalance]);
 
   const sendMessage = useCallback(async (content: string) => {
-    if (!conversationRef.current || !canSendMessages) {
-      setError('You need to hold lab tokens to send messages');
+    if (!conversationRef.current) {
+      setError('Chat not initialized');
+      return;
+    }
+    
+    if (isHoldersOnly && !canSendMessages) {
+      setError('You need to hold lab tokens to send messages in holders chat');
       return;
     }
 
@@ -157,7 +166,7 @@ export function useLabChat(
     } finally {
       setIsSending(false);
     }
-  }, [canSendMessages]);
+  }, [canSendMessages, isHoldersOnly]);
 
   return {
     messages,

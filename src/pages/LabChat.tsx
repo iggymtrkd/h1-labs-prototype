@@ -20,6 +20,7 @@ import { useXMTPContext } from "@/contexts/XMTPContext";
 import { useLabChat } from "@/hooks/useLabChat";
 import { useBaseAccount } from "@/hooks/useBaseAccount";
 import { toast } from "sonner";
+import { useENS, formatAddress as formatAddr } from "@/hooks/useENS";
 
 // Mock data for lab display info only
 const labInfoData: Record<string, {
@@ -37,7 +38,7 @@ const labInfoData: Record<string, {
     symbol: "CARDIO",
     price: "300,000",
     color: "hsl(263 97% 58%)",
-    vaultAddress: "0x0000000000000000000000000000000000000000",
+    vaultAddress: "0x0000000000000000000000000000000000000001", // Replace with actual vault
     apps: [
       { name: "HeartMonitor", icon: "H" },
       { name: "ECG Analyzer", icon: "E" },
@@ -49,6 +50,23 @@ const labInfoData: Record<string, {
       { value: 0.089 },
       { value: 0.031 },
       { value: 0.105 },
+    ],
+  },
+  "2": {
+    name: "ArtProof",
+    symbol: "ART",
+    price: "175,000",
+    color: "hsl(280 75% 58%)",
+    vaultAddress: "0x0000000000000000000000000000000000000002",
+    apps: [
+      { name: "Verify AI", icon: "V" },
+      { name: "ArtScan Pro", icon: "A" },
+    ],
+    channels: ["General", "Authenticity", "Market"],
+    priceData: [
+      { value: 0.018 },
+      { value: 0.072 },
+      { value: 0.024 },
     ],
   },
 };
@@ -76,7 +94,8 @@ export default function LabChat() {
     client,
     id || "",
     address || null,
-    labInfo?.vaultAddress || null
+    labInfo?.vaultAddress || null,
+    isHoldersOnly
   );
 
   useEffect(() => {
@@ -88,8 +107,8 @@ export default function LabChat() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || isSending) return;
 
-    if (!canSendMessages) {
-      toast.error("You need to hold lab tokens to send messages");
+    if (isHoldersOnly && !canSendMessages) {
+      toast.error("You need to hold lab tokens to send messages in holders chat");
       return;
     }
 
@@ -111,6 +130,16 @@ export default function LabChat() {
 
   const formatAddress = (addr: string) => {
     return `${addr.slice(0, 6)}...${addr.slice(-4)}`;
+  };
+
+  // Component for displaying user with ENS
+  const UserDisplay = ({ address: userAddr }: { address: string }) => {
+    const { ensName } = useENS(userAddr);
+    return (
+      <span className="font-semibold text-xs text-primary">
+        {formatAddr(userAddr, ensName)}
+      </span>
+    );
   };
 
   if (!labInfo) {
@@ -157,14 +186,13 @@ export default function LabChat() {
               </Badge>
             )}
             <Button
-              variant="ghost"
-              size="icon"
+              variant={isHoldersOnly ? "default" : "outline"}
+              size="sm"
               onClick={() => setIsHoldersOnly(!isHoldersOnly)}
-              className={`rounded-full transition-colors ${
-                isHoldersOnly ? "bg-primary text-primary-foreground" : "bg-muted"
-              }`}
+              className="gap-2"
             >
               <Key className="h-4 w-4" />
+              {isHoldersOnly ? "Holders Chat" : "Open Chat"}
             </Button>
           </div>
         </div>
@@ -190,10 +218,10 @@ export default function LabChat() {
           </Alert>
         )}
 
-        {!canSendMessages && isReady && (
+        {isHoldersOnly && !canSendMessages && isReady && (
           <Alert className="m-4">
             <AlertDescription>
-              You need to hold {labInfo.symbol} tokens to send messages. Token Balance: {tokenBalance}
+              You need to hold {labInfo.symbol} tokens to access holders chat. Token Balance: {tokenBalance}
             </AlertDescription>
           </Alert>
         )}
@@ -203,7 +231,7 @@ export default function LabChat() {
             <div className="max-w-4xl mb-4 px-4 py-3 bg-primary/20 border border-primary/30 rounded-lg flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
-                Holders-Only Chat (Coming Soon)
+                🔒 Holders-Only Chat - Only token holders can participate
               </span>
             </div>
           )}
@@ -230,9 +258,7 @@ export default function LabChat() {
                   <div className={`flex flex-col ${msg.isOwn ? "items-end max-w-[75%]" : "items-start max-w-[75%]"}`}>
                     {!msg.isOwn && (
                       <div className="flex items-baseline gap-2 mb-1 px-1">
-                        <span className="font-semibold text-xs text-primary">
-                          {formatAddress(msg.senderAddress)}
-                        </span>
+                        <UserDisplay address={msg.senderAddress} />
                         <span className="text-[10px] text-muted-foreground">
                           {new Date(msg.timestamp).toLocaleTimeString()}
                         </span>
@@ -275,11 +301,11 @@ export default function LabChat() {
               placeholder={
                 !isReady
                   ? "Initializing chat..."
-                  : !canSendMessages
-                  ? "Hold tokens to send messages"
+                  : isHoldersOnly && !canSendMessages
+                  ? "Hold tokens to send messages in holders chat"
                   : "Type your message"
               }
-              disabled={!isReady || !canSendMessages || isSending}
+              disabled={!isReady || (isHoldersOnly && !canSendMessages) || isSending}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Button
@@ -287,7 +313,7 @@ export default function LabChat() {
               size="icon"
               className="h-8 w-8"
               onClick={handleSendMessage}
-              disabled={!isReady || !canSendMessages || isSending || !messageInput.trim()}
+              disabled={!isReady || (isHoldersOnly && !canSendMessages) || isSending || !messageInput.trim()}
             >
               {isSending ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -341,10 +367,12 @@ export default function LabChat() {
               </Button>
             </Link>
 
-            <div className="text-xs text-muted-foreground space-y-1 pt-4">
+            <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
+              <p className="font-semibold text-foreground mb-2">Chat Info</p>
               <p>🔐 End-to-end encrypted via XMTP</p>
-              <p>📊 Token balance: {parseFloat(tokenBalance).toFixed(2)}</p>
+              <p>📊 Balance: {parseFloat(tokenBalance).toFixed(2)} tokens</p>
               <p>👤 Role: {userRole}</p>
+              <p>💬 Mode: {isHoldersOnly ? "Holders Only" : "Open Chat"}</p>
             </div>
           </div>
         </ScrollArea>
