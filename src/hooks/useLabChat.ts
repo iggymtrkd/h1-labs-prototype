@@ -2,6 +2,7 @@ import { useState, useEffect, useCallback, useRef } from 'react';
 import { Client, Conversation, DecodedMessage } from '@xmtp/xmtp-js';
 import { ethers } from 'ethers';
 import { LabVault_ABI } from '@/contracts/abis';
+import { useBaseAccount } from '@/hooks/useBaseAccount';
 
 export interface LabChatMessage {
   id: string;
@@ -29,6 +30,7 @@ export function useLabChat(
   labVaultAddress: string | null,
   isHoldersOnly: boolean = false
 ): UseLabChatReturn {
+  const { sdk } = useBaseAccount();
   const [messages, setMessages] = useState<LabChatMessage[]>([]);
   const [isLoading, setIsLoading] = useState(false);
   const [isSending, setIsSending] = useState(false);
@@ -39,19 +41,14 @@ export function useLabChat(
 
   // Check user's token balance to determine role
   const checkTokenBalance = useCallback(async () => {
-    if (!labVaultAddress || !userAddress) {
-      setTokenBalance('0');
-      return;
-    }
-
-    if (!window.ethereum) {
-      console.warn('[LabChat] No ethereum provider available');
+    if (!labVaultAddress || !userAddress || !sdk) {
       setTokenBalance('0');
       return;
     }
 
     try {
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      const baseProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(baseProvider);
       const vaultContract = new ethers.Contract(labVaultAddress, LabVault_ABI, provider);
       const balance = await vaultContract.balanceOf(userAddress);
       setTokenBalance(ethers.formatEther(balance));
@@ -59,7 +56,7 @@ export function useLabChat(
       console.error('[LabChat] Error checking token balance:', err);
       setTokenBalance('0');
     }
-  }, [labVaultAddress, userAddress]);
+  }, [labVaultAddress, userAddress, sdk]);
 
   // Determine user role based on token balance
   const userRole: 'owner' | 'holder' | 'guest' = parseFloat(tokenBalance) > 0 ? 'holder' : 'guest';

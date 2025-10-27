@@ -2,7 +2,7 @@ import React, { createContext, useContext, useEffect } from 'react';
 import { Client } from '@xmtp/xmtp-js';
 import { ethers } from 'ethers';
 import { useXMTP } from '@/hooks/useXMTP';
-import { useWallet } from '@/hooks/useWallet';
+import { useBaseAccount } from '@/hooks/useBaseAccount';
 
 interface XMTPContextValue {
   client: Client | null;
@@ -14,21 +14,20 @@ interface XMTPContextValue {
 const XMTPContext = createContext<XMTPContextValue | undefined>(undefined);
 
 export function XMTPProvider({ children }: { children: React.ReactNode }) {
-  const { address, isConnected } = useWallet();
+  const { address, isConnected, sdk } = useBaseAccount();
   const { client, isInitializing, isReady, error, initializeClient } = useXMTP();
 
   useEffect(() => {
-    if (isConnected && address && !client && !isInitializing) {
+    if (isConnected && address && sdk && !client && !isInitializing) {
       const initXMTP = async () => {
-        if (!window.ethereum) {
-          console.warn('[XMTPProvider] No ethereum provider available');
-          return;
-        }
-
         try {
           console.log('[XMTPProvider] Initializing XMTP for address:', address);
-          const provider = new ethers.BrowserProvider(window.ethereum);
-          const signer = await provider.getSigner();
+          
+          // Use the Base SDK provider to create a signer
+          const baseProvider = sdk.getProvider();
+          const ethersProvider = new ethers.BrowserProvider(baseProvider);
+          const signer = await ethersProvider.getSigner();
+          
           await initializeClient(signer);
         } catch (err) {
           console.error('[XMTPProvider] Failed to initialize XMTP:', err);
@@ -37,7 +36,7 @@ export function XMTPProvider({ children }: { children: React.ReactNode }) {
 
       initXMTP();
     }
-  }, [isConnected, address, client, isInitializing, initializeClient]);
+  }, [isConnected, address, sdk, client, isInitializing, initializeClient]);
 
   const value: XMTPContextValue = {
     client,
