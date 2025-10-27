@@ -47,11 +47,18 @@ const AppContent = () => {
   const [showHowItWorks, setShowHowItWorks] = useState(false);
 
   const handleConnectWallet = async () => {
-    await connectWallet();
-    // Small delay to ensure state updates before navigation
-    setTimeout(() => {
-      navigate("/get-started");
-    }, 100);
+    try {
+      await connectWallet();
+      // Only navigate if we're on the home page
+      if (location.pathname === '/') {
+        // Wait longer to ensure wallet state is fully updated
+        setTimeout(() => {
+          navigate("/get-started");
+        }, 500);
+      }
+    } catch (error) {
+      console.error('Failed to connect wallet:', error);
+    }
   };
 
   return (
