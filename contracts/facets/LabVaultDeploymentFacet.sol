@@ -48,4 +48,3 @@ contract LabVaultDeploymentFacet {
     return abi.decode(data, (address));
   }
 }
-
