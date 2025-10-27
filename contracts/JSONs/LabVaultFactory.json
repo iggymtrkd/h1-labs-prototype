@@ -1,0 +1,85 @@
+[
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      },
+      {
+        "indexed": true,
+        "internalType": "address",
+        "name": "owner",
+        "type": "address"
+      }
+    ],
+    "name": "VaultDeployed",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "address",
+        "name": "labsToken",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "h1Name",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "h1Symbol",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "labDisplayName",
+        "type": "string"
+      },
+      {
+        "internalType": "uint64",
+        "name": "cooldownSeconds",
+        "type": "uint64"
+      },
+      {
+        "internalType": "uint16",
+        "name": "epochExitCapBps",
+        "type": "uint16"
+      },
+      {
+        "internalType": "address",
+        "name": "admin",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "labOwner",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "treasury",
+        "type": "address"
+      },
+      {
+        "internalType": "address",
+        "name": "diamond",
+        "type": "address"
+      }
+    ],
+    "name": "deployVault",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "vault",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  }
+]

@@ -137,6 +137,14 @@ contract ConfigurationFacet {
     emit ProtocolConfigurationUpdated("labsToken", uint256(uint160(labsToken)), msg.sender);
   }
   
+  /// @notice Set vault factory address
+  /// @param factory Address of the LabVaultFactory contract
+  function setVaultFactory(address factory) external onlyOwner {
+    if (factory == address(0)) revert InvalidAddress();
+    LibH1Storage.h1Storage().vaultFactory = factory;
+    emit ProtocolConfigurationUpdated("vaultFactory", uint256(uint160(factory)), msg.sender);
+  }
+  
   // ============================================
   // QUERY FUNCTIONS
   // ============================================
@@ -148,6 +156,7 @@ contract ConfigurationFacet {
   /// @return defaultExitCapBps Current default exit cap
   /// @return curveFeeBps Current curve fee
   /// @return curvePolBps Current curve POL allocation
+  /// @return vaultFactory Vault factory address
   /// @return defaultsInitialized Whether defaults have been initialized
   function getConfiguration() external view returns (
     address labsToken,
@@ -156,6 +165,7 @@ contract ConfigurationFacet {
     uint16 defaultExitCapBps,
     uint16 curveFeeBps,
     uint16 curvePolBps,
+    address vaultFactory,
     bool defaultsInitialized
   ) {
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
@@ -165,6 +175,7 @@ contract ConfigurationFacet {
     defaultExitCapBps = hs.defaultExitCapBps;
     curveFeeBps = hs.curveFeeBps;
     curvePolBps = hs.curvePolBps;
+    vaultFactory = hs.vaultFactory;
     defaultsInitialized = hs.defaultsInitialized;
   }
   

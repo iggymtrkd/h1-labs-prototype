@@ -2,16 +2,31 @@
 pragma solidity ^0.8.20;
 
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
-import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
+
+interface ILabVaultFactory {
+  function deployVault(
+    address labsToken,
+    string calldata h1Name,
+    string calldata h1Symbol,
+    string calldata labDisplayName,
+    uint64 cooldownSeconds,
+    uint16 epochExitCapBps,
+    address admin,
+    address labOwner,
+    address treasury,
+    address diamond
+  ) external returns (address vault);
+}
 
 /// @title LabVaultDeploymentFacet
 /// @notice Creates lab entry and deploys vault (Step 1 of lab creation)
-/// @dev Handles validation, lab creation, and vault deployment (~15KB)
+/// @dev Uses external factory to reduce contract size
 contract LabVaultDeploymentFacet {
   event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault);
   
   error InvalidInput();
   error InsufficientStake();
+  error FactoryNotSet();
   
   uint256 constant MIN_STAKE = 100_000e18;
   
@@ -43,20 +58,20 @@ contract LabVaultDeploymentFacet {
     hs.labs[labId].active = true;
     hs.labs[labId].level = level;
     
-    // Deploy vault
-    vault = LibLabVaultFactory.deployVault(
-      LibLabVaultFactory.VaultParams({
-        labsToken: hs.labsToken,
-        h1Name: name,
-        h1Symbol: symbol,
-        labDisplayName: name,
-        cooldownSeconds: hs.defaultCooldown,
-        epochExitCapBps: hs.defaultExitCapBps,
-        admin: msg.sender,
-        labOwner: msg.sender,
-        treasury: hs.protocolTreasury,
-        diamond: address(this)
-      })
+    // Deploy vault via external factory
+    if (hs.vaultFactory == address(0)) revert FactoryNotSet();
+    
+    vault = ILabVaultFactory(hs.vaultFactory).deployVault(
+      hs.labsToken,
+      name,
+      symbol,
+      name,
+      hs.defaultCooldown,
+      hs.defaultExitCapBps,
+      msg.sender,
+      msg.sender,
+      hs.protocolTreasury,
+      address(this)
     );
     
     hs.labIdToVault[labId] = vault;

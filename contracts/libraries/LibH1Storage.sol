@@ -158,6 +158,8 @@ library LibH1Storage {
     // Lab vesting IDs (for scholars and devs)
     mapping(uint256 => uint256[]) labScholarVestings;       // labId → [vestingIds]
     mapping(uint256 => uint256[]) labDevVestings;           // labId → [vestingIds]
+    // External factory for vault deployment
+    address vaultFactory;
   }
 
   function h1Storage() internal pure returns (H1Storage storage hs) {
