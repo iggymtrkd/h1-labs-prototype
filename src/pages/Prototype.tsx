@@ -15,7 +15,7 @@ import { useBaseAccount } from '@/hooks/useBaseAccount';
 import { useFaucet } from '@/hooks/useFaucet';
 import { useWindowSize } from '@/hooks/use-window-size';
 import Confetti from 'react-confetti';
-import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp, FileStack, PenTool } from 'lucide-react';
+import { Beaker, Rocket, GraduationCap, Building2, Loader2, CheckCircle2, XCircle, Info, ArrowLeft, HelpCircle, CircleHelp, FileStack, PenTool, Flame, TrendingUp } from 'lucide-react';
 import { toast } from 'sonner';
 import { useNavigate, Link } from 'react-router-dom';
 import { ethers } from 'ethers';
@@ -3000,20 +3000,135 @@ export default function Prototype() {
               <p className="text-sm text-muted-foreground">Buy & Sell H1 tokens from any lab. Powered by Bonding Curves.</p>
             </div>
 
-            <div className="space-y-6">
-              {/* Real Labs from Blockchain */}
-              <div>
-                <p className="text-sm font-semibold text-primary mb-4">
-                  Available Labs for Trading {allLabsForMarketplace.length > 0 && `(${allLabsForMarketplace.length})`}
-                </p>
-                
-                {allLabsForMarketplace.length === 0 ? (
-                  <Card className="p-8 text-center bg-slate-800/30">
-                    <p className="text-muted-foreground">No labs available yet. Create the first lab to start trading!</p>
-                  </Card>
-                ) : (
-                  <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
-                    {allLabsForMarketplace.map((lab) => (
+            <div className="space-y-8">
+              {allLabsForMarketplace.length === 0 ? (
+                <Card className="p-8 text-center bg-slate-800/30">
+                  <p className="text-muted-foreground">No labs available yet. Create the first lab to start trading!</p>
+                </Card>
+              ) : (
+                <>
+                  {/* Trending Labs - Labs with bonding curves and TVL */}
+                  {allLabsForMarketplace.filter(lab => 
+                    lab.curveAddress && 
+                    lab.curveAddress !== ethers.ZeroAddress && 
+                    parseFloat(lab.tvl) > 0
+                  ).length > 0 && (
+                    <div>
+                      <div className="flex items-center gap-2 mb-4">
+                        <Flame className="h-5 w-5 text-primary" />
+                        <h4 className="text-xl font-bold text-primary">🔥 Trending Labs</h4>
+                        <Badge variant="secondary" className="ml-2">
+                          {allLabsForMarketplace.filter(lab => 
+                            lab.curveAddress && 
+                            lab.curveAddress !== ethers.ZeroAddress && 
+                            parseFloat(lab.tvl) > 0
+                          ).length} active
+                        </Badge>
+                      </div>
+                      <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                        {allLabsForMarketplace
+                          .filter(lab => 
+                            lab.curveAddress && 
+                            lab.curveAddress !== ethers.ZeroAddress && 
+                            parseFloat(lab.tvl) > 0
+                          )
+                          .sort((a, b) => parseFloat(b.tvl) - parseFloat(a.tvl))
+                          .map((lab) => (
+                            <Card key={lab.labId} className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition">
+                              <div className="space-y-3">
+                                <div>
+                                  <h4 className="font-bold text-lg text-secondary">{lab.name}</h4>
+                                  <p className="text-sm text-muted-foreground">Domain: {lab.domain}</p>
+                                </div>
+
+                                <div className="grid grid-cols-2 gap-2 text-sm">
+                                  <div>
+                                    <p className="text-muted-foreground text-xs">H1 Price</p>
+                                    <p className="font-mono font-bold">
+                                      {lab.h1Price === '0' || !lab.curveAddress || lab.curveAddress === ethers.ZeroAddress 
+                                        ? 'Not Set' 
+                                        : `${parseFloat(lab.h1Price).toFixed(4)} LABS`}
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground text-xs">Lab ID</p>
+                                    <p className="font-mono font-bold">#{lab.labId}</p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground text-xs">TVL</p>
+                                    <p className="font-mono font-bold text-xs">
+                                      {parseFloat(lab.tvl).toFixed(2)} LABS
+                                    </p>
+                                  </div>
+                                  <div>
+                                    <p className="text-muted-foreground text-xs">Symbol</p>
+                                    <p className="font-mono font-bold text-xs">{lab.symbol}</p>
+                                  </div>
+                                </div>
+
+                                <Separator className="my-2" />
+
+                                <div className="space-y-2">
+                                  <Select 
+                                    value={marketplaceAction} 
+                                    onValueChange={v => setMarketplaceAction(v as 'buy' | 'sell')}
+                                  >
+                                    <SelectTrigger className="text-sm">
+                                      <SelectValue placeholder="Buy / Sell" />
+                                    </SelectTrigger>
+                                    <SelectContent className="bg-background">
+                                      <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                                      <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                                    </SelectContent>
+                                  </Select>
+
+                                  <Input 
+                                    type="number" 
+                                    placeholder="Amount in LABS" 
+                                    step="0.01" 
+                                    value={selectedLabForTrade === lab.labId ? tradeAmount : ''} 
+                                    onChange={e => {
+                                      setSelectedLabForTrade(lab.labId);
+                                      setTradeAmount(e.target.value);
+                                    }} 
+                                    className="text-sm" 
+                                  />
+
+                                  <Button 
+                                    size="sm" 
+                                    className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} 
+                                    disabled={loading === 'marketplace' || !tradeAmount || selectedLabForTrade !== lab.labId}
+                                    onClick={() => handleTradeH1(lab.labId, marketplaceAction)}
+                                  >
+                                    {loading === 'marketplace' && selectedLabForTrade === lab.labId ? (
+                                      <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : (
+                                      marketplaceAction === 'buy' ? '🟢 Buy H1 with LABS' : '🔴 Redeem H1'
+                                    )}
+                                  </Button>
+                                </div>
+
+                                <p className="text-xs text-muted-foreground text-center">
+                                  💡 Stake LABS to get H1 tokens for governance
+                                </p>
+                              </div>
+                            </Card>
+                          ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* All Labs Section */}
+                  <div>
+                    <div className="flex items-center gap-2 mb-4">
+                      <TrendingUp className="h-5 w-5 text-primary" />
+                      <h4 className="text-xl font-bold">All Labs</h4>
+                      <Badge variant="secondary" className="ml-2">
+                        {allLabsForMarketplace.length} total
+                      </Badge>
+                    </div>
+                    <div className="grid gap-4 grid-cols-1 md:grid-cols-2 lg:grid-cols-3">
+                      {allLabsForMarketplace.map((lab) => (
                       <Card key={lab.labId} className="p-4 bg-slate-800/50 border-secondary/20 hover:border-secondary/40 transition">
                         <div className="space-y-3">
                           <div>
@@ -3086,7 +3201,7 @@ export default function Prototype() {
                                   <Loader2 className="h-4 w-4 animate-spin" />
                                 ) : (
                                   marketplaceAction === 'buy' ? '🟢 Buy H1 with LABS' : '🔴 Redeem H1'
-                                )}
+                                 )}
                               </Button>
                             </div>
                           ) : (
@@ -3124,8 +3239,9 @@ export default function Prototype() {
                       </Card>
                     ))}
                   </div>
-                )}
-              </div>
+                </div>
+                </>
+              )}
 
               {/* Marketplace Info */}
               <div className="bg-primary/5 border border-primary/20 rounded-lg p-4">
