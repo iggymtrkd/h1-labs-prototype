@@ -299,15 +299,20 @@ export default function LabDetail() {
           try {
             const curveContract = new ethers.Contract(
               bondingCurveAddress,
-              ['function getCurrentPrice() view returns (uint256)', 'function getTotalDeposits() view returns (uint256)'],
+              ['function price() view returns (uint256)'],
               rpc
             );
-            const [price, deposits] = await Promise.all([
-              curveContract.getCurrentPrice(),
-              curveContract.getTotalDeposits()
-            ]);
-            h1Price = ethers.formatEther(price);
-            tvl = ethers.formatEther(deposits);
+            const priceWei = await curveContract.price();
+            h1Price = ethers.formatEther(priceWei);
+            
+            // Get TVL from vault
+            const vaultContract = new ethers.Contract(
+              h1Token,
+              ['function totalSupply() view returns (uint256)'],
+              rpc
+            );
+            const totalSupply = await vaultContract.totalSupply();
+            tvl = ethers.formatEther(totalSupply);
           } catch {}
         }
 
