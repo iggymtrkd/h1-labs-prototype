@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { LabCard, Lab } from "@/components/LabCard";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
@@ -6,27 +6,104 @@ import { Search, TrendingUp, Flame, Clock, Loader2 } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
 import { useLabEvents } from "@/hooks/useLabEvents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { ethers } from "ethers";
+import { CONTRACTS } from "@/config/contracts";
+import { LABSCoreFacet_ABI } from "@/contracts/abis";
 
-// Fetch real labs from blockchain
+// Fetch real labs from blockchain with bonding curve data
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const { labs: labEvents, loading, error } = useLabEvents();
+  const { labs: labEvents, loading: labEventsLoading, error } = useLabEvents();
+  const [labs, setLabs] = useState<Lab[]>([]);
+  const [loadingDetails, setLoadingDetails] = useState(false);
 
-  // Transform lab events into Lab format for LabCard
-  const labs: Lab[] = labEvents.map((event, index) => ({
-    id: event.labId,
-    name: event.name,
-    symbol: event.symbol,
-    category: event.domain || "Uncategorized",
-    description: `Lab ${event.name} - H1 Token: ${event.h1Token.slice(0, 6)}...${event.h1Token.slice(-4)}`,
-    price: "0.000", // Will be populated from bonding curve
-    change24h: 0,
-    volume24h: "0",
-    marketCap: "0",
-    validators: 0,
-    datasets: 0,
-  }));
+  // Fetch bonding curve details for each lab
+  useEffect(() => {
+    const fetchLabDetails = async () => {
+      if (labEvents.length === 0) return;
+      
+      setLoadingDetails(true);
+      try {
+        const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+        const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, rpc);
+
+        const labsWithDetails = await Promise.all(
+          labEvents.map(async (event) => {
+            try {
+              const labId = parseInt(event.labId);
+              const [owner, h1Token, domain, active, level] = await diamond.getLabDetails(labId);
+              
+              // Get bonding curve address
+              let bondingCurveAddress = ethers.ZeroAddress;
+              try {
+                bondingCurveAddress = await diamond.getLabBondingCurve(labId);
+              } catch {}
+
+              // Get H1 price if bonding curve exists
+              let h1Price = '0';
+              let tvl = '0';
+              if (bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress) {
+                try {
+                  const curveContract = new ethers.Contract(
+                    bondingCurveAddress,
+                    ['function getCurrentPrice() view returns (uint256)', 'function getTotalDeposits() view returns (uint256)'],
+                    rpc
+                  );
+                  const [price, deposits] = await Promise.all([
+                    curveContract.getCurrentPrice(),
+                    curveContract.getTotalDeposits()
+                  ]);
+                  h1Price = ethers.formatEther(price);
+                  tvl = ethers.formatEther(deposits);
+                } catch {}
+              }
+
+              return {
+                id: event.labId,
+                name: event.name,
+                symbol: event.symbol,
+                category: event.domain || "Uncategorized",
+                description: `${event.name} - Level ${level} Lab on H1 Protocol`,
+                price: h1Price,
+                change24h: 0,
+                volume24h: tvl,
+                marketCap: "0",
+                validators: 0,
+                datasets: 0,
+                bondingCurveAddress,
+                h1Price,
+                tvl,
+              } as Lab;
+            } catch (err) {
+              console.error(`Error fetching details for lab ${event.labId}:`, err);
+              return {
+                id: event.labId,
+                name: event.name,
+                symbol: event.symbol,
+                category: event.domain || "Uncategorized",
+                description: `Lab ${event.name}`,
+                price: "0",
+                change24h: 0,
+                volume24h: "0",
+                marketCap: "0",
+                validators: 0,
+                datasets: 0,
+              } as Lab;
+            }
+          })
+        );
+
+        setLabs(labsWithDetails);
+      } catch (err) {
+        console.error('Error fetching lab details:', err);
+      } finally {
+        setLoadingDetails(false);
+      }
+    };
+
+    fetchLabDetails();
+  }, [labEvents]);
 
   const categories = ["all", ...Array.from(new Set(labs.map(lab => lab.category)))];
 
@@ -36,6 +113,8 @@ export default function Dashboard() {
     const matchesCategory = selectedCategory === "all" || lab.category === selectedCategory;
     return matchesSearch && matchesCategory;
   });
+
+  const loading = labEventsLoading || loadingDetails;
 
   if (loading) {
     return (
@@ -115,20 +194,33 @@ export default function Dashboard() {
           </Tabs>
         </div>
 
-        {/* Trending Section */}
+        {/* Trending Section - Labs with active bonding curves */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Flame className="h-5 w-5 text-primary" />
             <h2 className="text-2xl font-bold">Trending Labs</h2>
+            <Badge variant="secondary" className="ml-2">
+              {filteredLabs.filter(lab => lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress && parseFloat(lab.tvl || '0') > 0).length} active
+            </Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredLabs
-              .filter((lab) => lab.change24h > 10)
-              .slice(0, 3)
+              .filter((lab) => 
+                lab.bondingCurveAddress && 
+                lab.bondingCurveAddress !== ethers.ZeroAddress && 
+                parseFloat(lab.tvl || '0') > 0
+              )
+              .sort((a, b) => parseFloat(b.tvl || '0') - parseFloat(a.tvl || '0'))
+              .slice(0, 6)
               .map((lab) => (
                 <LabCard key={lab.id} lab={lab} />
               ))}
           </div>
+          {filteredLabs.filter(lab => lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress && parseFloat(lab.tvl || '0') > 0).length === 0 && (
+            <div className="text-center py-8 bg-muted/30 rounded-lg">
+              <p className="text-muted-foreground">No active bonding curves yet. Create a lab to start trading!</p>
+            </div>
+          )}
         </div>
 
         {/* All Labs */}

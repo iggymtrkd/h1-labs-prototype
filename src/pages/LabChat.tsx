@@ -8,6 +8,7 @@ import { Avatar, AvatarFallback } from "@/components/ui/avatar";
 import { ScrollArea } from "@/components/ui/scroll-area";
 import { Tabs, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { Alert, AlertDescription } from "@/components/ui/alert";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import {
   ArrowLeft,
   Key,
@@ -20,6 +21,9 @@ import { useBaseAccount } from "@/hooks/useBaseAccount";
 import { useLabChat } from "@/hooks/useLabChat";
 import { toast } from "sonner";
 import { useENS, formatAddress as formatAddr } from "@/hooks/useENS";
+import { ethers } from "ethers";
+import { CONTRACTS } from "@/config/contracts";
+import { LABSToken_ABI, BondingCurveSale_ABI } from "@/contracts/abis";
 
 // Mock data for lab display info only
 const labInfoData: Record<string, {
@@ -72,10 +76,14 @@ const labInfoData: Record<string, {
 
 export default function LabChat() {
   const { id } = useParams();
-  const { address } = useBaseAccount();
+  const { address, isConnected, sdk } = useBaseAccount();
   const [messageInput, setMessageInput] = useState("");
   const [isHoldersOnly, setIsHoldersOnly] = useState(false);
   const scrollRef = useRef<HTMLDivElement>(null);
+  const [tradeAction, setTradeAction] = useState<'buy' | 'sell'>('buy');
+  const [tradeAmount, setTradeAmount] = useState('100');
+  const [trading, setTrading] = useState(false);
+  const [bondingCurveAddress, setBondingCurveAddress] = useState<string | null>(null);
 
   const labInfo = labInfoData[id || ""];
 
@@ -96,11 +104,82 @@ export default function LabChat() {
 
   const canSendMessages = !isHoldersOnly || userRole === 'holder';
 
+  // Fetch bonding curve address for this lab
+  useEffect(() => {
+    const fetchBondingCurve = async () => {
+      if (!id) return;
+      
+      try {
+        const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+        const diamond = new ethers.Contract(
+          CONTRACTS.H1Diamond,
+          ['function getLabBondingCurve(uint256) view returns (address)'],
+          rpc
+        );
+        
+        const curveAddr = await diamond.getLabBondingCurve(parseInt(id));
+        setBondingCurveAddress(curveAddr);
+      } catch (err) {
+        console.error('Error fetching bonding curve:', err);
+      }
+    };
+
+    fetchBondingCurve();
+  }, [id]);
+
   useEffect(() => {
     if (scrollRef.current) {
       scrollRef.current.scrollTop = scrollRef.current.scrollHeight;
     }
   }, [messages]);
+
+  const handleTrade = async () => {
+    if (!isConnected || !sdk || !address) {
+      toast.error('Please connect your wallet first');
+      return;
+    }
+
+    if (!bondingCurveAddress || bondingCurveAddress === ethers.ZeroAddress) {
+      toast.error('Bonding curve not deployed for this lab yet');
+      return;
+    }
+
+    if (!tradeAmount || isNaN(Number(tradeAmount)) || Number(tradeAmount) <= 0) {
+      toast.error('Enter a valid amount');
+      return;
+    }
+
+    setTrading(true);
+
+    try {
+      const walletProvider = sdk.getProvider();
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      const signer = await provider.getSigner(address);
+      const amountWei = ethers.parseEther(tradeAmount);
+
+      if (tradeAction === 'buy') {
+        // Approve LABS tokens
+        const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
+        const approveTx = await labsToken.approve(bondingCurveAddress, amountWei);
+        await approveTx.wait();
+
+        // Buy H1 tokens
+        const curve = new ethers.Contract(bondingCurveAddress, BondingCurveSale_ABI, signer);
+        const minSharesOut = 0;
+        const buyTx = await curve.buy(amountWei, address, minSharesOut);
+        await buyTx.wait();
+
+        toast.success(`Successfully bought ${labInfo?.symbol || 'H1'} tokens!`);
+      } else {
+        toast.info('Sell functionality coming soon');
+      }
+    } catch (error: any) {
+      console.error('Trade error:', error);
+      toast.error('Failed to trade H1 tokens');
+    } finally {
+      setTrading(false);
+    }
+  };
 
   const handleSendMessage = async () => {
     if (!messageInput.trim() || isSendingMessage) return;
@@ -343,6 +422,38 @@ export default function LabChat() {
                 View Lab Details
               </Button>
             </Link>
+
+            {bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress && (
+              <div className="p-3 bg-muted/30 rounded-lg space-y-2">
+                <p className="text-xs font-semibold text-muted-foreground mb-2">💎 Trade H1 Tokens</p>
+                <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buy">🟢 Buy H1</SelectItem>
+                    <SelectItem value="sell">🔴 Sell H1</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder="Amount in LABS"
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={handleTrade}
+                    disabled={trading || !isConnected}
+                    className="whitespace-nowrap"
+                  >
+                    {trading ? <Loader2 className="h-3 w-3 animate-spin" /> : 'Trade'}
+                  </Button>
+                </div>
+              </div>
+            )}
 
             <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
               <p className="font-semibold text-foreground mb-2">Chat Info</p>
