@@ -209,8 +209,14 @@ export default function LabChat() {
         {xmtpError && (
           <Alert variant="destructive" className="m-4">
             <AlertDescription>
-              <div className="font-semibold mb-1">Messaging Setup Failed</div>
-              <div className="text-sm">{xmtpError}</div>
+              <div className="font-semibold mb-1">Lab Chat Unavailable</div>
+              <div className="text-sm mb-2">{xmtpError}</div>
+              {xmtpError.includes('coming soon') && (
+                <div className="text-xs mt-2 p-2 bg-background/50 rounded">
+                  <strong>Why?</strong> XMTP's decentralized chat protocol is still adding full support for smart contract wallets like Base Smart Wallet.
+                  In the meantime, you can use a standard wallet (MetaMask, Rainbow, Rabby) to access lab chats.
+                </div>
+              )}
             </AlertDescription>
           </Alert>
         )}

@@ -39,8 +39,9 @@ export function useXMTP(): UseXMTPReturn {
           });
           
           // Convert hex string to Uint8Array
+          const hexString = signature.startsWith('0x') ? signature.slice(2) : signature;
           const bytes = new Uint8Array(
-            signature.match(/.{1,2}/g)!.map((byte: string) => parseInt(byte, 16))
+            hexString.match(/.{1,2}/g)!.map((byte: string) => parseInt(byte, 16))
           );
           return bytes;
         },
@@ -57,7 +58,15 @@ export function useXMTP(): UseXMTPReturn {
       setIsReady(true);
     } catch (err: any) {
       console.error('[XMTP] Failed to initialize client:', err);
-      setError(err.message || 'Failed to initialize XMTP messaging');
+      
+      // Handle specific SCW verification errors
+      if (err.message?.includes('Signature validation failed') || 
+          err.message?.includes('NoVerifier') ||
+          err.message?.includes('Smart contract wallet signature is invalid')) {
+        setError('XMTP chat requires a standard Ethereum wallet (MetaMask, Rainbow, etc). Base Smart Wallet support is coming soon!');
+      } else {
+        setError(err.message || 'Failed to initialize XMTP messaging');
+      }
     } finally {
       setIsInitializing(false);
     }
