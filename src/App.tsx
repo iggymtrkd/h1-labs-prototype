@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
@@ -45,20 +45,19 @@ const AppContent = () => {
     return localStorage.getItem("sidebar_collapsed") === "true";
   });
   const [showHowItWorks, setShowHowItWorks] = useState(false);
+  const isConnectingRef = useRef(false);
+
+  // Navigate to dashboard when wallet successfully connects from home page
+  useEffect(() => {
+    if (isConnected && isConnectingRef.current && location.pathname === '/') {
+      isConnectingRef.current = false;
+      navigate("/dashboard");
+    }
+  }, [isConnected, location.pathname, navigate]);
 
   const handleConnectWallet = async () => {
-    try {
-      await connectWallet();
-      // Only navigate if we're on the home page
-      if (location.pathname === '/') {
-        // Wait longer to ensure wallet state is fully updated
-        setTimeout(() => {
-          navigate("/dashboard");
-        }, 500);
-      }
-    } catch (error) {
-      console.error('Failed to connect wallet:', error);
-    }
+    isConnectingRef.current = true;
+    await connectWallet();
   };
 
   return (
