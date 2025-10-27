@@ -23,7 +23,7 @@ export default function Dashboard() {
     refetch();
   }, [refetch]);
 
-  // Fetch bonding curve details for each lab
+  // Fetch lab details from smart contract
   useEffect(() => {
     const fetchLabDetails = async () => {
       if (labEvents.length === 0) return;
@@ -66,10 +66,10 @@ export default function Dashboard() {
 
               return {
                 id: event.labId,
-                name: event.name,
-                symbol: event.symbol,
-                category: event.domain || "Uncategorized",
-                description: `${event.name} - Level ${level} Lab on H1 Protocol`,
+                name: `Lab #${event.labId}`,
+                symbol: `H1L${event.labId}`,
+                category: domain || "Uncategorized",
+                description: `Lab #${event.labId} - Level ${level} Lab on H1 Protocol`,
                 price: h1Price,
                 change24h: 0,
                 volume24h: tvl,
@@ -85,10 +85,10 @@ export default function Dashboard() {
               console.error(`Error fetching details for lab ${event.labId}:`, err);
               return {
                 id: event.labId,
-                name: event.name,
-                symbol: event.symbol,
-                category: event.domain || "Uncategorized",
-                description: `Lab ${event.name}`,
+                name: `Lab #${event.labId}`,
+                symbol: `H1L${event.labId}`,
+                category: "Uncategorized",
+                description: `Lab #${event.labId}`,
                 price: "0",
                 change24h: 0,
                 volume24h: "0",

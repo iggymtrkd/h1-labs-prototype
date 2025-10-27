@@ -313,10 +313,10 @@ export default function LabDetail() {
 
         setLab({
           id,
-          name: labEvent.name,
-          symbol: labEvent.symbol,
+          name: `Lab #${id}`,
+          symbol: `H1L${id}`,
           category: domain || "Uncategorized",
-          description: `${labEvent.name} - Level ${level} Lab on H1 Protocol`,
+          description: `Lab #${id} - Level ${level} Lab on H1 Protocol`,
           owner,
           h1Token,
           domain,

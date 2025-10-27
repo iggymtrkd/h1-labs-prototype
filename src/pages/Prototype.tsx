@@ -1654,9 +1654,9 @@ export default function Prototype() {
 
             return {
               labId,
-              name: labEvent.name,
-              symbol: labEvent.symbol,
-              domain: labEvent.domain || domain,
+              name: `Lab #${labId}`,
+              symbol: `H1L${labId}`,
+              domain: domain,
               owner,
               level: Number(level),
               active,
@@ -1672,13 +1672,13 @@ export default function Prototype() {
             // Return basic data from event
             return {
               labId,
-              name: labEvent.name,
-              symbol: labEvent.symbol,
-              domain: labEvent.domain,
+              name: `Lab #${labId}`,
+              symbol: `H1L${labId}`,
+              domain: 'unknown',
               owner: labEvent.owner,
               level: 1,
               active: true,
-              vaultAddress: labEvent.h1Token,
+              vaultAddress: labEvent.vault,
               bondingCurveAddress: '0x0000000000000000000000000000000000000000',
               h1Distribution: null,
               h1Price: '0',
@@ -1735,7 +1735,7 @@ export default function Prototype() {
             
             // Get TVL from vault
             try {
-              const vault = new ethers.Contract(lab.h1Token, LabVault_ABI, provider);
+              const vault = new ethers.Contract(lab.vault, LabVault_ABI, provider);
               const totalAssets = await vault.totalAssets();
               tvl = ethers.formatEther(totalAssets);
             } catch (e) {
@@ -1755,14 +1755,14 @@ export default function Prototype() {
             
             return {
               labId: parseInt(lab.labId),
-              name: lab.name,
-              symbol: lab.symbol,
-              domain: lab.domain,
+              name: `Lab #${lab.labId}`,
+              symbol: `H1L${lab.labId}`,
+              domain: 'lab-domain',
               h1Price: h1Price,
               tvl: tvl,
               curveAddress: curveAddress,
               ownerAddress: lab.owner,
-              vaultAddress: lab.h1Token
+              vaultAddress: lab.vault
             };
           } catch (error) {
             console.error(`Error processing lab ${lab.labId}:`, error);

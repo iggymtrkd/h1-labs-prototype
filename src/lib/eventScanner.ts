@@ -6,22 +6,19 @@ import { CONTRACTS } from '@/config/contracts';
 const BLOCKSCOUT_API = 'https://base-sepolia.blockscout.com/api';
 const LOGS_PER_REQUEST = 1000;
 
-// LabCreated event signature: LabCreated(uint256,address,string,string,string,address)
-const LAB_CREATED_SIGNATURE = 'LabCreated(uint256,address,string,string,string,address)';
-const LAB_CREATED_TOPIC0 = keccak256(toHex(LAB_CREATED_SIGNATURE));
+// LabVaultDeployed event signature: LabVaultDeployed(uint256,address,address)
+const LAB_VAULT_DEPLOYED_SIGNATURE = 'LabVaultDeployed(uint256,address,address)';
+const LAB_VAULT_DEPLOYED_TOPIC0 = keccak256(toHex(LAB_VAULT_DEPLOYED_SIGNATURE));
 
-// Define the LabCreated event ABI
-const LAB_CREATED_ABI = [
+// Define the LabVaultDeployed event ABI
+const LAB_VAULT_DEPLOYED_ABI = [
   {
     type: 'event',
-    name: 'LabCreated',
+    name: 'LabVaultDeployed',
     inputs: [
       { name: 'labId', type: 'uint256', indexed: true },
       { name: 'owner', type: 'address', indexed: true },
-      { name: 'name', type: 'string', indexed: false },
-      { name: 'symbol', type: 'string', indexed: false },
-      { name: 'domain', type: 'string', indexed: false },
-      { name: 'h1Token', type: 'address', indexed: false },
+      { name: 'vault', type: 'address', indexed: false },
     ],
   },
 ] as const;
@@ -29,10 +26,7 @@ const LAB_CREATED_ABI = [
 export interface ParsedLabEvent {
   labId: string;
   owner: string;
-  name: string;
-  symbol: string;
-  domain: string;
-  h1Token: string;
+  vault: string;
   blockNumber: string;
   transactionHash: string;
   logIndex: number;
@@ -52,10 +46,10 @@ export async function fetchLabEvents(
   ownerFilter?: string
 ): Promise<EventScanResult> {
   try {
-    console.log(`🔍 Fetching ALL LabCreated events from Blockscout API`);
+    console.log(`🔍 Fetching ALL LabVaultDeployed events from Blockscout API`);
     console.log(`📍 Contract: ${CONTRACTS.H1Diamond}`);
     console.log(`📍 From block: ${CONTRACTS.DEPLOYMENT_BLOCK}`);
-    console.log(`📍 Topic0: ${LAB_CREATED_TOPIC0}`);
+    console.log(`📍 Topic0: ${LAB_VAULT_DEPLOYED_TOPIC0}`);
     
     const params = {
       module: 'logs',
@@ -63,7 +57,7 @@ export async function fetchLabEvents(
       fromBlock: CONTRACTS.DEPLOYMENT_BLOCK.toString(),
       toBlock: 'latest',
       address: CONTRACTS.H1Diamond,
-      topic0: LAB_CREATED_TOPIC0,
+      topic0: LAB_VAULT_DEPLOYED_TOPIC0,
       page: '1',
       offset: LOGS_PER_REQUEST.toString()
     };
@@ -92,7 +86,7 @@ export async function fetchLabEvents(
     const parsedLogs: ParsedLabEvent[] = results.map((log: any) => {
       try {
         const decoded = decodeEventLog({
-          abi: LAB_CREATED_ABI,
+          abi: LAB_VAULT_DEPLOYED_ABI,
           data: log.data,
           topics: [log.topics[0], log.topics[1], log.topics[2]],
         }) as any;
@@ -100,19 +94,13 @@ export async function fetchLabEvents(
         const args = decoded.args as {
           labId: bigint;
           owner: string;
-          name: string;
-          symbol: string;
-          domain: string;
-          h1Token: string;
+          vault: string;
         };
 
         return {
           labId: args.labId.toString(),
           owner: args.owner.toLowerCase(),
-          name: args.name,
-          symbol: args.symbol,
-          domain: args.domain,
-          h1Token: args.h1Token.toLowerCase(),
+          vault: args.vault.toLowerCase(),
           blockNumber: log.blockNumber,
           transactionHash: log.transactionHash,
           logIndex: parseInt(log.logIndex, 16),
