@@ -17,22 +17,30 @@ contract LabVaultDeploymentFacet {
     LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
     if (hs.stakedBalances[msg.sender] < 100_000e18) revert InsufficientStake();
     if (hs.vaultFactory == address(0)) revert FactoryNotSet();
-    uint256 b = hs.stakedBalances[msg.sender];
     labId = hs.nextLabId++;
     hs.labs[labId].owner = msg.sender;
     hs.labs[labId].domain = domain;
     hs.labs[labId].active = true;
-    hs.labs[labId].level = b >= 500_000e18 ? 3 : (b >= 250_000e18 ? 2 : 1);
+    hs.labs[labId].level = _calcLevel(hs.stakedBalances[msg.sender]);
+    vault = _deployVault(hs, name, symbol);
+    hs.labIdToVault[labId] = vault;
+    hs.labs[labId].h1Token = vault;
+    emit LabVaultDeployed(labId, msg.sender, vault);
+  }
+
+  function _calcLevel(uint256 bal) private pure returns (uint8) {
+    return bal >= 500_000e18 ? 3 : (bal >= 250_000e18 ? 2 : 1);
+  }
+
+  function _deployVault(LibH1Storage.H1Storage storage hs, string calldata name, string calldata symbol) 
+    private returns (address) {
     (bool ok, bytes memory data) = hs.vaultFactory.call(abi.encodeWithSignature(
       "deployVault(address,string,string,string,uint64,uint16,address,address,address,address)",
       hs.labsToken, name, symbol, name, hs.defaultCooldown, hs.defaultExitCapBps,
       msg.sender, msg.sender, hs.protocolTreasury, address(this)
     ));
     require(ok, "deploy failed");
-    vault = abi.decode(data, (address));
-    hs.labIdToVault[labId] = vault;
-    hs.labs[labId].h1Token = vault;
-    emit LabVaultDeployed(labId, msg.sender, vault);
+    return abi.decode(data, (address));
   }
 }
 
