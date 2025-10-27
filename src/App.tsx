@@ -5,6 +5,7 @@ import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
 import { BaseAccountProvider, useBaseAccount } from "@/hooks/useBaseAccount";
+import { XMTPProvider } from "@/contexts/XMTPContext";
 import { Navigation } from "@/components/Navigation";
 import { PlatformSidebar } from "@/components/PlatformSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
@@ -196,11 +197,13 @@ const App = () => {
     <QueryClientProvider client={queryClient}>
       <TooltipProvider>
         <BaseAccountProvider>
-          <Toaster />
-          <Sonner />
-          <BrowserRouter>
-            <AppContent />
-          </BrowserRouter>
+          <XMTPProvider>
+            <Toaster />
+            <Sonner />
+            <BrowserRouter>
+              <AppContent />
+            </BrowserRouter>
+          </XMTPProvider>
         </BaseAccountProvider>
       </TooltipProvider>
     </QueryClientProvider>
