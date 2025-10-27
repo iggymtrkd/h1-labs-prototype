@@ -14,9 +14,14 @@ import { LABSCoreFacet_ABI } from "@/contracts/abis";
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
-  const { labs: labEvents, loading: labEventsLoading, error } = useLabEvents();
+  const { labs: labEvents, loading: labEventsLoading, error, refetch } = useLabEvents();
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
+
+  // Refetch labs when component mounts to always show latest data
+  useEffect(() => {
+    refetch();
+  }, [refetch]);
 
   // Fetch bonding curve details for each lab
   useEffect(() => {

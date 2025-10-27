@@ -1,5 +1,4 @@
-// React Hook for Lab Events with Pagination Support
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { fetchLabEvents, fetchUserLabEvents, ParsedLabEvent } from '@/lib/eventScanner';
 
 export function useLabEvents(ownerAddress?: string, autoFetch: boolean = true) {
@@ -8,7 +7,7 @@ export function useLabEvents(ownerAddress?: string, autoFetch: boolean = true) {
   const [error, setError] = useState<string | null>(null);
   const [source, setSource] = useState<string>('');
 
-  const fetchLabs = async () => {
+  const fetchLabs = useCallback(async () => {
     setLoading(true);
     setError(null);
     
@@ -28,13 +27,13 @@ export function useLabEvents(ownerAddress?: string, autoFetch: boolean = true) {
     } finally {
       setLoading(false);
     }
-  };
+  }, [ownerAddress]);
 
   useEffect(() => {
     if (autoFetch) {
       fetchLabs();
     }
-  }, [ownerAddress, autoFetch]);
+  }, [autoFetch, fetchLabs]);
 
   return {
     labs,
