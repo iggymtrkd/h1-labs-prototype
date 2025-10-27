@@ -119,10 +119,7 @@ const AppContent = () => {
             path="/get-started" 
             element={isConnected ? <GetStarted /> : <Home onConnect={handleConnectWallet} />} 
           />
-          <Route 
-            path="/dashboard" 
-            element={isConnected ? <Dashboard /> : <Home onConnect={handleConnectWallet} />} 
-          />
+          <Route path="/dashboard" element={<Dashboard />} />
           <Route 
             path="/staking" 
             element={isConnected ? <Staking labsBalance={labsBalance} /> : <Home onConnect={handleConnectWallet} />} 
