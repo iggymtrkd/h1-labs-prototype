@@ -72,6 +72,7 @@ export const BondingCurveFacet_ABI = [
 
 export const BondingCurveSale_ABI = [
   "function buy(uint256 labsAmount, address receiver, uint256 minSharesOut) external returns (uint256 sharesOut)",
+  "function sell(uint256 sharesAmount, address receiver, uint256 minLabsOut) external returns (uint256 labsOut)",
   "function price() external view returns (uint256)",
   "function labsToken() external view returns (address)",
   "function vault() external view returns (address)",
@@ -90,6 +91,8 @@ export const LabVault_ABI = [
   "function assetsPerShare() external view returns (uint256)",
   "function depositLABS(uint256 assets, address receiver) external returns (uint256 shares)",
   "function requestRedeem(uint256 shares) external returns (uint256 requestId)",
+  "function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets)",
+  "function approve(address spender, uint256 amount) external returns (bool)",
   "function getLevel() external view returns (uint8)",
   "function initialMintCompleted() external view returns (bool)"
 ];

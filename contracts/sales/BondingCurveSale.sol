@@ -6,6 +6,9 @@ import { IERC20 } from "../interfaces/IERC20.sol";
 interface ILabVaultLike {
   function depositLABS(uint256 assets, address receiver) external returns (uint256 shares);
   function assetsPerShare() external view returns (uint256);
+  function transferFrom(address from, address to, uint256 amount) external returns (bool);
+  function approve(address spender, uint256 amount) external returns (bool);
+  function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets);
 }
 
 /// @title BondingCurveSale
@@ -248,9 +251,49 @@ contract BondingCurveSale {
     return _paused;
   }
 
-  /// @notice Updates the admin address
-  /// @dev Only callable by current admin
-  /// @param newAdmin Address of new admin
+  /// @notice Sell vault shares back for LABS tokens
+  /// @dev User sells their H1 vault shares to get LABS back
+  /// @param sharesAmount Amount of vault shares to sell
+  /// @param receiver Address to receive LABS tokens
+  /// @param minLabsOut Minimum LABS tokens to receive (slippage protection)
+  /// @return labsOut Actual amount of LABS received
+  function sell(uint256 sharesAmount, address receiver, uint256 minLabsOut) external nonReentrant whenNotPaused returns (uint256 labsOut) {
+    if (sharesAmount == 0) revert InvalidAmount();
+    if (receiver == address(0)) revert InvalidAddress();
+
+    // Validate price before sale
+    uint256 currentPrice = price();
+    if (currentPrice < MIN_PRICE || currentPrice > MAX_PRICE) revert PriceOutOfBounds();
+    _validatePriceChange(currentPrice);
+
+    // Transfer vault shares from seller to this contract
+    if (!vault.transferFrom(msg.sender, address(this), sharesAmount)) {
+      revert TransferFailed();
+    }
+
+    // Redeem shares from vault to get LABS
+    uint256 labsRedeemed = vault.redeem(sharesAmount, address(this), address(this));
+
+    // Calculate fee
+    uint256 fee = (labsRedeemed * feeBps) / BPS_DENOMINATOR;
+    labsOut = labsRedeemed - fee;
+
+    // Slippage protection
+    if (labsOut < minLabsOut) revert SlippageExceeded();
+
+    // Transfer LABS to receiver
+    if (!IERC20(labsToken).transfer(receiver, labsOut)) {
+      revert TransferFailed();
+    }
+
+    // Transfer fee to treasury
+    if (fee > 0 && !IERC20(labsToken).transfer(treasury, fee)) {
+      revert TransferFailed();
+    }
+
+    emit Purchased(receiver, labsRedeemed, sharesAmount, fee, 0);
+  }
+
   function setAdmin(address newAdmin) external onlyAdmin {
     if (newAdmin == address(0)) revert InvalidAddress();
     admin = newAdmin;

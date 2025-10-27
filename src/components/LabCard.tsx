@@ -120,7 +120,21 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
 
         toast.success(`Successfully bought ${lab.symbol} H1 tokens!`);
       } else {
-        toast.info('Sell functionality coming soon');
+        // Get vault address from bonding curve
+        const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, signer);
+        const vaultAddress = await curve.vault();
+
+        // Approve vault shares (H1 tokens)
+        const vault = new ethers.Contract(vaultAddress, ['function approve(address,uint256) returns (bool)'], signer);
+        const approveTx = await vault.approve(lab.bondingCurveAddress, amountWei);
+        await approveTx.wait();
+
+        // Sell H1 tokens
+        const minLabsOut = 0;
+        const sellTx = await curve.sell(amountWei, address, minLabsOut);
+        await sellTx.wait();
+
+        toast.success(`Successfully sold ${lab.symbol} H1 tokens!`);
       }
     } catch (error: any) {
       console.error('Trade error:', error);
@@ -202,7 +216,7 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
           <div className="flex gap-2">
             <Input
               type="number"
-              placeholder="Amount in LABS"
+              placeholder={tradeAction === 'buy' ? 'Amount in LABS' : 'Amount in H1'}
               value={tradeAmount}
               onChange={(e) => setTradeAmount(e.target.value)}
               className="h-8 text-sm"
