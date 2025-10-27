@@ -194,31 +194,26 @@ export default function Dashboard() {
           </Tabs>
         </div>
 
-        {/* Trending Section - Labs with active bonding curves */}
+        {/* Trending Section - All Labs from LABSCoreFacet */}
         <div className="mb-8">
           <div className="flex items-center gap-2 mb-4">
             <Flame className="h-5 w-5 text-primary" />
             <h2 className="text-2xl font-bold">Trending Labs</h2>
             <Badge variant="secondary" className="ml-2">
-              {filteredLabs.filter(lab => lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress && parseFloat(lab.tvl || '0') > 0).length} active
+              {filteredLabs.length} labs
             </Badge>
           </div>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
             {filteredLabs
-              .filter((lab) => 
-                lab.bondingCurveAddress && 
-                lab.bondingCurveAddress !== ethers.ZeroAddress && 
-                parseFloat(lab.tvl || '0') > 0
-              )
               .sort((a, b) => parseFloat(b.tvl || '0') - parseFloat(a.tvl || '0'))
               .slice(0, 6)
               .map((lab) => (
                 <LabCard key={lab.id} lab={lab} />
               ))}
           </div>
-          {filteredLabs.filter(lab => lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress && parseFloat(lab.tvl || '0') > 0).length === 0 && (
+          {filteredLabs.length === 0 && (
             <div className="text-center py-8 bg-muted/30 rounded-lg">
-              <p className="text-muted-foreground">No active bonding curves yet. Create a lab to start trading!</p>
+              <p className="text-muted-foreground">No labs found. Create a lab to get started!</p>
             </div>
           )}
         </div>
