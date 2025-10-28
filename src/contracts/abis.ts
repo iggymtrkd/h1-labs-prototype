@@ -64,6 +64,8 @@ export const TestingFacet_ABI = [
   "function setCurveFeeBps(uint16 feeBps) external",
   "function setCurvePolBps(uint16 polBps) external",
   "function setProtocolTreasury(address treasury) external",
+  "function setLABSToken(address labsToken) external",
+  "function getLABSToken() external view returns (address)",
   "function getStakedBalance(address user) external view returns (uint256)"
 ];
 
