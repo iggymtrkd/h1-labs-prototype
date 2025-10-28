@@ -766,66 +766,65 @@ export default function Prototype() {
         }
         
         // Lab creation successful!
-        const receipt1 = receipt;
-
-      // Load vesting data for the new lab (if H1 distribution happened)
-      const vestingData = await loadLabVestingData(
-        typeof labId === 'number' ? labId : parseInt(labId),
-        vaultAddress
-      );
-      
-      // Add to user's created labs
-      const newLab: CreatedLab = {
-        labId: typeof labId === 'number' ? labId : parseInt(labId),
-        name: labName,
-        symbol: labSymbol,
-        domain: labDomain,
-        vaultAddress: vaultAddress,
-        createdAt: new Date(),
-        level: eventLevel, // ✅ NEW: Use actual level from contract event
-        ...vestingData // Add H1 distribution & vesting data
-      };
-      setUserCreatedLabs(prev => [newLab, ...prev]);
-      
-      if (vestingData?.h1Distribution) {
-        addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, tx1.hash);
-        toast.success(`Lab Created! ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 tokens distributed`);
-      } else {
-        addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, tx1.hash);
-        toast.success(`Lab Created! Lab ID: ${labId} (Level ${eventLevel})`);
-      }
-      
-      // Refresh marketplace data and blockchain labs
-      await loadMarketplaceLabs();
-      await loadBlockchainLabsAndData(); // Refresh blockchain labs to show newly created lab
-      
-      // Track created lab ID for dropdowns
-      const numericLabId = typeof labId === 'number' ? labId : parseInt(labId as string);
-      if (!isNaN(numericLabId)) {
-        setCreatedLabIds(prev => [...prev, numericLabId]);
-        // Auto-fill Lab ID for Stage 2 (Create Data)
-        setDataLabId(numericLabId.toString());
-        addLog('info', 'Stage 2: Create Data', `✨ Lab ID auto-filled: ${numericLabId} (ready for data creation)`);
-      }
-      
-      setCompletedSteps(prev => ({
-        ...prev,
-        step1: true
-      }));
-      setDatasetMetadata(prev => ({
-        ...prev,
-        step1: {
-          labId: numericLabId,
-          timestamp: new Date(),
-          txHash: tx1.hash,
-          walletAddress: address as string
+        
+        // Load vesting data for the new lab (if H1 distribution happened)
+        const vestingData = await loadLabVestingData(
+          typeof labId === 'number' ? labId : parseInt(labId),
+          vaultAddress
+        );
+        
+        // Add to user's created labs
+        const newLab: CreatedLab = {
+          labId: typeof labId === 'number' ? labId : parseInt(labId),
+          name: labName,
+          symbol: labSymbol,
+          domain: labDomain,
+          vaultAddress: vaultAddress,
+          createdAt: new Date(),
+          level: eventLevel, // ✅ NEW: Use actual level from contract event
+          ...vestingData // Add H1 distribution & vesting data
+        };
+        setUserCreatedLabs(prev => [newLab, ...prev]);
+        
+        if (vestingData?.h1Distribution) {
+          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, tx.hash);
+          toast.success(`Lab Created! ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 tokens distributed`);
+        } else {
+          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, tx.hash);
+          toast.success(`Lab Created! Lab ID: ${labId} (Level ${eventLevel})`);
         }
-      }));
+        
+        // Refresh marketplace data and blockchain labs
+        await loadMarketplaceLabs();
+        await loadBlockchainLabsAndData(); // Refresh blockchain labs to show newly created lab
+        
+        // Track created lab ID for dropdowns
+        const numericLabId = typeof labId === 'number' ? labId : parseInt(labId as string);
+        if (!isNaN(numericLabId)) {
+          setCreatedLabIds(prev => [...prev, numericLabId]);
+          // Auto-fill Lab ID for Stage 2 (Create Data)
+          setDataLabId(numericLabId.toString());
+          addLog('info', 'Stage 2: Create Data', `✨ Lab ID auto-filled: ${numericLabId} (ready for data creation)`);
+        }
+        
+        setCompletedSteps(prev => ({
+          ...prev,
+          step1: true
+        }));
+        setDatasetMetadata(prev => ({
+          ...prev,
+          step1: {
+            labId: numericLabId,
+            timestamp: new Date(),
+            txHash: tx.hash,
+            walletAddress: address as string
+          }
+        }));
 
-      // Reset form
-      setLabName('');
-      setLabSymbol('');
-      setLabDomain('healthcare');
+        // Reset form
+        setLabName('');
+        setLabSymbol('');
+        setLabDomain('healthcare');
     } catch (error: any) {
       console.error('❌ Create lab error (FULL OBJECT):', error);
       console.error('❌ Error data:', error?.data);
@@ -919,6 +918,11 @@ export default function Prototype() {
         toast.error('Failed to create lab. Check console for details.');
       }
     } finally {
+      setLoading(null);
+    }
+    } catch (outerError: any) {
+      console.error('Outer error in lab creation:', outerError);
+      addLog('error', 'Stage 1: Create Lab', `❌ ${outerError.message || 'Failed during lab creation process'}`);
       setLoading(null);
     }
   };
@@ -2122,7 +2126,9 @@ export default function Prototype() {
     if (status === 'error') return <XCircle className="h-3 w-3 text-destructive" />;
     return <div className="h-3 w-3 rounded-full border border-muted-foreground" />;
   };
-  return <div className="min-h-screen bg-background">
+  
+  return (
+    <div className="min-h-screen bg-background">
       <div className="container mx-auto p-6">
         {/* Back Button */}
         <Button variant="ghost" onClick={() => navigate('/get-started')} className="mb-6">
@@ -3904,5 +3910,6 @@ export default function Prototype() {
         </div>
       </div>
       {showConfetti && <Confetti width={width} height={height} recycle={false} numberOfPieces={100} gravity={0.2} wind={0.01} colors={['#6366f1', '#3b82f6', '#10b981', '#f59e0b', '#ef4444']} />}
-    </div>;
+    </div>
+  );
 }
