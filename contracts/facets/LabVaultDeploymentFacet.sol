@@ -33,6 +33,12 @@ contract LabVaultDeploymentFacet {
         _locked = false;
     }
 
+    function setVaultFactory(address factory) external {
+        require(factory != address(0), "Invalid factory");
+        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+        hs.vaultFactory = factory;
+    }
+
     function createLabStep1(
         string calldata name,
         string calldata symbol,
