@@ -229,6 +229,20 @@ contract TestingFacet {
     emit ProtocolConfigurationUpdated("protocolTreasury", uint256(uint160(treasury)));
   }
   
+  /// @notice Set LABS token address
+  /// @param labsToken LABS token contract address
+  function setLABSToken(address labsToken) external onlyOwner {
+    if (labsToken == address(0)) revert InvalidAddress();
+    LibH1Storage.h1Storage().labsToken = labsToken;
+    emit ProtocolConfigurationUpdated("labsToken", uint256(uint160(labsToken)));
+  }
+  
+  /// @notice Get LABS token address
+  /// @return labsToken Current LABS token address
+  function getLABSToken() external view returns (address labsToken) {
+    labsToken = LibH1Storage.h1Storage().labsToken;
+  }
+  
   // ============================================
   // QUERY FUNCTIONS
   // ============================================
