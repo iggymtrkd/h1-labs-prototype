@@ -669,7 +669,20 @@ export default function Prototype() {
       // STEP 1: Create lab + vault
       addLog('info', 'Stage 1: Create Lab', '🏗️ Step 1/2: Creating lab and deploying vault...');
       const diamond1 = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
-      const tx1 = await diamond1.createLabStep1(labName, labSymbol, labDomain);
+      
+      let tx1;
+      try {
+        tx1 = await diamond1.createLabStep1(labName, labSymbol, labDomain);
+      } catch (e: any) {
+        console.log('Full createLabStep1 error:', e);
+        console.log('Error message:', e?.message);
+        console.log('Error data:', e?.data);
+        console.log('Error code:', e?.code);
+        console.log('Error reason:', e?.reason);
+        addLog('error', 'Stage 1: Create Lab', `❌ Step 1 failed: ${e?.reason || e?.message || String(e)}`);
+        throw e;
+      }
+      
       addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 1 transaction...');
       const receipt1 = await tx1.wait();
       
