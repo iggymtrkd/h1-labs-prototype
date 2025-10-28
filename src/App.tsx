@@ -9,7 +9,6 @@ import { XMTPProvider } from "@/contexts/XMTPContext";
 import { Navigation } from "@/components/Navigation";
 import { PlatformSidebar } from "@/components/PlatformSidebar";
 import { MobileBottomNav } from "@/components/MobileBottomNav";
-import { EditorAdminLogin } from "@/components/EditorAdminLogin";
 import Home from "./pages/Home";
 import Mission from "./pages/Mission";
 import Dashboard from "./pages/Dashboard";
@@ -186,9 +185,6 @@ const AppContent = () => {
 
       {/* Mobile bottom navigation (when connected and not on home/choice/prototype page) */}
       {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && <MobileBottomNav />}
-      
-      {/* Editor admin login (development only) */}
-      <EditorAdminLogin />
     </div>
   );
 };

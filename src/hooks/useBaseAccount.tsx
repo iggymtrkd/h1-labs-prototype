@@ -24,19 +24,13 @@ interface BaseAccountContextType {
 const BaseAccountContext = createContext<BaseAccountContextType | undefined>(undefined);
 
 export const BaseAccountProvider = ({ children }: { children: ReactNode }) => {
-  // Check for editor admin mode
-  const isEditorAdmin = localStorage.getItem('editor_admin_mode') === 'true';
-  
   const [isConnected, setIsConnected] = useState(() => {
-    if (isEditorAdmin) return true;
     return localStorage.getItem("wallet_connected") === "true";
   });
   const [address, setAddress] = useState<string | undefined>(() => {
-    if (isEditorAdmin) return '0xADMIN1234567890ABCDEF1234567890ABCDEF12';
     return localStorage.getItem("wallet_address") || undefined;
   });
   const [labsBalance, setLabsBalance] = useState(() => {
-    if (isEditorAdmin) return '10,000';
     return localStorage.getItem("labs_balance") || "8,320";
   });
 
