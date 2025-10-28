@@ -2040,6 +2040,8 @@ export default function Prototype() {
   useEffect(() => {
     if (isConnected && address) {
       loadBlockchainLabsAndData();
+      loadUserLabsBalance();
+      loadFaucetBalance();
     }
   }, [isConnected, address]);
   // Progress bar calculation: fills up to the completed step
