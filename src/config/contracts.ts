@@ -30,7 +30,7 @@ export const CONTRACTS = {
   OwnershipFacet: "0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9",
   SecurityFacet: "0x330c418951a0237d4c28685c0a7dbdb5b42eb441",
   LABSCoreFacet: "0xdf972c8cf5b1757d133aebbce1a704aeb65a2b29", // ✅ UPDATED: Removed domain requirements
-  LabVaultDeploymentFacet: "0x20b8349e6611c7416a5459742d9dbc694b4565ae", // ✅ UPDATED: Latest deployment with correct event
+  LabVaultDeploymentFacet: "0xc53E0Eac63508a05169e22B3fAa5A3839e9446a9", // ✅ FIXED: Removed state variable collision
   LabDistributionFacet: "0xfb7c840eb842e99837fd13aa957d499f5ad223df", // ✅ UPDATED
   VaultFacet: "0xd6157e381ec5c1d06aca995fa77c5d0a388ff512",
   BondingCurveFacet: "0x90c81d864d4d71af2449153091733cb1249706c6",

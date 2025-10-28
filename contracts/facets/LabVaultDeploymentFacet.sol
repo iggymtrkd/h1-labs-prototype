@@ -11,8 +11,6 @@ contract LabVaultDeploymentFacet {
     error VaultDeploymentFailed(string reason);
     error InvalidVaultAddress();
     
-    bool private _locked;
-
     struct VaultArgs {
         address labsToken;
         string name;
@@ -24,13 +22,6 @@ contract LabVaultDeploymentFacet {
         address manager;
         address treasury;
         address caller;
-    }
-
-    modifier nonReentrant() {
-        require(!_locked, "ReentrancyGuard: reentrant call");
-        _locked = true;
-        _;
-        _locked = false;
     }
 
     function setVaultFactory(address factory) external {
@@ -54,7 +45,7 @@ contract LabVaultDeploymentFacet {
         string calldata name,
         string calldata symbol,
         string calldata domain
-    ) external nonReentrant returns (uint256 labId, address vault) {
+    ) external returns (uint256 labId, address vault) {
         // --- Input validation ---
         if (bytes(name).length == 0 || bytes(name).length > 50) revert InvalidInput();
         if (bytes(symbol).length == 0 || bytes(symbol).length > 10) revert InvalidInput();
