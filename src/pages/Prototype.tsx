@@ -2042,6 +2042,15 @@ export default function Prototype() {
       loadBlockchainLabsAndData();
     }
   }, [isConnected, address]);
+  
+  // Load balances on page mount
+  useEffect(() => {
+    if (isConnected && address) {
+      loadUserLabsBalance();
+      loadFaucetBalance();
+    }
+  }, [isConnected, address]);
+  
   // Progress bar calculation: fills up to the completed step
   // 1 step complete (step1) = 25% (bar fills to step 1)
   // 2 steps complete (step1+step2) = 50% (bar fills to step 2)
