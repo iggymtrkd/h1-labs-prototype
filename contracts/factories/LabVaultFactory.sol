@@ -2,6 +2,7 @@
 pragma solidity ^0.8.20;
 
 import { LabVault } from "../vaults/LabVault.sol";
+import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
 /// @title LabVaultFactory
 /// @notice External factory for deploying LabVault contracts
@@ -23,7 +24,7 @@ contract LabVaultFactory {
     address diamond
   ) external returns (address vault) {
     // Use struct to avoid stack too deep
-    LabVault.ConstructorParams memory params = LabVault.ConstructorParams({
+    LibLabVaultFactory.ConstructorParams memory params = LibLabVaultFactory.ConstructorParams({
       labsToken: labsToken,
       h1Name: h1Name,
       h1Symbol: h1Symbol,

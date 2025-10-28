@@ -3,6 +3,7 @@ pragma solidity ^0.8.20;
 
 import { ERC20Base } from "../tokens/ERC20Base.sol";
 import { IERC20 } from "../interfaces/IERC20.sol";
+import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
 contract LabVault is ERC20Base {
   address public immutable labsToken;
@@ -88,20 +89,6 @@ contract LabVault is ERC20Base {
   uint8 public overrideLevel;
   uint256 public testTimeOffset;
 
-  // Constructor parameters struct to avoid stack too deep
-  struct ConstructorParams {
-    address labsToken;
-    string h1Name;
-    string h1Symbol;
-    string labDisplayName;
-    uint64 cooldownSeconds;
-    uint16 epochExitCapBps;
-    address admin;
-    address labOwner;
-    address treasury;
-    address diamond;
-  }
-
   modifier onlyAdmin() {
     if (msg.sender != admin) revert Unauthorized();
     _;
@@ -112,7 +99,7 @@ contract LabVault is ERC20Base {
     _;
   }
 
-  constructor(ConstructorParams memory params) ERC20Base(params.h1Name, params.h1Symbol, 18) {
+  constructor(LibLabVaultFactory.ConstructorParams memory params) ERC20Base(params.h1Name, params.h1Symbol, 18) {
     require(params.labsToken != address(0), "labs token = 0");
     require(params.labOwner != address(0), "lab owner = 0");
     require(params.treasury != address(0), "treasury = 0");
