@@ -22,19 +22,21 @@ contract LabVaultFactory {
     address treasury,
     address diamond
   ) external returns (address vault) {
-    vault = address(new LabVault(
-      labsToken,
-      h1Name,
-      h1Symbol,
-      labDisplayName,
-      cooldownSeconds,
-      epochExitCapBps,
-      admin,
-      labOwner,
-      treasury,
-      diamond
-    ));
+    // Use struct to avoid stack too deep
+    LabVault.ConstructorParams memory params = LabVault.ConstructorParams({
+      labsToken: labsToken,
+      h1Name: h1Name,
+      h1Symbol: h1Symbol,
+      labDisplayName: labDisplayName,
+      cooldownSeconds: cooldownSeconds,
+      epochExitCapBps: epochExitCapBps,
+      admin: admin,
+      labOwner: labOwner,
+      treasury: treasury,
+      diamond: diamond
+    });
     
+    vault = address(new LabVault(params));
     emit VaultDeployed(vault, labOwner);
   }
 }

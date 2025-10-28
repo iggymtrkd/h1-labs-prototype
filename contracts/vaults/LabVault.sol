@@ -88,6 +88,20 @@ contract LabVault is ERC20Base {
   uint8 public overrideLevel;
   uint256 public testTimeOffset;
 
+  // Constructor parameters struct to avoid stack too deep
+  struct ConstructorParams {
+    address labsToken;
+    string h1Name;
+    string h1Symbol;
+    string labDisplayName;
+    uint64 cooldownSeconds;
+    uint16 epochExitCapBps;
+    address admin;
+    address labOwner;
+    address treasury;
+    address diamond;
+  }
+
   modifier onlyAdmin() {
     if (msg.sender != admin) revert Unauthorized();
     _;
@@ -98,34 +112,23 @@ contract LabVault is ERC20Base {
     _;
   }
 
-  constructor(
-    address labsToken_,
-    string memory h1Name_,
-    string memory h1Symbol_,
-    string memory labDisplayName_,
-    uint64 cooldownSeconds_,
-    uint16 epochExitCapBps_,
-    address admin_,
-    address labOwner_,
-    address treasury_,
-    address diamond_
-  ) ERC20Base(h1Name_, h1Symbol_, 18) {
-    require(labsToken_ != address(0), "labs token = 0");
-    require(labOwner_ != address(0), "lab owner = 0");
-    require(treasury_ != address(0), "treasury = 0");
-    require(diamond_ != address(0), "diamond = 0");
-    require(bytes(h1Name_).length > 0 && bytes(h1Name_).length <= 50, "invalid name");
-    require(bytes(h1Symbol_).length > 0 && bytes(h1Symbol_).length <= 10, "invalid symbol");
-    require(epochExitCapBps_ <= MAX_EXIT_CAP_BPS, "exit cap > 100%");
+  constructor(ConstructorParams memory params) ERC20Base(params.h1Name, params.h1Symbol, 18) {
+    require(params.labsToken != address(0), "labs token = 0");
+    require(params.labOwner != address(0), "lab owner = 0");
+    require(params.treasury != address(0), "treasury = 0");
+    require(params.diamond != address(0), "diamond = 0");
+    require(bytes(params.h1Name).length > 0 && bytes(params.h1Name).length <= 50, "invalid name");
+    require(bytes(params.h1Symbol).length > 0 && bytes(params.h1Symbol).length <= 10, "invalid symbol");
+    require(params.epochExitCapBps <= MAX_EXIT_CAP_BPS, "exit cap > 100%");
     
-    labsToken = labsToken_;
-    labDisplayName = labDisplayName_;
-    cooldownSeconds = cooldownSeconds_;
-    epochExitCapBps = epochExitCapBps_;
-    admin = admin_;
-    labOwner = labOwner_;
-    treasury = treasury_;
-    diamond = diamond_;
+    labsToken = params.labsToken;
+    labDisplayName = params.labDisplayName;
+    cooldownSeconds = params.cooldownSeconds;
+    epochExitCapBps = params.epochExitCapBps;
+    admin = params.admin;
+    labOwner = params.labOwner;
+    treasury = params.treasury;
+    diamond = params.diamond;
   }
 
   function assetsPerShare() public view returns (uint256) {
