@@ -828,21 +828,49 @@ export default function Prototype() {
       let errorMessage = error.message || 'Failed to create lab';
       let errorHandled = false;
       
-      // Check for specific custom errors from LabVaultDeploymentFacet
+      // Check for specific custom errors from LibLabCreation
       // Error selectors (first 4 bytes of keccak256(errorSignature)):
-      // InvalidInput() = 0xb4fa3fb3
+      // ConfigNotSet() = 0xa7df7fac
       // InsufficientStake() = 0xccb21934
+      // InvalidName() = 0x29a8bb6e
+      // InvalidSymbol() = 0x621509d8
+      // InvalidDomain() = 0x7f8c84b5
+      // InvalidInput() = 0xb4fa3fb3 (legacy)
       
       if (errorData && typeof errorData === 'string') {
-        if (errorData.includes('ccb21934')) {
+        if (errorData.includes('a7df7fac')) {
+          // ConfigNotSet() error - contract not properly configured
+          errorMessage = `Contract configuration error. The protocol treasury or LABS token address is not set. Please contact support.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage, { duration: 7000 });
+          errorHandled = true;
+        } else if (errorData.includes('ccb21934')) {
           // InsufficientStake() error
           errorMessage = `Insufficient LABS staked. You need at least 100,000 LABS staked on-chain to create a lab.`;
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
           toast.error(errorMessage, { duration: 5000 });
           await loadUserLabsBalance(); // Refresh staked balance
           errorHandled = true;
+        } else if (errorData.includes('29a8bb6e')) {
+          // InvalidName() error
+          errorMessage = `Invalid lab name. Name must be between 1-50 characters.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage, { duration: 5000 });
+          errorHandled = true;
+        } else if (errorData.includes('621509d8')) {
+          // InvalidSymbol() error
+          errorMessage = `Invalid symbol. Symbol must be between 1-10 characters.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage, { duration: 5000 });
+          errorHandled = true;
+        } else if (errorData.includes('7f8c84b5')) {
+          // InvalidDomain() error
+          errorMessage = `Invalid domain. Domain must be between 1-100 characters.`;
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
+          toast.error(errorMessage, { duration: 5000 });
+          errorHandled = true;
         } else if (errorData.includes('b4fa3fb3')) {
-          // InvalidInput() error
+          // InvalidInput() error (legacy)
           errorMessage = `Invalid input: Name must be 1-50 chars, Symbol must be 1-10 chars, Domain must be 1-100 chars. Please check your inputs.`;
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
           toast.error(errorMessage, { duration: 7000 });
