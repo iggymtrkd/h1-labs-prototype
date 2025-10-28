@@ -10,6 +10,41 @@ import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 contract LabVaultFactory {
   event VaultDeployed(address indexed vault, address indexed owner);
   
+  /// @notice Deploy and initialize a new LabVault contract in one call
+  /// @dev Combines createVault and finalizeVault steps
+  function deployVault(
+    address labsToken,
+    string calldata h1Name,
+    string calldata h1Symbol,
+    string calldata labDisplayName,
+    uint64 cooldownSeconds,
+    uint16 epochExitCapBps,
+    address admin,
+    address labOwner,
+    address treasury,
+    address diamond
+  ) external returns (address vault) {
+    // Deploy with zero parameters
+    LabVault vaultContract = new LabVault();
+    vault = address(vaultContract);
+    
+    // Initialize metadata
+    vaultContract.initializeMetadata(h1Name, h1Symbol, labDisplayName);
+    
+    // Initialize configuration
+    vaultContract.initializeConfig(
+      labsToken,
+      cooldownSeconds,
+      epochExitCapBps,
+      admin,
+      labOwner,
+      treasury,
+      diamond
+    );
+    
+    emit VaultDeployed(vault, labOwner);
+  }
+  
   /// @notice Create and initialize a new LabVault contract (part 1 - metadata)
   /// @dev Must call finalizeVault after this
   function createVault(

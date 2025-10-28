@@ -99,14 +99,34 @@ contract LabVaultDeploymentFacet {
         private
         returns (address)
     {
-        // Use signature string for clarity and safety
-        (bool ok, bytes memory data) = factory.call(
+        // Step 1: Create vault with metadata only
+        (bool ok1, bytes memory data1) = factory.call(
             abi.encodeWithSignature(
-                "deployVault(address,string,string,string,uint64,uint16,address,address,address,address)",
-                args.labsToken,
+                "createVault(string,string,string)",
                 args.name,
                 args.symbol,
-                args.domain,
+                args.domain
+            )
+        );
+        
+        if (!ok1) {
+            if (data1.length > 0) {
+                assembly {
+                    let returndata_size := mload(data1)
+                    revert(add(32, data1), returndata_size)
+                }
+            }
+            revert VaultDeploymentFailed("Factory createVault call failed");
+        }
+        
+        address vault = abi.decode(data1, (address));
+        
+        // Step 2: Finalize vault with configuration
+        (bool ok2, bytes memory data2) = factory.call(
+            abi.encodeWithSignature(
+                "finalizeVault(address,address,uint64,uint16,address,address,address,address)",
+                vault,
+                args.labsToken,
                 args.cooldown,
                 args.exitCapBps,
                 args.owner,
@@ -116,17 +136,16 @@ contract LabVaultDeploymentFacet {
             )
         );
         
-        if (!ok) {
-            // Bubble up revert reason if available
-            if (data.length > 0) {
+        if (!ok2) {
+            if (data2.length > 0) {
                 assembly {
-                    let returndata_size := mload(data)
-                    revert(add(32, data), returndata_size)
+                    let returndata_size := mload(data2)
+                    revert(add(32, data2), returndata_size)
                 }
             }
-            revert VaultDeploymentFailed("Factory call failed");
+            revert VaultDeploymentFailed("Factory finalizeVault call failed");
         }
         
-        return abi.decode(data, (address));
+        return vault;
     }
 }
