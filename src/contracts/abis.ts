@@ -19,7 +19,11 @@ export const LABSCoreFacet_ABI = [
 
 export const LabVaultDeploymentFacet_ABI = [
   "function createLabStep1(string calldata name, string calldata symbol, string calldata domain) external returns (uint256 labId, address vault)",
-  "event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault)"
+  "function setVaultFactory(address factory) external",
+  "function setLabsToken(address token) external",
+  "function getLabsToken() external view returns (address)",
+  "function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level)",
+  "event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault, string name, string symbol, string domain)"
 ];
 
 export const LabDistributionFacet_ABI = [
