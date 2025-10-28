@@ -836,11 +836,12 @@ export default function Prototype() {
       // InvalidSymbol() = 0x621509d8
       // InvalidDomain() = 0x7f8c84b5
       // InvalidInput() = 0xb4fa3fb3 (legacy)
+      // FactoryNotSet() = 0x7138356f
       
       if (errorData && typeof errorData === 'string') {
-        if (errorData.includes('a7df7fac')) {
-          // ConfigNotSet() error - contract not properly configured
-          errorMessage = `Contract configuration error. The protocol treasury or LABS token address is not set. Please contact support.`;
+        if (errorData.includes('7138356f')) {
+          // FactoryNotSet() error - vault factory not configured
+          errorMessage = `Vault factory not set. Please call setVaultFactory on the LabVaultDeploymentFacet with address: 0xa833e790bb4984c618e3a67d4e07c001cd49dcd1`;
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
           toast.error(errorMessage, { duration: 7000 });
           errorHandled = true;
