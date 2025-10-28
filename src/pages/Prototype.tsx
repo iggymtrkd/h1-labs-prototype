@@ -666,9 +666,26 @@ export default function Prototype() {
       // Import ABIs needed for two-step lab creation
       const { LabVaultDeploymentFacet_ABI, LabDistributionFacet_ABI } = await import('@/contracts/abis');
       
+      // Initialize vault factory if not set (only needs to be done once)
+      addLog('info', 'Initialization', '⚙️ Checking vault factory configuration...');
+      const diamond1 = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
+      
+      try {
+        // Try to set vault factory (will fail if already set, which is fine)
+        const setFactoryTx = await diamond1.setVaultFactory(CONTRACTS.LabVaultFactory);
+        await setFactoryTx.wait();
+        addLog('success', 'Initialization', '✅ Vault factory configured');
+      } catch (e: any) {
+        // If it fails, factory might already be set - that's okay
+        if (e?.message?.includes('already initialized') || e?.code === 'CALL_EXCEPTION') {
+          addLog('info', 'Initialization', '✓ Vault factory already configured');
+        } else {
+          console.log('Factory setup error (might be okay):', e);
+        }
+      }
+      
       // STEP 1: Create lab + vault
       addLog('info', 'Stage 1: Create Lab', '🏗️ Step 1/2: Creating lab and deploying vault...');
-      const diamond1 = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
       
       let tx1;
       try {
