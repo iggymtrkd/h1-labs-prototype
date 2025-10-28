@@ -690,6 +690,8 @@ export default function Prototype() {
       
       try {
         const params = await testingFacet.getProtocolParams();
+        console.log('Protocol params:', params);
+        
         if (!params.defaultsInitialized) {
           addLog('info', 'Initialization', '🔧 Initializing protocol defaults...');
           const initTx = await testingFacet.initializeDefaults(CONTRACTS.ProtocolTreasury);
@@ -698,7 +700,21 @@ export default function Prototype() {
         } else {
           addLog('info', 'Initialization', '✓ Protocol defaults already configured');
         }
+        
+        // Explicitly set LABS token if not already set
+        const labsTokenAddr = await testingFacet.getLABSToken();
+        console.log('Current LABS token in Diamond:', labsTokenAddr);
+        
+        if (labsTokenAddr === '0x0000000000000000000000000000000000000000') {
+          addLog('info', 'Initialization', '🔧 Setting LABS token address...');
+          const setLabsTx = await testingFacet.setLABSToken(CONTRACTS.LABSToken);
+          await setLabsTx.wait();
+          addLog('success', 'Initialization', '✅ LABS token address set');
+        } else {
+          addLog('info', 'Initialization', '✓ LABS token already configured');
+        }
       } catch (e: any) {
+        console.log('Initialization error details:', e);
         // If it fails, might already be initialized - that's okay
         if (e?.message?.includes('already initialized')) {
           addLog('info', 'Initialization', '✓ Protocol defaults already configured');
@@ -759,6 +775,11 @@ export default function Prototype() {
       
       try {
         const diamond2 = new ethers.Contract(CONTRACTS.H1Diamond, LabDistributionFacet_ABI, signer);
+        
+        console.log('Attempting Step 2 with labId:', labId);
+        console.log('Diamond address:', CONTRACTS.H1Diamond);
+        console.log('User address:', await signer.getAddress());
+        
         const tx2 = await diamond2.createLabStep2(labId);
         addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 2 transaction...');
         const receipt2 = await tx2.wait();
