@@ -39,6 +39,17 @@ contract LabVaultDeploymentFacet {
         hs.vaultFactory = factory;
     }
 
+    function setLabsToken(address labsToken) external {
+        require(labsToken != address(0), "Invalid LABS token");
+        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+        hs.labsToken = labsToken;
+    }
+
+    function getLabsToken() external view returns (address) {
+        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+        return hs.labsToken;
+    }
+
     function createLabStep1(
         string calldata name,
         string calldata symbol,
