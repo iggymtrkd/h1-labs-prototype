@@ -6,7 +6,7 @@ import { IERC20 } from "../interfaces/IERC20.sol";
 import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
 contract LabVault is ERC20Base {
-  address public immutable labsToken;
+  address public labsToken;
   string public labDisplayName;
   address public admin;
   address public labOwner;           // New: Lab owner receives 1.5% of fees
@@ -82,7 +82,9 @@ contract LabVault is ERC20Base {
 
   bool private _paused;
   bool public initialMintCompleted;  // Track if initial H1 distribution happened
-  address public immutable diamond;   // H1Diamond address for auth
+  address public diamond;   // H1Diamond address for auth
+  
+  bool private _initialized;  // Flag to prevent re-initialization
 
   // Testing variables (TESTNET ONLY)
   bool public testMode;
@@ -99,23 +101,54 @@ contract LabVault is ERC20Base {
     _;
   }
 
-  constructor(LibLabVaultFactory.ConstructorParams memory params) ERC20Base(params.h1Name, params.h1Symbol, 18) {
-    require(params.labsToken != address(0), "labs token = 0");
-    require(params.labOwner != address(0), "lab owner = 0");
-    require(params.treasury != address(0), "treasury = 0");
-    require(params.diamond != address(0), "diamond = 0");
-    require(bytes(params.h1Name).length > 0 && bytes(params.h1Name).length <= 50, "invalid name");
-    require(bytes(params.h1Symbol).length > 0 && bytes(params.h1Symbol).length <= 10, "invalid symbol");
-    require(params.epochExitCapBps <= MAX_EXIT_CAP_BPS, "exit cap > 100%");
+  constructor() {
+    // Zero-parameter constructor to avoid stack depth issues
+    // All initialization happens in initialize functions
+  }
+
+  /// @notice Initialize vault metadata (step 1)
+  /// @dev Must be called first after deployment
+  function initializeMetadata(
+    string calldata h1Name,
+    string calldata h1Symbol,
+    string calldata labDisplayName_
+  ) external {
+    require(!_initialized, "already initialized");
+    require(bytes(h1Name).length > 0 && bytes(h1Name).length <= 50, "invalid name");
+    require(bytes(h1Symbol).length > 0 && bytes(h1Symbol).length <= 10, "invalid symbol");
     
-    labsToken = params.labsToken;
-    labDisplayName = params.labDisplayName;
-    cooldownSeconds = params.cooldownSeconds;
-    epochExitCapBps = params.epochExitCapBps;
-    admin = params.admin;
-    labOwner = params.labOwner;
-    treasury = params.treasury;
-    diamond = params.diamond;
+    // Directly set internal variables to avoid function call overhead
+    _name = h1Name;
+    _symbol = h1Symbol;
+    labDisplayName = labDisplayName_;
+  }
+
+  /// @notice Initialize vault configuration (step 2 and final)
+  /// @dev Must be called after initializeMetadata
+  function initializeConfig(
+    address labsToken_,
+    uint64 cooldownSeconds_,
+    uint16 epochExitCapBps_,
+    address admin_,
+    address labOwner_,
+    address treasury_,
+    address diamond_
+  ) external {
+    require(!_initialized, "already initialized");
+    require(labsToken_ != address(0), "labs token = 0");
+    require(labOwner_ != address(0), "lab owner = 0");
+    require(treasury_ != address(0), "treasury = 0");
+    require(diamond_ != address(0), "diamond = 0");
+    require(epochExitCapBps_ <= MAX_EXIT_CAP_BPS, "exit cap > 100%");
+    
+    _initialized = true;
+    labsToken = labsToken_;
+    cooldownSeconds = cooldownSeconds_;
+    epochExitCapBps = epochExitCapBps_;
+    admin = admin_;
+    labOwner = labOwner_;
+    treasury = treasury_;
+    diamond = diamond_;
   }
 
   function assetsPerShare() public view returns (uint256) {

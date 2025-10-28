@@ -10,34 +10,43 @@ import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 contract LabVaultFactory {
   event VaultDeployed(address indexed vault, address indexed owner);
   
-  /// @notice Deploy a new LabVault contract
-  function deployVault(
-    address labsToken,
+  /// @notice Create and initialize a new LabVault contract (part 1 - metadata)
+  /// @dev Must call finalizeVault after this
+  function createVault(
     string calldata h1Name,
     string calldata h1Symbol,
-    string calldata labDisplayName,
+    string calldata labDisplayName
+  ) external returns (address vault) {
+    // Deploy with zero parameters
+    LabVault vaultContract = new LabVault();
+    vault = address(vaultContract);
+    
+    // Initialize metadata only
+    vaultContract.initializeMetadata(h1Name, h1Symbol, labDisplayName);
+  }
+  
+  /// @notice Finalize vault configuration (part 2)
+  /// @dev Must be called after createVault
+  function finalizeVault(
+    address vault,
+    address labsToken,
     uint64 cooldownSeconds,
     uint16 epochExitCapBps,
     address admin,
     address labOwner,
     address treasury,
     address diamond
-  ) external returns (address vault) {
-    // Use struct to avoid stack too deep
-    LibLabVaultFactory.ConstructorParams memory params = LibLabVaultFactory.ConstructorParams({
-      labsToken: labsToken,
-      h1Name: h1Name,
-      h1Symbol: h1Symbol,
-      labDisplayName: labDisplayName,
-      cooldownSeconds: cooldownSeconds,
-      epochExitCapBps: epochExitCapBps,
-      admin: admin,
-      labOwner: labOwner,
-      treasury: treasury,
-      diamond: diamond
-    });
+  ) external {
+    LabVault(vault).initializeConfig(
+      labsToken,
+      cooldownSeconds,
+      epochExitCapBps,
+      admin,
+      labOwner,
+      treasury,
+      diamond
+    );
     
-    vault = address(new LabVault(params));
     emit VaultDeployed(vault, labOwner);
   }
 }
