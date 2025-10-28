@@ -770,6 +770,26 @@ export default function Prototype() {
       // STEP 2: Deploy bonding curve + distribute H1
       addLog('info', 'Stage 1: Create Lab', '💎 Step 2/2: Deploying bonding curve and distributing H1 tokens...');
       
+      // Pre-flight checks before step 2
+      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, rpc);
+      const diamondLabsBalance = await labsToken.balanceOf(CONTRACTS.H1Diamond);
+      console.log('Diamond LABS balance:', ethers.formatEther(diamondLabsBalance));
+      addLog('info', 'Diagnostics', `💰 Diamond LABS balance: ${ethers.formatEther(diamondLabsBalance)} LABS`);
+      
+      if (diamondLabsBalance === 0n) {
+        throw new Error('Diamond has no LABS tokens. Staking may have failed.');
+      }
+      
+      // Verify LABS token is set in Diamond storage
+      const currentLabsToken = await testingFacet.getLABSToken();
+      console.log('LABS token in Diamond storage:', currentLabsToken);
+      addLog('info', 'Diagnostics', `🔧 LABS token in storage: ${currentLabsToken}`);
+      
+      if (currentLabsToken === '0x0000000000000000000000000000000000000000') {
+        throw new Error('LABS token not set in Diamond storage');
+      }
+      
       let step2Success = false;
       let bondingCurveAddress = '';
       
