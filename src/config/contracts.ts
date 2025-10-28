@@ -28,9 +28,9 @@ export const CONTRACTS = {
   DiamondLoupeFacet: "0x94c4868d99590e247ff48de19cd7be385a2b5e58",
   OwnershipFacet: "0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9",
   SecurityFacet: "0x330c418951a0237d4c28685c0a7dbdb5b42eb441",
-  LABSCoreFacet: "0x4345a4ae14a1111b921a74868033d90f268c24bb", // ✅ Staking + Queries only, 14KB
-  LabVaultDeploymentFacet: "0x60320c6afd8118dd374a6407babc690fd5bcb599", // ✅ Lab creation + vault deployment
-  LabDistributionFacet: "0x34662d29c5995890cc24c3020a41ea1379da7669", // ✅ Curve + H1 distribution
+  LABSCoreFacet: "0xdf972c8cf5b1757d133aebbce1a704aeb65a2b29", // ✅ UPDATED: Removed domain requirements
+  LabVaultDeploymentFacet: "0xb92e4ebcc7721201f60fc89858311b42bcca63d1", // ✅ UPDATED: Removed domain requirements
+  LabDistributionFacet: "0xfb7c840eb842e99837fd13aa957d499f5ad223df", // ✅ UPDATED
   VaultFacet: "0xd6157e381ec5c1d06aca995fa77c5d0a388ff512",
   BondingCurveFacet: "0x90c81d864d4d71af2449153091733cb1249706c6",
   LabPassFacet: "0x799cb349e8feec8ce0155abe0a2f258307a66834",
