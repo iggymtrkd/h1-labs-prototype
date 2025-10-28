@@ -723,126 +723,50 @@ export default function Prototype() {
         }
       }
       
-      // STEP 1: Create lab + vault
-      addLog('info', 'Stage 1: Create Lab', '🏗️ Step 1/2: Creating lab and deploying vault...');
+      // ONE-STEP LAB CREATION: Everything happens in one transaction!
+      addLog('info', 'Stage 1: Create Lab', '🚀 Creating lab with vault, bonding curve, and H1 distribution...');
       
-      let tx1;
-      try {
-        tx1 = await diamond1.createLabStep1(labName, labSymbol, labDomain);
-      } catch (e: any) {
-        console.log('Full createLabStep1 error:', e);
-        console.log('Error message:', e?.message);
-        console.log('Error data:', e?.data);
-        console.log('Error code:', e?.code);
-        console.log('Error reason:', e?.reason);
-        addLog('error', 'Stage 1: Create Lab', `❌ Step 1 failed: ${e?.reason || e?.message || String(e)}`);
-        throw e;
-      }
-      
-      addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 1 transaction...');
-      const receipt1 = await tx1.wait();
-      
-      // Get labId and vault from Step 1 event
-      const iface1 = new ethers.Interface(LabVaultDeploymentFacet_ABI);
       let labId: number | string = "unknown";
       let vaultAddress = '';
-      let eventLevel = labLevel; // Use calculated level as default
-      
-      for (const log of receipt1.logs) {
-        try {
-          const decoded = iface1.parseLog(log);
-          if (decoded && decoded.name === "LabVaultDeployed") {
-            labId = ethers.toNumber(decoded.args[0]); // labId
-            vaultAddress = decoded.args[2]; // vault address
-            console.log('✅ LabVaultDeployed event decoded:', { labId, vaultAddress });
-            addLog('success', 'Stage 1: Create Lab', `✅ Step 1 Complete: Lab #${labId} created, vault deployed at ${vaultAddress.slice(0, 10)}...`);
-            break;
-          }
-        } catch (e) {
-          continue;
-        }
-      }
-      
-      if (labId === "unknown") {
-        throw new Error("Failed to get labId from Step 1");
-      }
-      
-      // STEP 2: Deploy bonding curve + distribute H1
-      addLog('info', 'Stage 1: Create Lab', '💎 Step 2/2: Deploying bonding curve and distributing H1 tokens...');
-      
-      // Pre-flight checks before step 2
-      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, rpc);
-      const diamondLabsBalance = await labsToken.balanceOf(CONTRACTS.H1Diamond);
-      console.log('Diamond LABS balance:', ethers.formatEther(diamondLabsBalance));
-      addLog('info', 'Diagnostics', `💰 Diamond LABS balance: ${ethers.formatEther(diamondLabsBalance)} LABS`);
-      
-      if (diamondLabsBalance === 0n) {
-        throw new Error('Diamond has no LABS tokens. Staking may have failed.');
-      }
-      
-      // Verify LABS token is set in Diamond storage
-      const currentLabsToken = await testingFacet.getLABSToken();
-      console.log('LABS token in Diamond storage:', currentLabsToken);
-      addLog('info', 'Diagnostics', `🔧 LABS token in storage: ${currentLabsToken}`);
-      
-      if (currentLabsToken === '0x0000000000000000000000000000000000000000') {
-        throw new Error('LABS token not set in Diamond storage');
-      }
-      
-      let step2Success = false;
       let bondingCurveAddress = '';
+      let eventLevel = labLevel;
       
       try {
-        const diamond2 = new ethers.Contract(CONTRACTS.H1Diamond, LabDistributionFacet_ABI, signer);
+        const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
         
-        console.log('Attempting Step 2 with labId:', labId);
-        console.log('Diamond address:', CONTRACTS.H1Diamond);
-        console.log('User address:', await signer.getAddress());
+        // Call createLab - does everything in ONE transaction!
+        const tx = await diamond.createLab(labName, labSymbol, labDomain);
+        addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation transaction (creating vault, bonding curve, distributing H1)...');
+        const receipt = await tx.wait();
         
-        const tx2 = await diamond2.createLabStep2(labId);
-        addLog('info', 'Stage 1: Create Lab', '⏳ Mining Step 2 transaction...');
-        const receipt2 = await tx2.wait();
+        console.log('✅ Lab creation transaction mined:', tx.hash);
         
-        console.log('✅ Step 2 transaction mined:', tx2.hash);
-        
-        // Log Step 2 completion
-        const iface2 = new ethers.Interface(LabDistributionFacet_ABI);
-        for (const log of receipt2.logs) {
+        // Parse both events from the single transaction
+        const iface = new ethers.Interface(LabVaultDeploymentFacet_ABI);
+        for (const log of receipt.logs) {
           try {
-            const decoded = iface2.parseLog(log);
-            if (decoded && decoded.name === "LabDistributionComplete") {
-              bondingCurveAddress = decoded.args[1]; // Second arg is curve address
+            const decoded = iface.parseLog(log);
+            if (decoded && decoded.name === "LabVaultDeployed") {
+              labId = ethers.toNumber(decoded.args[0]); // labId
+              vaultAddress = decoded.args[2]; // vault address
+              console.log('✅ LabVaultDeployed event decoded:', { labId, vaultAddress });
+              addLog('success', 'Stage 1: Create Lab', `✅ Lab created: Lab #${labId}, vault at ${vaultAddress.slice(0, 10)}...`);
+            } else if (decoded && decoded.name === "LabDistributionComplete") {
+              bondingCurveAddress = decoded.args[1]; // curve address
               console.log('✅ LabDistributionComplete event decoded, curve:', bondingCurveAddress);
-              addLog('success', 'Stage 1: Create Lab', `✅ Step 2 Complete: Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, tx2.hash);
-              step2Success = true;
-              break;
+              addLog('success', 'Stage 1: Create Lab', `✅ Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, tx.hash);
             }
           } catch (e) {
             continue;
           }
         }
         
-        if (!step2Success) {
-          addLog('info', 'Stage 1: Create Lab', '⚠️ Step 2 transaction mined but LabDistributionComplete event not found. Bonding curve may have already existed.');
-          step2Success = true; // Still consider it a success if tx didn't revert
+        if (labId === "unknown") {
+          throw new Error("Failed to get labId from lab creation");
         }
-      } catch (step2Error: any) {
-        console.error('❌ Step 2 Error:', step2Error);
         
-        // Check if error is because curve already exists
-        if (step2Error?.message?.includes('EXISTS') || step2Error?.data?.includes('EXISTS')) {
-          addLog('info', 'Stage 1: Create Lab', '⚠️ Bonding curve already exists for this lab (this is OK - continuing...)');
-          step2Success = true; // Not a fatal error
-        } else {
-          addLog('error', 'Stage 1: Create Lab', `❌ Step 2 Failed: ${step2Error.message || 'Unknown error'}. Bonding curve NOT deployed!`);
-          toast.error('Lab created but bonding curve deployment failed. You can deploy it manually later.');
-          // Don't throw - lab was still created successfully in Step 1
-        }
-      }
-      
-      // Use the combined receipt for final success message (we'll use tx1.hash as primary)
-      const receipt = receipt1;
+        // Lab creation successful!
+        const receipt1 = receipt;
 
       // Load vesting data for the new lab (if H1 distribution happened)
       const vestingData = await loadLabVestingData(
@@ -910,7 +834,7 @@ export default function Prototype() {
       console.error('❌ Error code:', error?.code);
       
       // Try multiple paths to get error data
-      let errorData = error?.data || error?.error?.data?.data || error?.error?.data || '';
+      let errorData = error?.data || error?.error?.data || error?.error?.data || '';
       
       // Convert to string if it's an object
       if (typeof errorData === 'object' && errorData !== null) {

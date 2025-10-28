@@ -2,27 +2,17 @@
 pragma solidity ^0.8.20;
 
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
+import { LibBondingCurveFactory } from "../libraries/LibBondingCurveFactory.sol";
+import { LibH1Distribution } from "../libraries/LibH1Distribution.sol";
 
 contract LabVaultDeploymentFacet {
     event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault, string name, string symbol, string domain);
+    event LabDistributionComplete(uint256 indexed labId, address indexed curve);
     error InvalidInput();
     error InsufficientStake();
     error FactoryNotSet();
     error VaultDeploymentFailed(string reason);
     error InvalidVaultAddress();
-    
-    struct VaultArgs {
-        address labsToken;
-        string name;
-        string symbol;
-        string domain;
-        uint64 cooldown;
-        uint16 exitCapBps;
-        address owner;
-        address manager;
-        address treasury;
-        address caller;
-    }
 
     function setVaultFactory(address factory) external {
         require(factory != address(0), "Invalid factory");
@@ -30,22 +20,15 @@ contract LabVaultDeploymentFacet {
         hs.vaultFactory = factory;
     }
 
-    function setLabsToken(address labsToken) external {
-        require(labsToken != address(0), "Invalid LABS token");
-        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
-        hs.labsToken = labsToken;
-    }
-
-    function getLabsToken() external view returns (address) {
-        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
-        return hs.labsToken;
-    }
-
-    function createLabStep1(
+    /// @notice Create a complete lab in ONE transaction (both Step 1 & 2)
+    /// @param name Lab name
+    /// @param symbol H1 token symbol
+    /// @param domain Lab domain
+    function createLab(
         string calldata name,
         string calldata symbol,
         string calldata domain
-    ) external returns (uint256 labId, address vault) {
+    ) external returns (uint256 labId, address vault, address curve) {
         // --- Input validation ---
         if (bytes(name).length == 0 || bytes(name).length > 50) revert InvalidInput();
         if (bytes(symbol).length == 0 || bytes(symbol).length > 10) revert InvalidInput();
@@ -56,34 +39,36 @@ contract LabVaultDeploymentFacet {
         if (hs.stakedBalances[msg.sender] < 100_000e18) revert InsufficientStake();
         if (hs.vaultFactory == address(0)) revert FactoryNotSet();
 
+        // STEP 1: Create lab entry
         labId = hs.nextLabId++;
         hs.labs[labId].owner = msg.sender;
         hs.labs[labId].domain = domain;
         hs.labs[labId].active = true;
         hs.labs[labId].level = _calcLevel(hs.stakedBalances[msg.sender]);
 
-        // --- Prepare args struct ---
-        VaultArgs memory args = VaultArgs({
-            labsToken: hs.labsToken,
-            name: name,
-            symbol: symbol,
-            domain: domain, // FIXED: Use actual domain parameter
-            cooldown: hs.defaultCooldown,
-            exitCapBps: hs.defaultExitCapBps,
-            owner: msg.sender,
-            manager: msg.sender,
-            treasury: hs.protocolTreasury,
-            caller: address(this)
-        });
-
-        vault = _deployVault(hs.vaultFactory, args);
-        
+        // Deploy vault
+        vault = _deployVault(hs.vaultFactory, name, symbol, domain, hs);
         if (vault == address(0)) revert InvalidVaultAddress();
 
         hs.labIdToVault[labId] = vault;
         hs.labs[labId].h1Token = vault;
 
         emit LabVaultDeployed(labId, msg.sender, vault, name, symbol, domain);
+
+        // STEP 2: Deploy curve and distribute H1
+        curve = LibBondingCurveFactory.deployBondingCurve(
+            hs.labsToken,
+            vault,
+            hs.protocolTreasury,
+            hs.curveFeeBps,
+            hs.curvePolBps
+        );
+        hs.labIdToCurve[labId] = curve;
+
+        // Distribute H1 tokens
+        LibH1Distribution.distribute(labId, vault, curve, hs.stakedBalances[msg.sender], msg.sender);
+
+        emit LabDistributionComplete(labId, curve);
     }
     
     /// @notice Get lab details (domain)
@@ -97,7 +82,7 @@ contract LabVaultDeploymentFacet {
         return bal >= 500_000e18 ? 3 : (bal >= 250_000e18 ? 2 : 1);
     }
 
-    function _deployVault(address factory, VaultArgs memory args)
+    function _deployVault(address factory, string calldata name, string calldata symbol, string calldata domain, LibH1Storage.H1Storage storage hs)
         private
         returns (address)
     {
@@ -105,9 +90,9 @@ contract LabVaultDeploymentFacet {
         (bool ok1, bytes memory data1) = factory.call(
             abi.encodeWithSignature(
                 "createVault(string,string,string)",
-                args.name,
-                args.symbol,
-                args.domain
+                name,
+                symbol,
+                domain
             )
         );
         
@@ -128,13 +113,13 @@ contract LabVaultDeploymentFacet {
             abi.encodeWithSignature(
                 "finalizeVault(address,address,uint64,uint16,address,address,address,address)",
                 vault,
-                args.labsToken,
-                args.cooldown,
-                args.exitCapBps,
-                args.owner,
-                args.manager,
-                args.treasury,
-                args.caller
+                hs.labsToken,
+                hs.defaultCooldown,
+                hs.defaultExitCapBps,
+                msg.sender,
+                msg.sender,
+                hs.protocolTreasury,
+                address(this)
             )
         );
         
