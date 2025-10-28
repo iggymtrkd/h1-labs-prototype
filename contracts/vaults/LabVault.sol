@@ -113,7 +113,7 @@ contract LabVault is ERC20Base {
     string calldata h1Symbol,
     string calldata labDisplayName_
   ) external {
-    require(!_initialized, "already initialized");
+    require(bytes(_name).length == 0, "metadata already set");
     require(bytes(h1Name).length > 0 && bytes(h1Name).length <= 50, "invalid name");
     require(bytes(h1Symbol).length > 0 && bytes(h1Symbol).length <= 10, "invalid symbol");
     

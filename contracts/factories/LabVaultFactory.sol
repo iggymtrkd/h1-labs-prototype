@@ -84,4 +84,39 @@ contract LabVaultFactory {
     
     emit VaultDeployed(vault, labOwner);
   }
+  
+  /// @notice Single-call deployment function (combines createVault + finalizeVault)
+  /// @dev This is the function called by LabVaultDeploymentFacet
+  function deployVault(
+    address labsToken,
+    string calldata name,
+    string calldata symbol,
+    string calldata domain,
+    uint64 cooldownSeconds,
+    uint16 epochExitCapBps,
+    address owner,
+    address manager,
+    address treasury,
+    address caller
+  ) external returns (address vault) {
+    // Deploy with zero parameters
+    LabVault vaultContract = new LabVault();
+    vault = address(vaultContract);
+    
+    // Initialize metadata
+    vaultContract.initializeMetadata(name, symbol, domain);
+    
+    // Initialize config
+    vaultContract.initializeConfig(
+      labsToken,
+      cooldownSeconds,
+      epochExitCapBps,
+      manager,
+      owner,
+      treasury,
+      caller
+    );
+    
+    emit VaultDeployed(vault, owner);
+  }
 }
