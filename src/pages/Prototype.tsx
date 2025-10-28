@@ -663,65 +663,8 @@ export default function Prototype() {
         }
       }
       
-      // Import ABIs needed for two-step lab creation
-      const { LabVaultDeploymentFacet_ABI, LabDistributionFacet_ABI, TestingFacet_ABI } = await import('@/contracts/abis');
-      
-      // Initialize vault factory if not set (only needs to be done once)
-      addLog('info', 'Initialization', '⚙️ Checking vault factory configuration...');
-      const diamond1 = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
-      
-      try {
-        // Try to set vault factory (will fail if already set, which is fine)
-        const setFactoryTx = await diamond1.setVaultFactory(CONTRACTS.LabVaultFactory);
-        await setFactoryTx.wait();
-        addLog('success', 'Initialization', '✅ Vault factory configured');
-      } catch (e: any) {
-        // If it fails, factory might already be set - that's okay
-        if (e?.message?.includes('already initialized') || e?.code === 'CALL_EXCEPTION') {
-          addLog('info', 'Initialization', '✓ Vault factory already configured');
-        } else {
-          console.log('Factory setup error (might be okay):', e);
-        }
-      }
-      
-      // Initialize protocol defaults (LABS token, treasury, fees) if not set
-      addLog('info', 'Initialization', '⚙️ Checking protocol defaults...');
-      const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
-      
-      try {
-        const params = await testingFacet.getProtocolParams();
-        console.log('Protocol params:', params);
-        
-        if (!params.defaultsInitialized) {
-          addLog('info', 'Initialization', '🔧 Initializing protocol defaults...');
-          const initTx = await testingFacet.initializeDefaults(CONTRACTS.ProtocolTreasury);
-          await initTx.wait();
-          addLog('success', 'Initialization', '✅ Protocol defaults initialized');
-        } else {
-          addLog('info', 'Initialization', '✓ Protocol defaults already configured');
-        }
-        
-        // Explicitly set LABS token if not already set
-        const labsTokenAddr = await testingFacet.getLABSToken();
-        console.log('Current LABS token in Diamond:', labsTokenAddr);
-        
-        if (labsTokenAddr === '0x0000000000000000000000000000000000000000') {
-          addLog('info', 'Initialization', '🔧 Setting LABS token address...');
-          const setLabsTx = await testingFacet.setLABSToken(CONTRACTS.LABSToken);
-          await setLabsTx.wait();
-          addLog('success', 'Initialization', '✅ LABS token address set');
-        } else {
-          addLog('info', 'Initialization', '✓ LABS token already configured');
-        }
-      } catch (e: any) {
-        console.log('Initialization error details:', e);
-        // If it fails, might already be initialized - that's okay
-        if (e?.message?.includes('already initialized')) {
-          addLog('info', 'Initialization', '✓ Protocol defaults already configured');
-        } else {
-          console.log('Defaults setup error (might be okay):', e);
-        }
-      }
+      // Import ABIs needed for lab creation
+      const { LabVaultDeploymentFacet_ABI } = await import('@/contracts/abis');
       
       // ONE-STEP LAB CREATION: Everything happens in one transaction!
       addLog('info', 'Stage 1: Create Lab', '🚀 Creating lab with vault, bonding curve, and H1 distribution...');
