@@ -618,18 +618,7 @@ export default function Prototype() {
         return;
       }
       
-      // Check if domain is available BEFORE attempting transaction
-      addLog('info', 'Stage 1: Create Lab', `🔍 Checking if domain "${labDomain}" is available...`);
-      const isDomainAvailable = await diamond.isDomainAvailable(labDomain);
-      
-      if (!isDomainAvailable) {
-        toast.error(`Domain "${labDomain}" is already taken. Please choose a different domain.`);
-        addLog('error', 'Stage 1: Create Lab', `❌ Domain "${labDomain}" is already taken. Try a different domain.`);
-        setLoading(null);
-        return;
-      }
-      
-      addLog('success', 'Stage 1: Create Lab', `✅ Domain "${labDomain}" is available!`);
+      // Domain uniqueness is no longer enforced - skip domain check
       
       labLevel = calculateLabLevel(stakedAmount);
       addLog('success', 'Stage 1: Create Lab', `✅ Staking requirement met! Creating Lab Level ${labLevel}...`);
@@ -842,17 +831,10 @@ export default function Prototype() {
       // Check for specific custom errors from LabVaultDeploymentFacet
       // Error selectors (first 4 bytes of keccak256(errorSignature)):
       // InvalidInput() = 0xb4fa3fb3
-      // DomainTaken() = 0x4ca8886f  
       // InsufficientStake() = 0xccb21934
       
       if (errorData && typeof errorData === 'string') {
-        if (errorData.includes('4ca8886f')) {
-          // DomainTaken() error - MOST LIKELY the actual error
-          errorMessage = `Domain "${labDomain}" is already taken! Please choose a different domain and try again.`;
-          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
-          toast.error(errorMessage, { duration: 7000 });
-          errorHandled = true;
-        } else if (errorData.includes('ccb21934')) {
+        if (errorData.includes('ccb21934')) {
           // InsufficientStake() error
           errorMessage = `Insufficient LABS staked. You need at least 100,000 LABS staked on-chain to create a lab.`;
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMessage}`);
