@@ -789,54 +789,37 @@ export default function Prototype() {
           throw new Error(`Invalid domain length: ${labDomain?.length || 0} (must be 1-100 chars)`);
         }
         
-        addLog('info', 'Stage 1: Create Lab', `📝 Creating lab: "${labName}" (${labSymbol}) @ ${labDomain}`);
+        addLog('info', 'Stage 1: Create Lab', `📝 Inputs validated: "${labName}" (${labSymbol}) @ ${labDomain}`);
         
-        // Try to estimate gas first to catch errors early
+        // CRITICAL: Test the actual call with staticCall to get the real error
+        addLog('info', 'Stage 1: Create Lab', '🧪 Testing contract call (staticCall)...');
         try {
-          addLog('info', 'Stage 1: Create Lab', '⛽ Estimating gas for lab creation...');
-          const gasEstimate = await diamond.createLab.estimateGas(labName, labSymbol, labDomain);
-          addLog('info', 'Stage 1: Create Lab', `⛽ Gas estimate: ${gasEstimate.toString()}`);
-        } catch (gasErr: any) {
-          console.error('❌ Gas estimation failed:', gasErr);
+          await diamond.createLab.staticCall(labName, labSymbol, labDomain);
+          addLog('success', 'Stage 1: Create Lab', '✅ Contract call test passed!');
+        } catch (staticErr: any) {
+          console.error('❌ StaticCall failed:', staticErr);
           
-          // Try to decode the revert reason from the error
-          let revertReason = 'Unknown error';
-          
-          if (gasErr?.message) {
-            // Check for common revert reasons
-            if (gasErr.message.includes('InsufficientStake')) {
-              revertReason = 'Insufficient LABS staked (need 100,000 LABS minimum)';
-            } else if (gasErr.message.includes('FactoryNotSet')) {
-              revertReason = 'VaultFactory not configured (admin must set it first)';
-            } else if (gasErr.message.includes('InvalidInput')) {
-              revertReason = 'Invalid input parameters (check name/symbol/domain length)';
-            } else if (gasErr.data) {
-              revertReason = `Contract reverted: ${gasErr.data}`;
-            } else {
-              revertReason = gasErr.message;
+          // Decode the error
+          let errorMsg = 'Contract rejected the call';
+          if (staticErr.data) {
+            // Try to decode custom error
+            const errorData = staticErr.data;
+            console.log('Error data:', errorData);
+            
+            // Check for specific errors
+            if (errorData.includes('7138356f')) {
+              errorMsg = 'VaultFactory not set in Diamond (admin must configure it)';
+            } else if (errorData.includes('ccb21934')) {
+              errorMsg = 'Insufficient LABS staked (need 100,000 LABS)';
+            } else if (errorData.includes('b4fa3fb3')) {
+              errorMsg = 'Invalid input parameters';
             }
+          } else if (staticErr.message) {
+            errorMsg = staticErr.message;
           }
           
-          addLog('error', 'Stage 1: Create Lab', `❌ Gas estimation failed: ${revertReason}`);
-          toast.error('Lab Creation Failed', {
-            description: revertReason,
-            duration: 6000,
-          });
-          
-          // Try to call the contract read-only to get more details
-          try {
-            addLog('info', 'Stage 1: Create Lab', '🔍 Checking contract state...');
-            const params = await testingFacet.getProtocolParams();
-            addLog('info', 'Stage 1: Create Lab', `   LABS Token set: ${params.labsToken !== '0x0000000000000000000000000000000000000000'}`);
-            addLog('info', 'Stage 1: Create Lab', `   Treasury set: ${params.protocolTreasury !== '0x0000000000000000000000000000000000000000'}`);
-            addLog('info', 'Stage 1: Create Lab', `   Defaults initialized: ${params.defaultsInitialized}`);
-            addLog('info', 'Stage 1: Create Lab', `   Cooldown: ${params.defaultCooldown}`);
-            addLog('info', 'Stage 1: Create Lab', `   Exit cap BPS: ${params.defaultExitCapBps}`);
-            addLog('info', 'Stage 1: Create Lab', `   Curve fee BPS: ${params.curveFeeBps}`);
-          } catch (e) {
-            addLog('info', 'Stage 1: Create Lab', '⚠️ Could not read protocol params');
-          }
-          
+          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMsg}`);
+          toast.error(errorMsg, { duration: 7000 });
           setLoading(null);
           return;
         }
