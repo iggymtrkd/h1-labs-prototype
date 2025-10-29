@@ -202,7 +202,6 @@ export default function LabChat() {
     try {
       await sendMessage(messageInput);
       setMessageInput("");
-      toast.success("Message sent!");
     } catch (err) {
       toast.error("Failed to send message");
     }
