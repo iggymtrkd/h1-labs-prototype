@@ -2446,38 +2446,60 @@ export default function Prototype() {
             // Fallback to individual transactions
             addLog('warning', 'H1 Marketplace', '⚠️ Batch mode not supported, using sequential transactions...');
             
+            // Step 1: Approve
             const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
             const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
             addLog('info', 'H1 Marketplace', '⏳ Tx 1/2: Mining approval...');
-            await approveTx.wait();
+            const approveReceipt = await approveTx.wait();
+            
+            if (!approveReceipt) {
+              throw new Error('Approval transaction failed - no receipt');
+            }
             addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
             
+            // Verify allowance was actually set
+            try {
+              const allowance = await labsToken.allowance(address, lab.curveAddress);
+              if (allowance < amountWei) {
+                throw new Error(`Allowance verification failed: ${ethers.formatEther(allowance)} LABS < ${ethers.formatEther(amountWei)} LABS required`);
+              }
+              addLog('info', 'H1 Marketplace', `✓ Allowance verified: ${ethers.formatEther(allowance)} LABS`);
+            } catch (allowanceCheckError: any) {
+              addLog('warning', 'H1 Marketplace', `⚠️ Could not verify allowance: ${allowanceCheckError.message}`);
+            }
+            
+            // Step 2: Buy
             const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
             const buyTx = await curve.buy(amountWei, address, 0);
             addLog('info', 'H1 Marketplace', '⏳ Tx 2/2: Mining buy...');
             txHash = buyTx.hash;
-            await buyTx.wait();
-          }
-
-          // If batch was used, wait for confirmation
-          if (txHash && !txHash.includes('0x')) {
-            // It's a batch ID, wait for it to complete
-            addLog('info', 'H1 Marketplace', '⏳ Waiting for batch completion...');
-            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for batch to complete
-          } else if (txHash) {
-            // Regular tx hash, verify it
-            const receipt = await provider.getTransactionReceipt(txHash);
-            if (!receipt) {
-              throw new Error('Transaction failed - no receipt');
+            const buyReceipt = await buyTx.wait();
+            
+            if (!buyReceipt) {
+              throw new Error('Buy transaction failed - no receipt');
             }
+          } catch (buyError: any) {
+            addLog('error', 'H1 Marketplace', `❌ Batch transaction failed: ${buyError.message || buyError}`);
+            
+            // Provide specific guidance based on error
+            let userMessage = buyError.message || 'Failed to execute transaction';
+            if (userMessage.includes('transfer')) {
+              userMessage = 'Token transfer failed. Check your balance and approval.';
+            } else if (userMessage.includes('SlippageExceeded')) {
+              userMessage = 'Slippage exceeded. Try again with a smaller amount.';
+            } else if (userMessage.includes('PriceOutOfBounds')) {
+              userMessage = 'Price is out of bounds. Please try again.';
+            } else if (userMessage.includes('TransferFailed')) {
+              userMessage = 'Transfer failed. Ensure you have approved and have sufficient balance.';
+            } else if (userMessage.includes('paused')) {
+              userMessage = 'Bonding curve is paused. Please try again later.';
+            } else if (userMessage.includes('allowance')) {
+              userMessage = 'Insufficient allowance. Try approving again or using a smaller amount.';
+            }
+            
+            toast.error(userMessage);
+            return;
           }
-
-          addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`);
-          toast.success(`Successfully bought H1 ${lab.symbol}!`);
-          
-          // Refresh marketplace data
-          await loadMarketplaceLabs();
-          setTradeAmount('1');
         } catch (buyError: any) {
           addLog('error', 'H1 Marketplace', `❌ Batch transaction failed: ${buyError.message || buyError}`);
           
@@ -2493,6 +2515,8 @@ export default function Prototype() {
             userMessage = 'Transfer failed. Ensure you have approved and have sufficient balance.';
           } else if (userMessage.includes('paused')) {
             userMessage = 'Bonding curve is paused. Please try again later.';
+          } else if (userMessage.includes('allowance')) {
+            userMessage = 'Insufficient allowance. Try approving again or using a smaller amount.';
           }
           
           toast.error(userMessage);
