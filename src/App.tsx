@@ -66,6 +66,17 @@ const AppContent = () => {
     }
   }, [isConnected, location.pathname, navigate]);
 
+  // Redirect to home if trying to access protected routes without connection
+  useEffect(() => {
+    const protectedRoutes = ['/dashboard', '/staking', '/apps', '/profile', '/settings', '/lab'];
+    const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
+    
+    if (!isConnected && isProtectedRoute && !isHomePage && !isGetStartedPage) {
+      console.log('[App] Redirecting to home - not connected on protected route');
+      navigate('/');
+    }
+  }, [isConnected, location.pathname, navigate, isHomePage, isGetStartedPage]);
+
   const handleConnectWallet = async () => {
     console.log('[App] handleConnectWallet called');
     sessionStorage.setItem('wallet_connecting', 'true');
