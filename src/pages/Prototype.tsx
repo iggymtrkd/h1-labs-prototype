@@ -785,21 +785,52 @@ export default function Prototype() {
         
         // Try to estimate gas first to catch errors early
         try {
+          addLog('info', 'Stage 1: Create Lab', '⛽ Estimating gas for lab creation...');
           const gasEstimate = await diamond.createLab.estimateGas(labName, labSymbol, labDomain);
           addLog('info', 'Stage 1: Create Lab', `⛽ Gas estimate: ${gasEstimate.toString()}`);
         } catch (gasErr: any) {
-          console.error('Gas estimation failed:', gasErr);
-          addLog('error', 'Stage 1: Create Lab', `❌ Gas estimation failed: ${gasErr?.message || String(gasErr)}`);
+          console.error('❌ Gas estimation failed:', gasErr);
           
-          // Try to get more details about why it failed
-          if (gasErr?.message?.includes('InsufficientStake')) {
-            throw new Error('Insufficient LABS staked (need 100,000 LABS)');
-          } else if (gasErr?.message?.includes('FactoryNotSet')) {
-            throw new Error('VaultFactory not configured in Diamond');
-          } else if (gasErr?.message?.includes('InvalidInput')) {
-            throw new Error('Invalid input parameters (check name/symbol/domain)');
+          // Try to decode the revert reason from the error
+          let revertReason = 'Unknown error';
+          
+          if (gasErr?.message) {
+            // Check for common revert reasons
+            if (gasErr.message.includes('InsufficientStake')) {
+              revertReason = 'Insufficient LABS staked (need 100,000 LABS minimum)';
+            } else if (gasErr.message.includes('FactoryNotSet')) {
+              revertReason = 'VaultFactory not configured (admin must set it first)';
+            } else if (gasErr.message.includes('InvalidInput')) {
+              revertReason = 'Invalid input parameters (check name/symbol/domain length)';
+            } else if (gasErr.data) {
+              revertReason = `Contract reverted: ${gasErr.data}`;
+            } else {
+              revertReason = gasErr.message;
+            }
           }
-          throw gasErr;
+          
+          addLog('error', 'Stage 1: Create Lab', `❌ Gas estimation failed: ${revertReason}`);
+          toast.error('Lab Creation Failed', {
+            description: revertReason,
+            duration: 6000,
+          });
+          
+          // Try to call the contract read-only to get more details
+          try {
+            addLog('info', 'Stage 1: Create Lab', '🔍 Checking contract state...');
+            const params = await testingFacet.getProtocolParams();
+            addLog('info', 'Stage 1: Create Lab', `   LABS Token set: ${params.labsToken !== '0x0000000000000000000000000000000000000000'}`);
+            addLog('info', 'Stage 1: Create Lab', `   Treasury set: ${params.protocolTreasury !== '0x0000000000000000000000000000000000000000'}`);
+            addLog('info', 'Stage 1: Create Lab', `   Defaults initialized: ${params.defaultsInitialized}`);
+            addLog('info', 'Stage 1: Create Lab', `   Cooldown: ${params.defaultCooldown}`);
+            addLog('info', 'Stage 1: Create Lab', `   Exit cap BPS: ${params.defaultExitCapBps}`);
+            addLog('info', 'Stage 1: Create Lab', `   Curve fee BPS: ${params.curveFeeBps}`);
+          } catch (e) {
+            addLog('info', 'Stage 1: Create Lab', '⚠️ Could not read protocol params');
+          }
+          
+          setLoading(null);
+          return;
         }
         
         // Call createLab - does everything in ONE transaction!
