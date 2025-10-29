@@ -920,11 +920,13 @@ export default function Prototype() {
         addLog('info', 'Stage 1: Create Lab', '📤 Sending transaction via wallet_sendCalls...');
         
         // Send via wallet_sendCalls (Base Account method)
+        const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16); // Base Sepolia = 84532 = 0x14a34
         const txHash = await walletProvider.request({
           method: 'wallet_sendCalls',
           params: [{
             version: '1.0',
             from: fromAddress,
+            chainId: chainIdHex,
             calls: [{
               to: CONTRACTS.H1Diamond,
               data: callData,
