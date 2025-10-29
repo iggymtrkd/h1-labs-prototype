@@ -496,7 +496,7 @@ export default function Prototype() {
               }
             ]
           }]
-        });
+        }) as string;
         
         console.log('📦 Got bundle ID:', bundleId);
         addLog('success', 'Stage 1: Stake $LABS', '✅ Batch transaction submitted!');
@@ -527,7 +527,7 @@ export default function Prototype() {
           const callsStatus = await walletProvider.request({
             method: 'wallet_getCallsStatus',
             params: [bundleId],
-          });
+          }) as any;
           
           console.log(`📊 Batch status (attempt ${statusAttempts + 1}/${maxStatusAttempts}):`, callsStatus);
           addLog('info', 'Stage 1: Stake $LABS', `⏳ Batch status: ${callsStatus?.status || 'unknown'}`);
@@ -1007,7 +1007,7 @@ export default function Prototype() {
             const callsStatus = await walletProvider.request({
               method: 'wallet_getCallsStatus',
               params: [bundleId],
-            });
+            }) as any;
             
             console.log(`📊 Calls status (attempt ${statusAttempts + 1}/${maxStatusAttempts}):`, callsStatus);
             addLog('info', 'Stage 1: Create Lab', `⏳ Polling... status: ${callsStatus?.status || 'unknown'}`);
@@ -2446,81 +2446,74 @@ export default function Prototype() {
             // Fallback to individual transactions
             addLog('warning', 'H1 Marketplace', '⚠️ Batch mode not supported, using sequential transactions...');
             
-            // Step 1: Approve
-            const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-            const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
-            addLog('info', 'H1 Marketplace', '⏳ Tx 1/2: Mining approval...');
-            const approveReceipt = await approveTx.wait();
-            
-            if (!approveReceipt) {
-              throw new Error('Approval transaction failed - no receipt');
-            }
-            addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
-            
-            // Verify allowance was actually set
             try {
-              const allowance = await labsToken.allowance(address, lab.curveAddress);
-              if (allowance < amountWei) {
-                throw new Error(`Allowance verification failed: ${ethers.formatEther(allowance)} LABS < ${ethers.formatEther(amountWei)} LABS required`);
+              // Step 1: Approve
+              const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
+              const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
+              addLog('info', 'H1 Marketplace', '⏳ Tx 1/2: Mining approval...');
+              const approveReceipt = await approveTx.wait();
+              
+              if (!approveReceipt) {
+                throw new Error('Approval transaction failed - no receipt');
               }
-              addLog('info', 'H1 Marketplace', `✓ Allowance verified: ${ethers.formatEther(allowance)} LABS`);
-            } catch (allowanceCheckError: any) {
-              addLog('warning', 'H1 Marketplace', `⚠️ Could not verify allowance: ${allowanceCheckError.message}`);
+              addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
+              
+              // Verify allowance was actually set
+              try {
+                const allowance = await labsToken.allowance(address, lab.curveAddress);
+                if (allowance < amountWei) {
+                  throw new Error(`Allowance verification failed: ${ethers.formatEther(allowance)} LABS < ${ethers.formatEther(amountWei)} LABS required`);
+                }
+                addLog('info', 'H1 Marketplace', `✓ Allowance verified: ${ethers.formatEther(allowance)} LABS`);
+              } catch (allowanceCheckError: any) {
+                addLog('warning', 'H1 Marketplace', `⚠️ Could not verify allowance: ${allowanceCheckError.message}`);
+              }
+              
+              // Step 2: Buy
+              const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
+              const buyTx = await curve.buy(amountWei, address, 0);
+              addLog('info', 'H1 Marketplace', '⏳ Tx 2/2: Mining buy...');
+              txHash = buyTx.hash;
+              const buyReceipt = await buyTx.wait();
+              
+              if (!buyReceipt) {
+                throw new Error('Buy transaction failed - no receipt');
+              }
+            } catch (fallbackError: any) {
+              addLog('error', 'H1 Marketplace', `❌ Transaction failed: ${fallbackError.message || fallbackError}`);
+              
+              // Provide specific guidance based on error
+              let userMessage = fallbackError.message || 'Failed to execute transaction';
+              if (userMessage.includes('transfer')) {
+                userMessage = 'Token transfer failed. Check your balance and approval.';
+              } else if (userMessage.includes('SlippageExceeded')) {
+                userMessage = 'Slippage exceeded. Try again with a smaller amount.';
+              } else if (userMessage.includes('PriceOutOfBounds')) {
+                userMessage = 'Price is out of bounds. Please try again.';
+              } else if (userMessage.includes('TransferFailed')) {
+                userMessage = 'Transfer failed. Ensure you have approved and have sufficient balance.';
+              } else if (userMessage.includes('paused')) {
+                userMessage = 'Bonding curve is paused. Please try again later.';
+              } else if (userMessage.includes('allowance')) {
+                userMessage = 'Insufficient allowance. Try approving again or using a smaller amount.';
+              }
+              
+              toast.error(userMessage);
+              return;
             }
-            
-            // Step 2: Buy
-            const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
-            const buyTx = await curve.buy(amountWei, address, 0);
-            addLog('info', 'H1 Marketplace', '⏳ Tx 2/2: Mining buy...');
-            txHash = buyTx.hash;
-            const buyReceipt = await buyTx.wait();
-            
-            if (!buyReceipt) {
-              throw new Error('Buy transaction failed - no receipt');
-            }
-          } catch (buyError: any) {
-            addLog('error', 'H1 Marketplace', `❌ Batch transaction failed: ${buyError.message || buyError}`);
-            
-            // Provide specific guidance based on error
-            let userMessage = buyError.message || 'Failed to execute transaction';
-            if (userMessage.includes('transfer')) {
-              userMessage = 'Token transfer failed. Check your balance and approval.';
-            } else if (userMessage.includes('SlippageExceeded')) {
-              userMessage = 'Slippage exceeded. Try again with a smaller amount.';
-            } else if (userMessage.includes('PriceOutOfBounds')) {
-              userMessage = 'Price is out of bounds. Please try again.';
-            } else if (userMessage.includes('TransferFailed')) {
-              userMessage = 'Transfer failed. Ensure you have approved and have sufficient balance.';
-            } else if (userMessage.includes('paused')) {
-              userMessage = 'Bonding curve is paused. Please try again later.';
-            } else if (userMessage.includes('allowance')) {
-              userMessage = 'Insufficient allowance. Try approving again or using a smaller amount.';
-            }
-            
-            toast.error(userMessage);
-            return;
           }
-        } catch (buyError: any) {
-          addLog('error', 'H1 Marketplace', `❌ Batch transaction failed: ${buyError.message || buyError}`);
+
+          // Success handling
+          addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`);
+          toast.success(`Successfully bought H1 ${lab.symbol}!`);
           
-          // Provide specific guidance based on error
-          let userMessage = buyError.message || 'Failed to execute transaction';
-          if (userMessage.includes('transfer')) {
-            userMessage = 'Token transfer failed. Check your balance and approval.';
-          } else if (userMessage.includes('SlippageExceeded')) {
-            userMessage = 'Slippage exceeded. Try again with a smaller amount.';
-          } else if (userMessage.includes('PriceOutOfBounds')) {
-            userMessage = 'Price is out of bounds. Please try again.';
-          } else if (userMessage.includes('TransferFailed')) {
-            userMessage = 'Transfer failed. Ensure you have approved and have sufficient balance.';
-          } else if (userMessage.includes('paused')) {
-            userMessage = 'Bonding curve is paused. Please try again later.';
-          } else if (userMessage.includes('allowance')) {
-            userMessage = 'Insufficient allowance. Try approving again or using a smaller amount.';
-          }
-          
-          toast.error(userMessage);
-          return;
+          // Refresh marketplace data
+          await loadMarketplaceLabs();
+          setTradeAmount('1');
+        } catch (error: any) {
+          console.error('Trade error:', error);
+          addLog('error', 'H1 Marketplace', `❌ ${error.message || 'Failed to trade H1 tokens'}`);
+          toast.error(error.message || 'Failed to trade H1 tokens');
         }
       } else {
         // Sell functionality (redeem from vault)
@@ -3653,7 +3646,7 @@ export default function Prototype() {
                                               <p className="text-red-600 text-xs font-semibold">💡 Get more LABS:</p>
                                               <div className="flex gap-1.5">
                                                 <Button 
-                                                  size="xs" 
+                                                  size="sm" 
                                                   variant="outline" 
                                                   className="text-xs h-7 flex-1"
                                                   onClick={() => {
@@ -3664,7 +3657,7 @@ export default function Prototype() {
                                                   💧 Get Free LABS
                                                 </Button>
                                                 <Button 
-                                                  size="xs" 
+                                                  size="sm" 
                                                   variant="outline" 
                                                   className="text-xs h-7 flex-1"
                                                   onClick={() => {
@@ -3827,7 +3820,7 @@ export default function Prototype() {
                                           <p className="text-red-600 text-xs font-semibold">💡 Get more LABS:</p>
                                           <div className="flex gap-1.5">
                                             <Button 
-                                              size="xs" 
+                                              size="sm" 
                                               variant="outline" 
                                               className="text-xs h-7 flex-1"
                                               onClick={() => {
@@ -3838,7 +3831,7 @@ export default function Prototype() {
                                               💧 Get Free LABS
                                             </Button>
                                             <Button 
-                                              size="xs" 
+                                              size="sm" 
                                               variant="outline" 
                                               className="text-xs h-7 flex-1"
                                               onClick={() => {
