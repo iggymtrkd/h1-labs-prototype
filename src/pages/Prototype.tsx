@@ -3570,14 +3570,91 @@ export default function Prototype() {
                                     className="text-sm" 
                                   />
 
+                                  {/* Balance Check & Helper Actions */}
+                                  {marketplaceAction === 'buy' && tradeAmount && selectedLabForTrade === lab.labId && (
+                                    <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md space-y-2">
+                                      {/* Balance Info */}
+                                      <div className="text-xs space-y-1">
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Your LABS Balance:</span>
+                                          <span className="font-semibold text-blue-600">
+                                            {userLabsBalance || '0'} LABS
+                                          </span>
+                                        </div>
+                                        <div className="flex justify-between">
+                                          <span className="text-muted-foreground">Amount Needed:</span>
+                                          <span className="font-semibold">{tradeAmount} LABS</span>
+                                        </div>
+                                        
+                                        {/* Shortfall Calculation */}
+                                        {userLabsBalance && Number(userLabsBalance) < Number(tradeAmount) ? (
+                                          <>
+                                            <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                                              <span className="text-red-600 font-semibold">❌ Shortfall:</span>
+                                              <span className="text-red-600 font-semibold">
+                                                {(Number(tradeAmount) - Number(userLabsBalance)).toFixed(2)} LABS
+                                              </span>
+                                            </div>
+                                            {/* Helper Actions */}
+                                            <div className="pt-2 space-y-1.5">
+                                              <p className="text-red-600 text-xs font-semibold">💡 Get more LABS:</p>
+                                              <div className="flex gap-1.5">
+                                                <Button 
+                                                  size="xs" 
+                                                  variant="outline" 
+                                                  className="text-xs h-7 flex-1"
+                                                  onClick={() => {
+                                                    addLog('info', 'Faucet', '💧 Opening faucet section...');
+                                                    document.getElementById('faucet-section')?.scrollIntoView({ behavior: 'smooth' });
+                                                  }}
+                                                >
+                                                  💧 Get Free LABS
+                                                </Button>
+                                                <Button 
+                                                  size="xs" 
+                                                  variant="outline" 
+                                                  className="text-xs h-7 flex-1"
+                                                  onClick={() => {
+                                                    toast.info('Check your favorite DEX (Uniswap, etc.) to swap for LABS');
+                                                  }}
+                                                >
+                                                  🔄 Swap on DEX
+                                                </Button>
+                                              </div>
+                                            </div>
+                                          </>
+                                        ) : userLabsBalance && Number(userLabsBalance) >= Number(tradeAmount) ? (
+                                          <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                                            <span className="text-green-600 font-semibold">✅ Sufficient Balance</span>
+                                            <span className="text-green-600 font-semibold">
+                                              {(Number(userLabsBalance) - Number(tradeAmount)).toFixed(2)} LABS remaining
+                                            </span>
+                                          </div>
+                                        ) : null}
+                                      </div>
+                                    </div>
+                                  )}
+
                                   <Button 
                                     size="sm" 
                                     className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} 
-                                    disabled={loading === 'marketplace' || !tradeAmount || selectedLabForTrade !== lab.labId}
+                                    disabled={
+                                      loading === 'marketplace' || 
+                                      !tradeAmount || 
+                                      selectedLabForTrade !== lab.labId ||
+                                      (marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount))
+                                    }
+                                    title={
+                                      marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount)
+                                        ? `Insufficient LABS. Need ${(Number(tradeAmount) - Number(userLabsBalance)).toFixed(2)} more LABS`
+                                        : ''
+                                    }
                                     onClick={() => handleTradeH1(lab.labId, marketplaceAction)}
                                   >
                                     {loading === 'marketplace' && selectedLabForTrade === lab.labId ? (
                                       <Loader2 className="h-4 w-4 animate-spin" />
+                                    ) : marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount) ? (
+                                      `❌ Need ${(Number(tradeAmount) - Number(userLabsBalance)).toFixed(2)} more LABS`
                                     ) : (
                                       marketplaceAction === 'buy' ? '🟢 Buy H1 with LABS' : '🔴 Redeem H1'
                                     )}
@@ -3667,17 +3744,94 @@ export default function Prototype() {
                                 className="text-sm" 
                               />
 
+                              {/* Balance Check & Helper Actions */}
+                              {marketplaceAction === 'buy' && tradeAmount && selectedLabForTrade === lab.labId && (
+                                <div className="bg-slate-50 dark:bg-slate-900 p-3 rounded-md space-y-2">
+                                  {/* Balance Info */}
+                                  <div className="text-xs space-y-1">
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Your LABS Balance:</span>
+                                      <span className="font-semibold text-blue-600">
+                                        {userLabsBalance || '0'} LABS
+                                      </span>
+                                    </div>
+                                    <div className="flex justify-between">
+                                      <span className="text-muted-foreground">Amount Needed:</span>
+                                      <span className="font-semibold">{tradeAmount} LABS</span>
+                                    </div>
+                                    
+                                    {/* Shortfall Calculation */}
+                                    {userLabsBalance && Number(userLabsBalance) < Number(tradeAmount) ? (
+                                      <>
+                                        <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                                          <span className="text-red-600 font-semibold">❌ Shortfall:</span>
+                                          <span className="text-red-600 font-semibold">
+                                            {(Number(tradeAmount) - Number(userLabsBalance)).toFixed(2)} LABS
+                                          </span>
+                                        </div>
+                                        {/* Helper Actions */}
+                                        <div className="pt-2 space-y-1.5">
+                                          <p className="text-red-600 text-xs font-semibold">💡 Get more LABS:</p>
+                                          <div className="flex gap-1.5">
+                                            <Button 
+                                              size="xs" 
+                                              variant="outline" 
+                                              className="text-xs h-7 flex-1"
+                                              onClick={() => {
+                                                addLog('info', 'Faucet', '💧 Opening faucet section...');
+                                                document.getElementById('faucet-section')?.scrollIntoView({ behavior: 'smooth' });
+                                              }}
+                                            >
+                                              💧 Get Free LABS
+                                            </Button>
+                                            <Button 
+                                              size="xs" 
+                                              variant="outline" 
+                                              className="text-xs h-7 flex-1"
+                                              onClick={() => {
+                                                toast.info('Check your favorite DEX (Uniswap, etc.) to swap for LABS');
+                                              }}
+                                            >
+                                              🔄 Swap on DEX
+                                            </Button>
+                                          </div>
+                                        </div>
+                                      </>
+                                    ) : userLabsBalance && Number(userLabsBalance) >= Number(tradeAmount) ? (
+                                      <div className="flex justify-between pt-2 border-t border-slate-200 dark:border-slate-700">
+                                        <span className="text-green-600 font-semibold">✅ Sufficient Balance</span>
+                                        <span className="text-green-600 font-semibold">
+                                          {(Number(userLabsBalance) - Number(tradeAmount)).toFixed(2)} LABS remaining
+                                        </span>
+                                      </div>
+                                    ) : null}
+                                  </div>
+                                </div>
+                              )}
+
                               <Button 
                                 size="sm" 
                                 className={`w-full text-sm ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} 
-                                disabled={loading === 'marketplace' || !tradeAmount || selectedLabForTrade !== lab.labId}
+                                disabled={
+                                  loading === 'marketplace' || 
+                                  !tradeAmount || 
+                                  selectedLabForTrade !== lab.labId ||
+                                  (marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount))
+                                }
+                                title={
+                                  marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount)
+                                    ? `Insufficient LABS. Need ${(Number(tradeAmount) - Number(userLabsBalance)).toFixed(2)} more LABS`
+                                    : ''
+                                }
                                 onClick={() => handleTradeH1(lab.labId, marketplaceAction)}
                               >
                                 {loading === 'marketplace' && selectedLabForTrade === lab.labId ? (
                                   <Loader2 className="h-4 w-4 animate-spin" />
+                                ) : marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount) ? (
+                                  `❌ Need ${(Number(tradeAmount) - Number(userLabsBalance)).toFixed(2)} more LABS`
                                 ) : (
                                   marketplaceAction === 'buy' ? '🟢 Buy H1 with LABS' : '🔴 Redeem H1'
-                                 )}
+                                )}
                               </Button>
                             </div>
                           ) : (
