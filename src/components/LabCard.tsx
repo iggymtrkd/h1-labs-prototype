@@ -204,8 +204,8 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
         }
 
       } else {
-        // Sell: approve + sell in single transaction (mirrors buy flow)
-        toast.info('Preparing to sell H1 tokens (1 confirmation)...');
+        // Sell: approve + sell in single transaction (mirrors buy flow exactly)
+        toast.info('Preparing to sell H1 tokens (2 confirmations)...');
         
         // Get vault address (needed for batch transaction)
         const provider = new ethers.BrowserProvider(walletProvider as any);
@@ -222,60 +222,35 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
           throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(h1Balance)} but need ${tradeAmount}`);
         }
         
-        // Check current allowance before approving
-        const currentAllowance = await vault.allowance(address, lab.bondingCurveAddress!);
+        // Encode approval call
+        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
+        const approvalData = vaultInterface.encodeFunctionData('approve', [lab.bondingCurveAddress!, amountWei]);
         
         // Encode sell call
         const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
         const sellData = curveInterface.encodeFunctionData('sell', [amountWei, address, 0]);
-        
-        let bundleId: string;
-        
-        if (currentAllowance >= amountWei) {
-          // Sufficient allowance - skip approval
-          toast.info('Selling H1 tokens (1 confirmation)...');
-          
-          bundleId = await walletProvider.request({
-            method: 'wallet_sendCalls',
-            params: [{
-              version: '1.0',
-              from: address,
-              chainId: chainIdHex,
-              calls: [{
+
+        // Send batched transaction
+        const bundleId = await walletProvider.request({
+          method: 'wallet_sendCalls',
+          params: [{
+            version: '1.0',
+            from: address,
+            chainId: chainIdHex,
+            calls: [
+              {
+                to: vaultAddress,
+                data: approvalData,
+                value: '0x0'
+              },
+              {
                 to: lab.bondingCurveAddress,
                 data: sellData,
                 value: '0x0'
-              }]
-            }]
-          }) as string;
-        } else {
-          // Need approval - use infinite approval
-          toast.info('Approving H1 tokens for trading (1 confirmation)...');
-          
-          const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
-          const approvalData = vaultInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, ethers.MaxUint256]);
-          
-          bundleId = await walletProvider.request({
-            method: 'wallet_sendCalls',
-            params: [{
-              version: '1.0',
-              from: address,
-              chainId: chainIdHex,
-              calls: [
-                {
-                  to: vaultAddress,
-                  data: approvalData,
-                  value: '0x0'
-                },
-                {
-                  to: lab.bondingCurveAddress,
-                  data: sellData,
-                  value: '0x0'
-                }
-              ]
-            }]
-          }) as string;
-        }
+              }
+            ]
+          }]
+        }) as string;
 
         // Poll for confirmation
         let confirmed = false;
