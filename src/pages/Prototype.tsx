@@ -753,6 +753,10 @@ export default function Prototype() {
       // ONE-STEP LAB CREATION: Everything happens in one transaction!
       addLog('info', 'Stage 1: Create Lab', '🚀 Creating lab with vault, bonding curve, and H1 distribution...');
       
+      // Get the actual transaction sender address FIRST
+      const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
+      const txSenderAddress = accounts[0];
+      
       let labId: number | string = "unknown";
       let vaultAddress = '';
       let bondingCurveAddress = '';
@@ -764,14 +768,21 @@ export default function Prototype() {
         // ✅ Pre-flight checks: Verify all prerequisites
         addLog('info', 'Stage 1: Create Lab', '🔍 Running pre-flight checks...');
         
-        // Check 1: Verify staked balance on-chain
+        // Check 1: Verify staked balance on-chain FOR THE TRANSACTION SENDER
         try {
           const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
-          const stakedBalance = await testingFacet.getStakedBalance(address);
+          const stakedBalance = await testingFacet.getStakedBalance(txSenderAddress);
           const stakedAmount = parseFloat(ethers.formatEther(stakedBalance));
-          addLog('info', 'Pre-flight', `✓ Staked balance: ${stakedAmount.toLocaleString()} LABS (need 100,000)`);
+          addLog('info', 'Pre-flight', `✓ Staked balance for TX sender (${txSenderAddress.slice(0,10)}...): ${stakedAmount.toLocaleString()} LABS (need 100,000)`);
           
           if (stakedBalance < ethers.parseEther('100000')) {
+            addLog('error', 'Pre-flight', `❌ INSUFFICIENT STAKE FOR TRANSACTION SENDER`);
+            addLog('error', 'Pre-flight', `   UI shows: ${address.slice(0,10)}...`);
+            addLog('error', 'Pre-flight', `   But transactions come from: ${txSenderAddress.slice(0,10)}...`);
+            addLog('error', 'Pre-flight', `   The TX sender only has ${stakedAmount.toFixed(2)} LABS staked`);
+            addLog('error', 'Pre-flight', `   💡 SOLUTION: Go to Step 1 and stake 100,000 LABS again`);
+            addLog('error', 'Pre-flight', `   This will stake from ${txSenderAddress.slice(0,10)}... (the actual TX sender)`);
+            toast.error(`Transaction sender needs 100k LABS staked. Please stake again from Step 1.`, { duration: 10000 });
             throw new Error(`Insufficient stake: ${stakedAmount.toFixed(2)} LABS staked, need 100,000 LABS`);
           }
         } catch (e: any) {
@@ -843,6 +854,7 @@ export default function Prototype() {
         
         // CRITICAL: Test the actual call with staticCall to get the real error
         addLog('info', 'Stage 1: Create Lab', '🧪 Testing contract call with staticCall...');
+        
         try {
           const result = await diamond.createLab.staticCall(labName, labSymbol, labDomain);
           addLog('success', 'Stage 1: Create Lab', `✅ Contract call test passed! Would return: labId=${result[0]}, vault=${result[1]}, curve=${result[2]}`);
