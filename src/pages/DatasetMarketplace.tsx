@@ -5,6 +5,8 @@ import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import { Dialog, DialogContent, DialogHeader, DialogTitle } from "@/components/ui/dialog";
+import { Separator } from "@/components/ui/separator";
 import { DatasetCard, Dataset } from "@/components/DatasetCard";
 import {
   Search,
@@ -159,6 +161,7 @@ export default function DatasetMarketplace() {
   );
   const [sortBy, setSortBy] = useState("popular");
   const [qualityFilter, setQualityFilter] = useState("all");
+  const [selectedDatasetForModal, setSelectedDatasetForModal] = useState<Dataset | null>(null);
 
   const domains = ["Healthcare", "Finance", "Legal", "Robotics", "Art"];
 
@@ -222,7 +225,10 @@ export default function DatasetMarketplace() {
   };
 
   const handleViewDetails = (id: string) => {
-    navigate(`/dataset/${id}`);
+    const dataset = MOCK_DATASETS.find((d) => d.id === id);
+    if (dataset) {
+      setSelectedDatasetForModal(dataset);
+    }
   };
 
   const handleCheckout = () => {
@@ -234,14 +240,13 @@ export default function DatasetMarketplace() {
   };
 
   return (
-    <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+    <div className="min-h-screen bg-background">
       {/* Back Button - Top Right (Fixed Position) */}
       {fromChat && (
         <div className="fixed top-4 right-4 z-50">
           <Button
             variant="outline"
             onClick={() => navigate(fromChat)}
-            className="text-white border-white/20 hover:bg-white/10 bg-slate-900/80 backdrop-blur"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
             Back to Chat
@@ -250,14 +255,14 @@ export default function DatasetMarketplace() {
       )}
       
       {/* Header */}
-      <div className="sticky top-0 z-40 border-b border-slate-700 bg-slate-900/80 backdrop-blur">
+      <div className="sticky top-0 z-40 border-b bg-background/80 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-4">
           <div className="flex items-center justify-between mb-4">
             <div>
-              <h1 className="text-3xl font-bold text-white">
+              <h1 className="text-3xl font-bold">
                 Dataset Marketplace
               </h1>
-              <p className="text-slate-400 text-sm">
+              <p className="text-muted-foreground text-sm">
                 {sortedDatasets.length} datasets available
               </p>
             </div>
@@ -267,12 +272,12 @@ export default function DatasetMarketplace() {
               size="lg"
               onClick={handleCheckout}
               disabled={selectedDatasets.size === 0}
-              className={selectedDatasets.size > 0 ? "bg-blue-600" : ""}
+              className={selectedDatasets.size > 0 ? "bg-primary" : ""}
             >
               <ShoppingCart className="mr-2 h-5 w-5" />
               Cart ({selectedDatasets.size})
               {selectedDatasets.size > 0 && (
-                <Badge className="absolute -top-2 -right-2 bg-red-500">
+                <Badge className="absolute -top-2 -right-2 bg-destructive">
                   ${cartTotal.toLocaleString()}
                 </Badge>
               )}
@@ -281,12 +286,12 @@ export default function DatasetMarketplace() {
 
           {/* Search Bar */}
           <div className="relative">
-            <Search className="absolute left-3 top-3 h-5 w-5 text-slate-400" />
+            <Search className="absolute left-3 top-3 h-5 w-5 text-muted-foreground" />
             <Input
               placeholder="Search datasets, domains, creators..."
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 bg-slate-800 border-slate-700"
+              className="pl-10"
             />
           </div>
         </div>
@@ -296,11 +301,11 @@ export default function DatasetMarketplace() {
         <div className="grid grid-cols-1 lg:grid-cols-4 gap-8">
           {/* Sidebar Filters */}
           <div className="lg:col-span-1">
-            <Card className="bg-slate-800 border-slate-700 sticky top-24">
+            <Card className="sticky top-24">
               <div className="p-6 space-y-6">
                 {/* Domain Filter */}
                 <div>
-                  <h3 className="font-semibold text-white mb-3 flex items-center">
+                  <h3 className="font-semibold mb-3 flex items-center">
                     <Filter className="mr-2 h-4 w-4" />
                     Domain
                   </h3>
@@ -315,8 +320,8 @@ export default function DatasetMarketplace() {
                         }
                         className={`w-full text-left px-3 py-2 rounded transition ${
                           selectedDomain === domain
-                            ? "bg-blue-600 text-white"
-                            : "bg-slate-700 text-slate-300 hover:bg-slate-600"
+                            ? "bg-primary text-primary-foreground"
+                            : "bg-secondary text-secondary-foreground hover:bg-secondary/80"
                         }`}
                       >
                         {domain}
@@ -327,7 +332,7 @@ export default function DatasetMarketplace() {
 
                 {/* Quality Filter */}
                 <div>
-                  <h3 className="font-semibold text-white mb-3">Quality Score</h3>
+                  <h3 className="font-semibold mb-3">Quality Score</h3>
                   <div className="space-y-2">
                     {[
                       { value: "all", label: "All Qualities" },
@@ -336,7 +341,7 @@ export default function DatasetMarketplace() {
                     ].map((option) => (
                       <label
                         key={option.value}
-                        className="flex items-center text-slate-300 cursor-pointer"
+                        className="flex items-center cursor-pointer"
                       >
                         <input
                           type="radio"
@@ -372,15 +377,15 @@ export default function DatasetMarketplace() {
           <div className="lg:col-span-3">
             {/* Sort Options */}
             <div className="flex items-center justify-between mb-6">
-              <h2 className="text-lg font-semibold text-white">
+              <h2 className="text-lg font-semibold">
                 Datasets ({sortedDatasets.length})
               </h2>
               <div className="flex items-center gap-2">
-                <span className="text-sm text-slate-400">Sort by:</span>
+                <span className="text-sm text-muted-foreground">Sort by:</span>
                 <select
                   value={sortBy}
                   onChange={(e) => setSortBy(e.target.value)}
-                  className="bg-slate-800 border border-slate-700 text-white rounded px-3 py-2 text-sm"
+                  className="bg-background border rounded px-3 py-2 text-sm"
                 >
                   <option value="popular">Most Popular</option>
                   <option value="quality">Highest Quality</option>
@@ -408,11 +413,11 @@ export default function DatasetMarketplace() {
             {/* Empty State */}
             {sortedDatasets.length === 0 && (
               <div className="text-center py-12">
-                <Search className="h-12 w-12 text-slate-600 mx-auto mb-4" />
-                <h3 className="text-lg font-semibold text-slate-300 mb-2">
+                <Search className="h-12 w-12 text-muted-foreground mx-auto mb-4" />
+                <h3 className="text-lg font-semibold mb-2">
                   No datasets found
                 </h3>
-                <p className="text-slate-400">
+                <p className="text-muted-foreground">
                   Try adjusting your filters or search query
                 </p>
               </div>
@@ -422,7 +427,7 @@ export default function DatasetMarketplace() {
 
         {/* Sticky Cart Footer (Mobile) */}
         {selectedDatasets.size > 0 && (
-          <div className="fixed bottom-0 left-0 right-0 bg-gradient-to-t from-slate-900 to-slate-900/80 border-t border-slate-700 p-4 backdrop-blur lg:hidden">
+          <div className="fixed bottom-0 left-0 right-0 bg-background/80 border-t p-4 backdrop-blur lg:hidden">
             <Button
               size="lg"
               className="w-full"
@@ -435,6 +440,212 @@ export default function DatasetMarketplace() {
           </div>
         )}
       </div>
+
+      {/* Dataset Metadata Modal */}
+      <Dialog open={!!selectedDatasetForModal} onOpenChange={(open) => !open && setSelectedDatasetForModal(null)}>
+        <DialogContent className="max-w-3xl max-h-[80vh] overflow-y-auto">
+          <DialogHeader>
+            <DialogTitle>Dataset Metadata Report</DialogTitle>
+          </DialogHeader>
+          {selectedDatasetForModal && (
+            <Tabs defaultValue="dataset" className="w-full">
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="dataset">Dataset Summary</TabsTrigger>
+                <TabsTrigger value="details">Full Details</TabsTrigger>
+              </TabsList>
+              
+              {/* Dataset Summary Tab */}
+              <TabsContent value="dataset" className="space-y-4 mt-4">
+                <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
+                  <h3 className="font-bold text-lg mb-4">Dataset Overview</h3>
+                  <div className="space-y-3 text-sm">
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-muted-foreground font-semibold">Dataset ID:</span>
+                        <p className="font-mono text-primary">{selectedDatasetForModal.id}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground font-semibold">Created:</span>
+                        <p className="font-mono text-xs">{selectedDatasetForModal.createdAt}</p>
+                      </div>
+                    </div>
+                    
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Name:</span>
+                      <p className="font-semibold">{selectedDatasetForModal.name}</p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Description:</span>
+                      <p className="text-xs">{selectedDatasetForModal.description}</p>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Creator:</span>
+                      <p className="font-mono text-xs">{selectedDatasetForModal.creator}</p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Domain:</span>
+                      <p className="font-mono">{selectedDatasetForModal.domain}</p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Lab ID:</span>
+                      <p className="font-mono">#{selectedDatasetForModal.labId}</p>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Supervised by:</span>
+                      <p className="font-mono text-xs">{selectedDatasetForModal.supervisor}</p>
+                      <p className="text-xs text-muted-foreground">Credential ID: #{selectedDatasetForModal.supervisorCredentialId}</p>
+                    </div>
+
+                    <Separator />
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-muted-foreground font-semibold">Quality Score:</span>
+                        <p className="font-bold text-primary text-xl">{selectedDatasetForModal.qualityScore}%</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground font-semibold">Delta Gain:</span>
+                        <p className="font-bold text-secondary text-xl">{selectedDatasetForModal.deltaGain}%</p>
+                      </div>
+                    </div>
+
+                    <div className="grid grid-cols-2 gap-4">
+                      <div>
+                        <span className="text-muted-foreground font-semibold">Data Points:</span>
+                        <p className="font-mono">{selectedDatasetForModal.dataCount.toLocaleString()}</p>
+                      </div>
+                      <div>
+                        <span className="text-muted-foreground font-semibold">Reviewers:</span>
+                        <p className="font-mono">{selectedDatasetForModal.reviewerCount}</p>
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Compliance Standards:</span>
+                      <div className="flex gap-2 mt-1">
+                        {selectedDatasetForModal.complianceStandards.map((standard) => (
+                          <Badge key={standard} variant="secondary">{standard}</Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Tags:</span>
+                      <div className="flex gap-2 mt-1">
+                        {selectedDatasetForModal.tags.map((tag) => (
+                          <Badge key={tag} variant="outline">{tag}</Badge>
+                        ))}
+                      </div>
+                    </div>
+
+                    <Separator />
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Price:</span>
+                      <p className="font-bold text-2xl">${selectedDatasetForModal.price.toLocaleString()}</p>
+                    </div>
+
+                    <div>
+                      <span className="text-muted-foreground font-semibold">Available Licenses:</span>
+                      <p className="font-mono">{selectedDatasetForModal.availability.toLocaleString()}</p>
+                    </div>
+                  </div>
+                </div>
+              </TabsContent>
+
+              {/* Full Details Tab */}
+              <TabsContent value="details" className="space-y-4 mt-4">
+                <div className="space-y-4">
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Dataset Information</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Dataset ID:</span>
+                        <span className="font-mono">{selectedDatasetForModal.id}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Lab ID:</span>
+                        <span className="font-mono">#{selectedDatasetForModal.labId}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Created:</span>
+                        <span className="font-mono">{selectedDatasetForModal.createdAt}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Approved:</span>
+                        <Badge variant={selectedDatasetForModal.approved ? "default" : "destructive"}>
+                          {selectedDatasetForModal.approved ? "✓ Approved" : "Pending"}
+                        </Badge>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Creator Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Creator:</span>
+                        <span className="font-mono text-xs">{selectedDatasetForModal.creator}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Credential ID:</span>
+                        <span className="font-mono">#{selectedDatasetForModal.credentialId}</span>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Supervisor Details</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Supervisor:</span>
+                        <span className="font-mono text-xs">{selectedDatasetForModal.supervisor}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Credential ID:</span>
+                        <span className="font-mono">#{selectedDatasetForModal.supervisorCredentialId}</span>
+                      </div>
+                    </div>
+                  </Card>
+
+                  <Card className="p-4">
+                    <h4 className="font-semibold mb-3">Quality Metrics</h4>
+                    <div className="space-y-2 text-sm">
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Quality Score:</span>
+                        <span className="font-bold">{selectedDatasetForModal.qualityScore}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Delta Gain:</span>
+                        <span className="font-bold">{selectedDatasetForModal.deltaGain}%</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Reviewers:</span>
+                        <span className="font-mono">{selectedDatasetForModal.reviewerCount}</span>
+                      </div>
+                      <div className="flex justify-between">
+                        <span className="text-muted-foreground">Data Points:</span>
+                        <span className="font-mono">{selectedDatasetForModal.dataCount.toLocaleString()}</span>
+                      </div>
+                    </div>
+                  </Card>
+                </div>
+              </TabsContent>
+            </Tabs>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }
