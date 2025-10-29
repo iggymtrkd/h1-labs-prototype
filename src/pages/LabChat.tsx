@@ -636,6 +636,17 @@ export default function LabChat() {
               </div>
             )}
 
+            {parseFloat(userH1Balance) > 0 && (
+              <div className="mb-4 p-2 bg-primary/10 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">You own:</span>
+                  <span className="text-sm font-bold text-primary">
+                    {parseFloat(userH1Balance).toFixed(4)} {labInfo.symbol} H1
+                  </span>
+                </div>
+              </div>
+            )}
+
             <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
               <p className="font-semibold text-foreground mb-2">Chat Info</p>
               <p>💬 Server-side messaging</p>
