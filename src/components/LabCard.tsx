@@ -102,43 +102,133 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
 
     try {
       const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner(address);
       const amountWei = ethers.parseEther(tradeAmount);
+      const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
+
+      if (!walletProvider) {
+        throw new Error('Wallet provider not available');
+      }
 
       if (tradeAction === 'buy') {
-        // Approve LABS tokens
-        const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-        const approveTx = await labsToken.approve(lab.bondingCurveAddress, amountWei);
-        await approveTx.wait();
+        // Batch: approve + buy in single transaction
+        toast.info('Preparing to buy H1 tokens (1 confirmation)...');
+        
+        // Encode approval call
+        const labsTokenInterface = new ethers.Interface(LABSToken_ABI);
+        const approvalData = labsTokenInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, amountWei]);
+        
+        // Encode buy call
+        const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
+        const buyData = curveInterface.encodeFunctionData('buy', [amountWei, address, 0]);
 
-        // Buy H1 tokens
-        const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, signer);
-        const minSharesOut = 0;
-        const buyTx = await curve.buy(amountWei, address, minSharesOut);
-        await buyTx.wait();
+        // Send batched transaction
+        const bundleId = await walletProvider.request({
+          method: 'wallet_sendCalls',
+          params: [{
+            version: '1.0',
+            from: address,
+            chainId: chainIdHex,
+            calls: [
+              {
+                to: CONTRACTS.LABSToken,
+                data: approvalData,
+                value: '0x0'
+              },
+              {
+                to: lab.bondingCurveAddress,
+                data: buyData,
+                value: '0x0'
+              }
+            ]
+          }]
+        }) as string;
 
+        // Poll for confirmation
+        let confirmed = false;
+        for (let i = 0; i < 120 && !confirmed; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          try {
+            const callsStatus = await walletProvider.request({
+              method: 'wallet_getCallsStatus',
+              params: [bundleId],
+            }) as any;
+            
+            if (callsStatus?.status === 'CONFIRMED') {
+              confirmed = true;
+              break;
+            } else if (callsStatus?.status === 'FAILED') {
+              throw new Error('Transaction failed');
+            }
+          } catch {}
+        }
+
+        if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully bought ${lab.symbol} H1 tokens!`);
+
       } else {
-        // Get vault address from bonding curve
-        const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, signer);
+        // Batch: get vault + approve + sell in single transaction
+        toast.info('Preparing to sell H1 tokens (1 confirmation)...');
+        
+        // Get vault address
+        const provider = new ethers.BrowserProvider(walletProvider as any);
+        const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, provider);
         const vaultAddress = await curve.vault();
 
-        // Approve vault shares (H1 tokens)
-        const vault = new ethers.Contract(vaultAddress, ['function approve(address,uint256) returns (bool)'], signer);
-        const approveTx = await vault.approve(lab.bondingCurveAddress, amountWei);
-        await approveTx.wait();
+        // Encode approval call (vault shares)
+        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
+        const approvalData = vaultInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, amountWei]);
+        
+        // Encode sell call
+        const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
+        const sellData = curveInterface.encodeFunctionData('sell', [amountWei, address, 0]);
 
-        // Sell H1 tokens
-        const minLabsOut = 0;
-        const sellTx = await curve.sell(amountWei, address, minLabsOut);
-        await sellTx.wait();
+        // Send batched transaction
+        const bundleId = await walletProvider.request({
+          method: 'wallet_sendCalls',
+          params: [{
+            version: '1.0',
+            from: address,
+            chainId: chainIdHex,
+            calls: [
+              {
+                to: vaultAddress,
+                data: approvalData,
+                value: '0x0'
+              },
+              {
+                to: lab.bondingCurveAddress,
+                data: sellData,
+                value: '0x0'
+              }
+            ]
+          }]
+        }) as string;
 
+        // Poll for confirmation
+        let confirmed = false;
+        for (let i = 0; i < 120 && !confirmed; i++) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          try {
+            const callsStatus = await walletProvider.request({
+              method: 'wallet_getCallsStatus',
+              params: [bundleId],
+            }) as any;
+            
+            if (callsStatus?.status === 'CONFIRMED') {
+              confirmed = true;
+              break;
+            } else if (callsStatus?.status === 'FAILED') {
+              throw new Error('Transaction failed');
+            }
+          } catch {}
+        }
+
+        if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully sold ${lab.symbol} H1 tokens!`);
       }
     } catch (error: any) {
       console.error('Trade error:', error);
-      toast.error('Failed to trade H1 tokens');
+      toast.error(error?.message || 'Failed to trade H1 tokens');
     } finally {
       setLoading(false);
     }
