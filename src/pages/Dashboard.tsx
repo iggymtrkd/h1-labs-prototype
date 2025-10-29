@@ -120,7 +120,11 @@ export default function Dashboard() {
     fetchLabDetails();
   }, [labEvents]);
 
-  const categories = ["all", ...Array.from(new Set(labs.map(lab => lab.category)))];
+  // Placeholder categories
+  const placeholderCategories = ["healthcare", "robotics", "law", "biotech", "finance"];
+  const labCategories = Array.from(new Set(labs.map(lab => lab.category)));
+  const allCategories = [...placeholderCategories, ...labCategories.filter(cat => !placeholderCategories.includes(cat))];
+  const categories = ["all", ...allCategories];
 
   const filteredLabs = labs.filter((lab) => {
     const matchesSearch = lab.name.toLowerCase().includes(searchQuery.toLowerCase()) ||
