@@ -751,12 +751,26 @@ export default function Prototype() {
           addLog('info', 'Pre-flight', `✓ LABS Token: ${params.labsToken.slice(0, 10)}...`);
           addLog('info', 'Pre-flight', `✓ Treasury: ${params.protocolTreasury.slice(0, 10)}...`);
           addLog('info', 'Pre-flight', `✓ Defaults initialized: ${params.defaultsInitialized ? 'YES' : 'NO'}`);
+          addLog('info', 'Pre-flight', `✓ Default cooldown: ${params.defaultCooldown}`);
+          addLog('info', 'Pre-flight', `✓ Default exit cap BPS: ${params.defaultExitCapBps}`);
+          addLog('info', 'Pre-flight', `✓ Curve fee BPS: ${params.curveFeeBps}`);
+          addLog('info', 'Pre-flight', `✓ Curve POL BPS: ${params.curvePolBps}`);
           
+          // CRITICAL CHECKS - contract will revert if these fail
           if (!params.defaultsInitialized) {
-            throw new Error('Protocol defaults not initialized');
+            throw new Error('Protocol defaults not initialized - admin must call initializeDefaults()');
           }
           if (params.labsToken === '0x0000000000000000000000000000000000000000') {
-            throw new Error('LABS token not set in Diamond storage');
+            throw new Error('LABS token not set - admin must call setLABSToken()');
+          }
+          if (params.protocolTreasury === '0x0000000000000000000000000000000000000000') {
+            throw new Error('Protocol treasury not set - admin must call setProtocolTreasury()');
+          }
+          if (params.defaultCooldown === 0) {
+            throw new Error('Default cooldown not set');
+          }
+          if (params.curveFeeBps === 0 || params.curvePolBps === 0) {
+            throw new Error('Curve fees not set');
           }
         } catch (e: any) {
           console.error('Failed to check protocol params:', e);
