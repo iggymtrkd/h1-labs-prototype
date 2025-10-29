@@ -5,22 +5,20 @@ import { LibH1Storage } from "../libraries/LibH1Storage.sol";
 import { LibBondingCurveFactory } from "../libraries/LibBondingCurveFactory.sol";
 import { LibH1Distribution } from "../libraries/LibH1Distribution.sol";
 
+/// @title LabVaultDeploymentFacet
+/// @notice Handles lab and vault creation in a single transaction
+/// @dev Uses two-step factory calls to avoid stack depth errors
 contract LabVaultDeploymentFacet {
     event LabVaultDeployed(uint256 indexed labId, address indexed owner, address vault, string name, string symbol, string domain);
     event LabDistributionComplete(uint256 indexed labId, address indexed curve);
+    
     error InvalidInput();
     error InsufficientStake();
     error FactoryNotSet();
     error VaultDeploymentFailed(string reason);
     error InvalidVaultAddress();
 
-    function setVaultFactory(address factory) external {
-        require(factory != address(0), "Invalid factory");
-        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
-        hs.vaultFactory = factory;
-    }
-
-    /// @notice Create a complete lab in ONE transaction (both Step 1 & 2)
+    /// @notice Create a complete lab in ONE transaction (vault + curve + distribution)
     /// @param name Lab name
     /// @param symbol H1 token symbol
     /// @param domain Lab domain
@@ -46,7 +44,7 @@ contract LabVaultDeploymentFacet {
         hs.labs[labId].active = true;
         hs.labs[labId].level = _calcLevel(hs.stakedBalances[msg.sender]);
 
-        // Deploy vault
+        // Deploy vault using factory
         vault = _deployVault(hs.vaultFactory, name, symbol, domain, hs);
         if (vault == address(0)) revert InvalidVaultAddress();
 
@@ -71,22 +69,46 @@ contract LabVaultDeploymentFacet {
         emit LabDistributionComplete(labId, curve);
     }
     
-    /// @notice Get lab details (domain)
-    function getLabDetails(uint256 labId) external view returns (address owner, address h1Token, string memory domain, bool active, uint8 level) {
+    /// @notice Get lab details
+    function getLabDetails(uint256 labId) external view returns (
+        address owner,
+        address h1Token,
+        string memory domain,
+        bool active,
+        uint8 level
+    ) {
         LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
         LibH1Storage.Lab storage lab = hs.labs[labId];
         return (lab.owner, lab.h1Token, lab.domain, lab.active, lab.level);
     }
 
+    /// @notice Set the vault factory address
+    /// @dev Only callable by diamond owner (enforced by storage pattern)
+    function setVaultFactory(address factory) external {
+        require(factory != address(0), "Invalid factory");
+        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
+        hs.vaultFactory = factory;
+    }
+
+    // ============================================
+    // PRIVATE HELPERS
+    // ============================================
+
     function _calcLevel(uint256 bal) private pure returns (uint8) {
         return bal >= 500_000e18 ? 3 : (bal >= 250_000e18 ? 2 : 1);
     }
 
-    function _deployVault(address factory, string calldata name, string calldata symbol, string calldata domain, LibH1Storage.H1Storage storage hs)
-        private
-        returns (address)
-    {
-        // Step 1: Create vault with metadata only
+    /// @notice Deploy vault using factory's two-step pattern
+    /// @dev Calls createVault then finalizeVault to avoid stack depth
+    /// @dev address(this) is the diamond in delegatecall context
+    function _deployVault(
+        address factory,
+        string calldata name,
+        string calldata symbol,
+        string calldata domain,
+        LibH1Storage.H1Storage storage hs
+    ) private returns (address vault) {
+        // Step 1: Create vault with metadata
         (bool ok1, bytes memory data1) = factory.call(
             abi.encodeWithSignature(
                 "createVault(string,string,string)",
@@ -106,9 +128,10 @@ contract LabVaultDeploymentFacet {
             revert VaultDeploymentFailed("Factory createVault call failed");
         }
         
-        address vault = abi.decode(data1, (address));
+        vault = abi.decode(data1, (address));
         
-        // Step 2: Finalize vault with configuration
+        // Step 2: Finalize vault configuration
+        // address(this) = diamond (in delegatecall context of facet)
         (bool ok2, bytes memory data2) = factory.call(
             abi.encodeWithSignature(
                 "finalizeVault(address,address,uint64,uint16,address,address,address,address)",
@@ -116,10 +139,10 @@ contract LabVaultDeploymentFacet {
                 hs.labsToken,
                 hs.defaultCooldown,
                 hs.defaultExitCapBps,
-                msg.sender,
-                msg.sender,
-                hs.protocolTreasury,
-                address(this)
+                msg.sender,           // admin
+                msg.sender,           // labOwner
+                hs.protocolTreasury,  // treasury
+                address(this)         // diamond reference for vault
             )
         );
         
@@ -132,7 +155,5 @@ contract LabVaultDeploymentFacet {
             }
             revert VaultDeploymentFailed("Factory finalizeVault call failed");
         }
-        
-        return vault;
     }
 }

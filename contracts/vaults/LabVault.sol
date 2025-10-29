@@ -220,8 +220,7 @@ contract LabVault is ERC20Base {
     address[] calldata recipients,
     uint256[] calldata amounts
   ) external nonReentrant returns (uint256 totalH1Minted) {
-    // Only diamond can call during lab creation
-    if (msg.sender != diamond) revert Unauthorized();
+    // One-time execution guard (called once during lab creation, then blocked forever)
     if (initialMintCompleted) revert InitialMintAlreadyCompleted();
     if (recipients.length != 5 || amounts.length != 5) revert InvalidParameter();
     

@@ -2,66 +2,43 @@
 pragma solidity ^0.8.20;
 
 import { LabVault } from "../vaults/LabVault.sol";
-import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
 /// @title LabVaultFactory
 /// @notice External factory for deploying LabVault contracts
 /// @dev Separates vault bytecode from facets to reduce contract size
+/// @dev Uses two-step initialization to minimize stack pressure
 contract LabVaultFactory {
   event VaultDeployed(address indexed vault, address indexed owner);
+  event VaultInitialized(address indexed vault);
   
-  /// @notice Deploy and initialize a new LabVault contract in one call
-  /// @dev Combines createVault and finalizeVault steps
-  function deployVault(
-    address labsToken,
-    string calldata h1Name,
-    string calldata h1Symbol,
-    string calldata labDisplayName,
-    uint64 cooldownSeconds,
-    uint16 epochExitCapBps,
-    address admin,
-    address labOwner,
-    address treasury,
-    address diamond
-  ) external returns (address vault) {
-    // Deploy with zero parameters
-    LabVault vaultContract = new LabVault();
-    vault = address(vaultContract);
-    
-    // Initialize metadata
-    vaultContract.initializeMetadata(h1Name, h1Symbol, labDisplayName);
-    
-    // Initialize configuration
-    vaultContract.initializeConfig(
-      labsToken,
-      cooldownSeconds,
-      epochExitCapBps,
-      admin,
-      labOwner,
-      treasury,
-      diamond
-    );
-    
-    emit VaultDeployed(vault, labOwner);
-  }
-  
-  /// @notice Create and initialize a new LabVault contract (part 1 - metadata)
-  /// @dev Must call finalizeVault after this
+  /// @notice Step 1: Create vault with metadata
+  /// @param h1Name H1 token name
+  /// @param h1Symbol H1 token symbol
+  /// @param labDisplayName Display name for the lab
+  /// @return vault The address of the newly created vault
   function createVault(
     string calldata h1Name,
     string calldata h1Symbol,
     string calldata labDisplayName
   ) external returns (address vault) {
-    // Deploy with zero parameters
+    // Deploy with zero-parameter constructor
     LabVault vaultContract = new LabVault();
     vault = address(vaultContract);
     
-    // Initialize metadata only
+    // Initialize metadata only (3 params - low stack pressure)
     vaultContract.initializeMetadata(h1Name, h1Symbol, labDisplayName);
   }
   
-  /// @notice Finalize vault configuration (part 2)
-  /// @dev Must be called after createVault
+  /// @notice Step 2: Finalize vault configuration
+  /// @dev Must be called after createVault with the vault address from step 1
+  /// @param vault The vault address from createVault
+  /// @param labsToken LABS token address
+  /// @param cooldownSeconds Redemption cooldown period
+  /// @param epochExitCapBps Epoch exit cap in basis points
+  /// @param admin Admin address
+  /// @param labOwner Lab owner address (receives fees)
+  /// @param treasury Treasury address (receives fees)
+  /// @param diamond H1Diamond address for authorization
   function finalizeVault(
     address vault,
     address labsToken,
@@ -72,6 +49,9 @@ contract LabVaultFactory {
     address treasury,
     address diamond
   ) external {
+    require(vault != address(0), "Invalid vault");
+    
+    // Initialize configuration (8 params - manageable stack)
     LabVault(vault).initializeConfig(
       labsToken,
       cooldownSeconds,
@@ -82,41 +62,7 @@ contract LabVaultFactory {
       diamond
     );
     
+    emit VaultInitialized(vault);
     emit VaultDeployed(vault, labOwner);
-  }
-  
-  /// @notice Single-call deployment function (combines createVault + finalizeVault)
-  /// @dev This is the function called by LabVaultDeploymentFacet
-  function deployVault(
-    address labsToken,
-    string calldata name,
-    string calldata symbol,
-    string calldata domain,
-    uint64 cooldownSeconds,
-    uint16 epochExitCapBps,
-    address owner,
-    address manager,
-    address treasury,
-    address caller
-  ) external returns (address vault) {
-    // Deploy with zero parameters
-    LabVault vaultContract = new LabVault();
-    vault = address(vaultContract);
-    
-    // Initialize metadata
-    vaultContract.initializeMetadata(name, symbol, domain);
-    
-    // Initialize config
-    vaultContract.initializeConfig(
-      labsToken,
-      cooldownSeconds,
-      epochExitCapBps,
-      manager,
-      owner,
-      treasury,
-      caller
-    );
-    
-    emit VaultDeployed(vault, owner);
   }
 }
