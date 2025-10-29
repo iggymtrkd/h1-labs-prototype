@@ -906,9 +906,11 @@ export default function Prototype() {
           return;
         }
         
-        // Call createLab - exactly like credential calls work
+        // Call createLab with explicit gas limit for complex deployment
         addLog('info', 'Stage 1: Create Lab', `📤 Calling createLab("${labName}", "${labSymbol}", "${labDomain}")...`);
-        const createLabTx = await diamond.createLab(labName, labSymbol, labDomain);
+        const createLabTx = await diamond.createLab(labName, labSymbol, labDomain, {
+          gasLimit: 5000000 // Lab creation deploys vault + curve + distributes tokens
+        });
         addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent: ${createLabTx.hash}`);
         addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for confirmation...');
         
