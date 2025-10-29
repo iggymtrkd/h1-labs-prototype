@@ -22,6 +22,7 @@ import { ethers } from 'ethers';
 import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI, H1VestingFacet_ABI } from '@/contracts/abis';
 import { fetchAllLabEvents } from '@/lib/eventScanner';
+import { prepareSmartWalletCall, executeSmartWalletCalls, supportsSmartWallet } from '@/lib/smartWalletHelper';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
 
 // Available domains for lab creation
@@ -841,16 +842,40 @@ export default function Prototype() {
           return;
         }
         
-        // Call createLab - does everything in ONE transaction!
-        addLog('info', 'Stage 1: Create Lab', `📤 Calling createLab("${labName}", "${labSymbol}", "${labDomain}")...`);
-        const tx = await diamond.createLab(labName, labSymbol, labDomain);
-        addLog('info', 'Stage 1: Create Lab', `✅ Transaction sent: ${tx.hash}`);
-        addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation transaction (creating vault, bonding curve, distributing H1)...');
+        // Check if wallet supports smart wallet features
+        const isSmartWallet = await supportsSmartWallet(walletProvider);
+        addLog('info', 'Stage 1: Create Lab', `🔍 Wallet type: ${isSmartWallet ? 'Smart Wallet (Base Account)' : 'EOA'}`);
         
-        const receipt = await tx.wait();
-        addLog('success', 'Stage 1: Create Lab', `✅ Transaction mined in block ${receipt.blockNumber}`);
+        let txHash: string;
+        let receipt: any;
         
-        console.log('✅ Lab creation transaction mined:', tx.hash);
+        if (isSmartWallet) {
+          // Use smart wallet flow (wallet_sendCalls)
+          addLog('info', 'Stage 1: Create Lab', `📤 Preparing smart wallet transaction...`);
+          
+          const call = await prepareSmartWalletCall(diamond, 'createLab', [labName, labSymbol, labDomain]);
+          addLog('info', 'Stage 1: Create Lab', `✅ Call prepared: createLab("${labName}", "${labSymbol}", "${labDomain}")`);
+          
+          addLog('info', 'Stage 1: Create Lab', `🚀 Sending transaction via wallet_sendCalls...`);
+          txHash = await executeSmartWalletCalls(walletProvider, [call]);
+          addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent: ${txHash}`);
+          
+          addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for transaction confirmation...');
+          receipt = await provider.waitForTransaction(txHash);
+          addLog('success', 'Stage 1: Create Lab', `✅ Transaction confirmed in block ${receipt.blockNumber}`);
+        } else {
+          // Use standard EOA flow
+          addLog('info', 'Stage 1: Create Lab', `📤 Calling createLab("${labName}", "${labSymbol}", "${labDomain}")...`);
+          const tx = await diamond.createLab(labName, labSymbol, labDomain);
+          txHash = tx.hash;
+          addLog('info', 'Stage 1: Create Lab', `✅ Transaction sent: ${txHash}`);
+          addLog('info', 'Stage 1: Create Lab', '⏳ Mining transaction...');
+          
+          receipt = await tx.wait();
+          addLog('success', 'Stage 1: Create Lab', `✅ Transaction mined in block ${receipt.blockNumber}`);
+        }
+        
+        console.log('✅ Lab creation transaction mined:', txHash);
         
         // Parse both events from the single transaction
         const iface = new ethers.Interface(LabVaultDeploymentFacet_ABI);
@@ -865,7 +890,7 @@ export default function Prototype() {
             } else if (decoded && decoded.name === "LabDistributionComplete") {
               bondingCurveAddress = decoded.args[1]; // curve address
               console.log('✅ LabDistributionComplete event decoded, curve:', bondingCurveAddress);
-              addLog('success', 'Stage 1: Create Lab', `✅ Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, tx.hash);
+              addLog('success', 'Stage 1: Create Lab', `✅ Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, txHash);
             }
           } catch (e) {
             continue;
@@ -898,10 +923,10 @@ export default function Prototype() {
         setUserCreatedLabs(prev => [newLab, ...prev]);
         
         if (vestingData?.h1Distribution) {
-          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, tx.hash);
+          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, txHash);
           toast.success(`Lab Created! ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 tokens distributed`);
         } else {
-          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, tx.hash);
+          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, txHash);
           toast.success(`Lab Created! Lab ID: ${labId} (Level ${eventLevel})`);
         }
         
@@ -927,7 +952,7 @@ export default function Prototype() {
           step1: {
             labId: numericLabId,
             timestamp: new Date(),
-            txHash: tx.hash,
+            txHash: txHash,
             walletAddress: address as string
           }
         }));
