@@ -1,9 +1,18 @@
-import { useState, useEffect, useRef } from "react";
+import { useState, useEffect } from "react";
 import { Toaster } from "@/components/ui/toaster";
 import { Toaster as Sonner } from "@/components/ui/sonner";
 import { TooltipProvider } from "@/components/ui/tooltip";
 import { QueryClient, QueryClientProvider } from "@tanstack/react-query";
 import { BrowserRouter, Routes, Route, useNavigate, useLocation } from "react-router-dom";
+
+// Check if we're in an iframe (like Lovable preview)
+const isInIframe = () => {
+  try {
+    return window.self !== window.top;
+  } catch (e) {
+    return true;
+  }
+};
 import { BaseAccountProvider, useBaseAccount } from "@/hooks/useBaseAccount";
 import { XMTPProvider } from "@/contexts/XMTPContext";
 import { Navigation } from "@/components/Navigation";
@@ -67,7 +76,13 @@ const AppContent = () => {
   }, [isConnected, location.pathname, navigate]);
 
   // Redirect to home if trying to access protected routes without connection
+  // Skip this check if in iframe (Lovable preview) to allow navigation
   useEffect(() => {
+    if (isInIframe()) {
+      console.log('[App] Running in iframe, skipping route protection');
+      return;
+    }
+    
     const protectedRoutes = ['/dashboard', '/staking', '/apps', '/profile', '/settings', '/lab'];
     const isProtectedRoute = protectedRoutes.some(route => location.pathname.startsWith(route));
     
