@@ -7,7 +7,7 @@ import { Label } from '@/components/ui/label';
 import { Separator } from '@/components/ui/separator';
 import { Upload, Shield, FileText, DollarSign, TrendingUp, CheckCircle2, ArrowLeft } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 import { PieChart, Pie, Cell, Legend, Tooltip, ResponsiveContainer } from 'recharts';
 
 // Mock data
@@ -124,6 +124,8 @@ const MOCK_RECORDS: UploadedRecord[] = [
 
 export default function MedAtlas() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromChat = location.state?.from;
   const [records, setRecords] = useState<UploadedRecord[]>(MOCK_RECORDS);
 
   const [selectedRecord, setSelectedRecord] = useState<UploadedRecord | null>(MOCK_RECORDS[0]);
@@ -172,11 +174,11 @@ export default function MedAtlas() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/prototype')}
+            onClick={() => navigate(fromChat || '/prototype')}
             className="mb-4 text-slate-400 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Prototype
+            Back to {fromChat ? 'Chat' : 'Prototype'}
           </Button>
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-8 h-8 text-emerald-500" />

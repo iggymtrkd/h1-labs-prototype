@@ -1,5 +1,5 @@
 import { useState, useMemo } from "react";
-import { useNavigate } from "react-router-dom";
+import { useNavigate, useLocation } from "react-router-dom";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Card } from "@/components/ui/card";
@@ -13,6 +13,7 @@ import {
   TrendingUp,
   X,
   Download,
+  ArrowLeft,
 } from "lucide-react";
 
 // Mock dataset inventory
@@ -149,6 +150,8 @@ const MOCK_DATASETS: Dataset[] = [
 
 export default function DatasetMarketplace() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromChat = location.state?.from;
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedDomain, setSelectedDomain] = useState<string | null>(null);
   const [selectedDatasets, setSelectedDatasets] = useState<Set<string>>(
@@ -235,6 +238,16 @@ export default function DatasetMarketplace() {
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-slate-700 bg-slate-900/80 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-4">
+          {fromChat && (
+            <Button
+              variant="ghost"
+              onClick={() => navigate(fromChat)}
+              className="mb-2 text-slate-400 hover:text-white"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Chat
+            </Button>
+          )}
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-white">

@@ -11,7 +11,7 @@ import {
   AlertCircle, Pill, Heart, Brain, Award, User, Bot, ArrowLeft
 } from 'lucide-react';
 import { toast } from 'sonner';
-import { useNavigate } from 'react-router-dom';
+import { useNavigate, useLocation } from 'react-router-dom';
 
 // Mock data
 const MOCK_RECORD = `Chief Complaint: Persistent cough and chest discomfort for 3 weeks
@@ -69,6 +69,8 @@ interface TagInstance {
 
 export default function MedTagger() {
   const navigate = useNavigate();
+  const location = useLocation();
+  const fromChat = location.state?.from;
   const [tags, setTags] = useState<TagInstance[]>([]);
 
   const [selectedText, setSelectedText] = useState<{ start: number; end: number; text: string } | null>(null);
@@ -268,11 +270,11 @@ export default function MedTagger() {
         <div className="mb-8">
           <Button
             variant="ghost"
-            onClick={() => navigate('/prototype')}
+            onClick={() => navigate(fromChat || '/prototype')}
             className="mb-4 text-slate-400 hover:text-white"
           >
             <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to Prototype
+            Back to {fromChat ? 'Chat' : 'Prototype'}
           </Button>
           <div className="flex items-center gap-3 mb-2">
             <Stethoscope className="w-8 h-8 text-blue-500" />

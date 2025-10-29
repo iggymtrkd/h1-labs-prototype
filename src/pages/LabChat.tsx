@@ -15,6 +15,9 @@ import {
   Send,
   Loader2,
   ExternalLink,
+  FileStack,
+  PenTool,
+  Database,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { useBaseAccount } from "@/hooks/useBaseAccount";
@@ -25,6 +28,13 @@ import { ethers } from "ethers";
 import { CONTRACTS } from "@/config/contracts";
 import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI, BondingCurveFacet_ABI } from "@/contracts/abis";
 
+// Default training apps available for all labs
+const DEFAULT_TRAINING_APPS = [
+  { name: "MedAtlas", icon: FileStack, route: "/medatlas" },
+  { name: "MedTagger", icon: PenTool, route: "/medtag" },
+  { name: "Datasets", icon: Database, route: "/marketplace" },
+];
+
 // Mock data for lab display info only
 const labInfoData: Record<string, {
   name: string;
@@ -32,7 +42,6 @@ const labInfoData: Record<string, {
   price: string;
   color: string;
   vaultAddress: string;
-  apps: Array<{ name: string; icon: string }>;
   channels: string[];
   priceData: Array<{ value: number }>;
 }> = {
@@ -42,11 +51,6 @@ const labInfoData: Record<string, {
     price: "300,000",
     color: "hsl(263 97% 58%)",
     vaultAddress: "0x0000000000000000000000000000000000000001", // Replace with actual vault
-    apps: [
-      { name: "HeartMonitor", icon: "H" },
-      { name: "ECG Analyzer", icon: "E" },
-      { name: "CardioScan", icon: "C" },
-    ],
     channels: ["General", "Announcements", "Support"],
     priceData: [
       { value: 0.025 },
@@ -61,10 +65,6 @@ const labInfoData: Record<string, {
     price: "175,000",
     color: "hsl(280 75% 58%)",
     vaultAddress: "0x0000000000000000000000000000000000000002",
-    apps: [
-      { name: "Verify AI", icon: "V" },
-      { name: "ArtScan Pro", icon: "A" },
-    ],
     channels: ["General", "Authenticity", "Market"],
     priceData: [
       { value: 0.018 },
@@ -93,7 +93,6 @@ export default function LabChat() {
     price: "0",
     color: "hsl(263 97% 58%)",
     vaultAddress: "0x0000000000000000000000000000000000000000",
-    apps: [],
     channels: ["General"],
     priceData: [{ value: 0.01 }],
   };
@@ -657,14 +656,22 @@ export default function LabChat() {
             Training Apps
           </h3>
           <div className="grid grid-cols-3 gap-3">
-            {labInfo.apps.map((app, i) => (
-              <div key={i} className="text-center">
-                <div className="w-16 h-16 rounded-2xl bg-muted flex items-center justify-center text-xl font-bold mb-2 mx-auto">
-                  {app.icon}
-                </div>
-                <p className="text-xs font-medium">{app.name}</p>
-              </div>
-            ))}
+            {DEFAULT_TRAINING_APPS.map((app, i) => {
+              const IconComponent = app.icon;
+              return (
+                <Link 
+                  key={i} 
+                  to={app.route}
+                  state={{ from: `/lab/${id}/chat` }}
+                  className="flex flex-col items-center gap-1 hover:scale-105 transition-transform"
+                >
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center cursor-pointer hover:shadow-lg">
+                    <IconComponent className="w-8 h-8 text-white" />
+                  </div>
+                  <p className="text-xs font-medium text-muted-foreground hover:text-primary">{app.name}</p>
+                </Link>
+              );
+            })}
           </div>
         </div>
       </div>
