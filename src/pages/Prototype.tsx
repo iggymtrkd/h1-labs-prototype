@@ -685,26 +685,35 @@ export default function Prototype() {
           }
         }
         
-        // Initialize protocol defaults
-        const params = await testingFacet.getProtocolParams();
-        if (!params.defaultsInitialized) {
-          addLog('info', 'Initialization', '🔧 Initializing protocol defaults...');
-          const initTx = await testingFacet.initializeDefaults(CONTRACTS.ProtocolTreasury);
-          await initTx.wait();
-          addLog('success', 'Initialization', '✅ Protocol initialized');
-        } else {
-          addLog('info', 'Initialization', '✓ Protocol already initialized');
-        }
-        
-        // Set LABS token if not set
-        const labsTokenAddr = await testingFacet.getLABSToken();
-        if (labsTokenAddr === '0x0000000000000000000000000000000000000000') {
-          addLog('info', 'Initialization', '🔧 Setting LABS token...');
-          const setLabsTx = await testingFacet.setLABSToken(CONTRACTS.LABSToken);
-          await setLabsTx.wait();
-          addLog('success', 'Initialization', '✅ LABS token set');
-        } else {
-          addLog('info', 'Initialization', '✓ LABS token already set');
+        // Try to initialize protocol defaults via TestingFacet
+        try {
+          const params = await testingFacet.getProtocolParams();
+          if (!params.defaultsInitialized) {
+            addLog('info', 'Initialization', '🔧 Initializing protocol defaults...');
+            const initTx = await testingFacet.initializeDefaults(CONTRACTS.ProtocolTreasury);
+            await initTx.wait();
+            addLog('success', 'Initialization', '✅ Protocol initialized');
+          } else {
+            addLog('info', 'Initialization', '✓ Protocol already initialized');
+          }
+          
+          // Set LABS token if not set
+          const labsTokenAddr = await testingFacet.getLABSToken();
+          if (labsTokenAddr === '0x0000000000000000000000000000000000000000') {
+            addLog('info', 'Initialization', '🔧 Setting LABS token...');
+            const setLabsTx = await testingFacet.setLABSToken(CONTRACTS.LABSToken);
+            await setLabsTx.wait();
+            addLog('success', 'Initialization', '✅ LABS token set');
+          } else {
+            addLog('info', 'Initialization', '✓ LABS token already set');
+          }
+        } catch (testingErr: any) {
+          if (testingErr?.message?.includes('Function not found') || testingErr?.code === 'CALL_EXCEPTION') {
+            addLog('warning', 'Initialization', '⚠️ TestingFacet not available - skipping initialization (may already be set)');
+            // Continue anyway - protocol might already be initialized
+          } else {
+            throw testingErr;
+          }
         }
       } catch (initErr: any) {
         console.error('Initialization error:', initErr);
