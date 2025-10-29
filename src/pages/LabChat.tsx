@@ -191,7 +191,6 @@ export default function LabChat() {
 
     try {
       const walletProvider = sdk.getProvider();
-      const provider = new ethers.BrowserProvider(walletProvider as any);
       const amountWei = ethers.parseEther(tradeAmount);
       const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
 
@@ -199,23 +198,17 @@ export default function LabChat() {
         throw new Error('Wallet provider not available');
       }
 
-      // Fetch bonding curve address dynamically if not already loaded
-      let curveAddress = bondingCurveAddress;
+      // Fetch bonding curve address dynamically
+      const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+      const diamond = new ethers.Contract(
+        CONTRACTS.H1Diamond,
+        ['function getLabBondingCurve(uint256) view returns (address)'],
+        rpc
+      );
+      const curveAddress = await diamond.getLabBondingCurve(parseInt(id!));
+      
       if (!curveAddress || curveAddress === ethers.ZeroAddress) {
-        console.log('[LabChat] Fetching bonding curve address dynamically...');
-        const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-        const diamond = new ethers.Contract(
-          CONTRACTS.H1Diamond,
-          ['function getLabBondingCurve(uint256) view returns (address)'],
-          rpc
-        );
-        curveAddress = await diamond.getLabBondingCurve(parseInt(id!));
-        setBondingCurveAddress(curveAddress);
-        console.log('[LabChat] Dynamically fetched curve address:', curveAddress);
-        
-        if (!curveAddress || curveAddress === ethers.ZeroAddress) {
-          throw new Error('Bonding curve address not found');
-        }
+        throw new Error('Bonding curve not deployed for this lab yet');
       }
 
       if (tradeAction === 'buy') {
@@ -281,21 +274,28 @@ export default function LabChat() {
         const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
         const balance = await vault.balanceOf(address);
         setUserH1Balance(ethers.formatEther(balance));
-        
-        // Reset
-        setTradeAmount('100');
-        
+
       } else {
         // Sell: approve + sell in single transaction (mirrors buy flow)
         toast.info('Preparing to sell H1 tokens (1 confirmation)...');
         
         // Get vault address (needed for batch transaction)
         const provider = new ethers.BrowserProvider(walletProvider as any);
-        const curve = new ethers.Contract(curveAddress!, BondingCurveSale_ABI, provider);
+        const curve = new ethers.Contract(curveAddress, BondingCurveSale_ABI, provider);
         const vaultAddress = await curve.vault();
         
-        // Encode approval call for vault shares (H1 tokens)
-        const vaultInterface = new ethers.Interface(LabVault_ABI);
+        // Check H1 balance before proceeding
+        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+        const h1Balance = await vault.balanceOf(address);
+        
+        if (h1Balance < amountWei) {
+          const shortfall = ethers.formatEther(amountWei - h1Balance);
+          toast.error(`Insufficient H1 balance. Need ${shortfall} more ${labInfo.symbol}`);
+          throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(h1Balance)} but need ${tradeAmount}`);
+        }
+        
+        // Encode approval call for vault shares (H1 tokens) - use simple approve ABI
+        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
         const approvalData = vaultInterface.encodeFunctionData('approve', [curveAddress, amountWei]);
         
         // Encode sell call
@@ -346,14 +346,13 @@ export default function LabChat() {
         if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully sold ${labInfo.symbol} H1 tokens!`);
         
-        // Refresh H1 balance (reuse existing vaultAddress from above)
-        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+        // Refresh H1 balance
         const balance = await vault.balanceOf(address);
         setUserH1Balance(ethers.formatEther(balance));
-        
-        // Reset
-        setTradeAmount('100');
       }
+      
+      // Reset amount
+      setTradeAmount('100');
     } catch (error: any) {
       console.error('Trade error:', error);
       toast.error(error?.message || 'Failed to trade H1 tokens');
