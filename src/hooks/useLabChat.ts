@@ -157,6 +157,13 @@ export function useLabChat(
         console.log('[LabChat] Send response:', { data, error: sendError });
 
         if (sendError) throw sendError;
+        
+        // Immediately add the message to local state for instant feedback
+        if (data?.message) {
+          console.log('[LabChat] Adding message to local state immediately');
+          setMessages((prev) => [...prev, data.message]);
+        }
+        
         console.log('[LabChat] Message sent successfully:', data);
       } catch (err: any) {
         console.error('[LabChat] Error sending message:', err);
