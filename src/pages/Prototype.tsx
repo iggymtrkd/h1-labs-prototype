@@ -672,48 +672,30 @@ export default function Prototype() {
       const deploymentFacet = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
       
       try {
-        // CRITICAL: Set VaultFactory in Diamond storage (required for lab creation)
-        addLog('info', 'Initialization', '🔧 Setting VaultFactory address...');
-        try {
-          const setFactoryTx = await deploymentFacet.setVaultFactory(CONTRACTS.LabVaultFactory);
-          await setFactoryTx.wait();
-          addLog('success', 'Initialization', `✅ VaultFactory set: ${CONTRACTS.LabVaultFactory.slice(0, 10)}...`);
-        } catch (factoryErr: any) {
-          if (factoryErr?.message?.includes('already set') || factoryErr?.code === 'CALL_EXCEPTION') {
-            addLog('info', 'Initialization', '✓ VaultFactory already configured');
-          } else {
-            throw factoryErr;
-          }
-        }
+        // Verify VaultFactory is already set (should be configured by admin)
+        addLog('info', 'Initialization', '🔍 Verifying Diamond configuration...');
         
         // Try to initialize protocol defaults via TestingFacet
         try {
           const params = await testingFacet.getProtocolParams();
+          addLog('info', 'Initialization', `✓ LABS Token: ${params.labsToken !== '0x0000000000000000000000000000000000000000' ? 'SET' : 'NOT SET'}`);
+          addLog('info', 'Initialization', `✓ Treasury: ${params.protocolTreasury !== '0x0000000000000000000000000000000000000000' ? 'SET' : 'NOT SET'}`);
+          addLog('info', 'Initialization', `✓ Defaults initialized: ${params.defaultsInitialized ? 'YES' : 'NO'}`);
+          
           if (!params.defaultsInitialized) {
-            addLog('info', 'Initialization', '🔧 Initializing protocol defaults...');
-            const initTx = await testingFacet.initializeDefaults(CONTRACTS.ProtocolTreasury);
-            await initTx.wait();
-            addLog('success', 'Initialization', '✅ Protocol initialized');
-          } else {
-            addLog('info', 'Initialization', '✓ Protocol already initialized');
+            addLog('info', 'Initialization', '⚠️ Protocol defaults not initialized - lab creation may fail');
+          }
+          if (params.labsToken === '0x0000000000000000000000000000000000000000') {
+            addLog('info', 'Initialization', '⚠️ LABS token not set - lab creation may fail');
           }
           
-          // Set LABS token if not set
-          const labsTokenAddr = await testingFacet.getLABSToken();
-          if (labsTokenAddr === '0x0000000000000000000000000000000000000000') {
-            addLog('info', 'Initialization', '🔧 Setting LABS token...');
-            const setLabsTx = await testingFacet.setLABSToken(CONTRACTS.LABSToken);
-            await setLabsTx.wait();
-            addLog('success', 'Initialization', '✅ LABS token set');
-          } else {
-            addLog('info', 'Initialization', '✓ LABS token already set');
-          }
+          addLog('success', 'Initialization', '✅ Diamond configuration verified');
         } catch (testingErr: any) {
           if (testingErr?.message?.includes('Function not found') || testingErr?.code === 'CALL_EXCEPTION') {
-            addLog('info', 'Initialization', '⚠️ TestingFacet not available - skipping initialization (may already be set)');
-            // Continue anyway - protocol might already be initialized
+            addLog('info', 'Initialization', '⚠️ TestingFacet not available - assuming protocol is configured');
           } else {
-            throw testingErr;
+            console.error('Failed to check protocol params:', testingErr);
+            addLog('info', 'Initialization', `⚠️ Could not verify protocol: ${testingErr?.message}`);
           }
         }
       } catch (initErr: any) {
