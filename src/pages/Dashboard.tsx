@@ -1,9 +1,11 @@
 import { useState, useEffect } from "react";
 import { LabCard, Lab } from "@/components/LabCard";
+import { LabTable } from "@/components/LabTable";
 import { Input } from "@/components/ui/input";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import { Search, TrendingUp, Flame, Clock, Loader2 } from "lucide-react";
+import { Search, TrendingUp, Flame, Clock, Loader2, LayoutGrid, LayoutList } from "lucide-react";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
 import { useLabEvents } from "@/hooks/useLabEvents";
 import { Alert, AlertDescription } from "@/components/ui/alert";
 import { ethers } from "ethers";
@@ -14,6 +16,7 @@ import { LABSCoreFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI } from "
 export default function Dashboard() {
   const [searchQuery, setSearchQuery] = useState("");
   const [selectedCategory, setSelectedCategory] = useState("all");
+  const [viewMode, setViewMode] = useState<'grid' | 'table'>('grid');
   const { labs: labEvents, loading: labEventsLoading, error, refetch } = useLabEvents();
   const [labs, setLabs] = useState<Lab[]>([]);
   const [loadingDetails, setLoadingDetails] = useState(false);
@@ -191,15 +194,35 @@ export default function Dashboard() {
 
         {/* Search and Filters */}
         <div className="mb-8">
-          <div className="relative mb-4">
-            <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
-            <Input
-              type="text"
-              placeholder="Search labs by name or symbol..."
-              value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              className="pl-10 h-12 bg-card border-border focus:border-primary"
-            />
+          <div className="relative mb-4 flex gap-3">
+            <div className="relative flex-1">
+              <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-muted-foreground" />
+              <Input
+                type="text"
+                placeholder="Search labs by name or symbol..."
+                value={searchQuery}
+                onChange={(e) => setSearchQuery(e.target.value)}
+                className="pl-10 h-12 bg-card border-border focus:border-primary"
+              />
+            </div>
+            <div className="flex gap-2 bg-muted rounded-md p-1">
+              <Button
+                variant={viewMode === 'grid' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => setViewMode('grid')}
+                className="h-10 w-10"
+              >
+                <LayoutGrid className="h-5 w-5" />
+              </Button>
+              <Button
+                variant={viewMode === 'table' ? 'default' : 'ghost'}
+                size="icon"
+                onClick={() => setViewMode('table')}
+                className="h-10 w-10"
+              >
+                <LayoutList className="h-5 w-5" />
+              </Button>
+            </div>
           </div>
 
           <Tabs defaultValue="all" onValueChange={setSelectedCategory}>
@@ -222,14 +245,22 @@ export default function Dashboard() {
               {filteredLabs.length} labs
             </Badge>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLabs
-              .sort((a, b) => parseFloat(b.tvl || '0') - parseFloat(a.tvl || '0'))
-              .slice(0, 6)
-              .map((lab) => (
-                <LabCard key={lab.id} lab={lab} />
-              ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredLabs
+                .sort((a, b) => parseFloat(b.tvl || '0') - parseFloat(a.tvl || '0'))
+                .slice(0, 6)
+                .map((lab) => (
+                  <LabCard key={lab.id} lab={lab} />
+                ))}
+            </div>
+          ) : (
+            <LabTable 
+              labs={filteredLabs
+                .sort((a, b) => parseFloat(b.tvl || '0') - parseFloat(a.tvl || '0'))
+                .slice(0, 6)} 
+            />
+          )}
           {filteredLabs.length === 0 && (
             <div className="text-center py-8 bg-muted/30 rounded-lg">
               <p className="text-muted-foreground">No labs found. Create a lab to get started!</p>
@@ -246,11 +277,15 @@ export default function Dashboard() {
               {filteredLabs.length} labs
             </Badge>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-            {filteredLabs.map((lab) => (
-              <LabCard key={lab.id} lab={lab} />
-            ))}
-          </div>
+          {viewMode === 'grid' ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+              {filteredLabs.map((lab) => (
+                <LabCard key={lab.id} lab={lab} />
+              ))}
+            </div>
+          ) : (
+            <LabTable labs={filteredLabs} />
+          )}
         </div>
 
         {filteredLabs.length === 0 && (
