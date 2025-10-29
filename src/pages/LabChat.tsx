@@ -85,7 +85,17 @@ export default function LabChat() {
   const [trading, setTrading] = useState(false);
   const [bondingCurveAddress, setBondingCurveAddress] = useState<string | null>(null);
 
-  const labInfo = labInfoData[id || ""];
+  // Use mock data if available, otherwise create a default lab info
+  const labInfo = labInfoData[id || ""] || {
+    name: `Lab #${id}`,
+    symbol: `LAB${id}`,
+    price: "0",
+    color: "hsl(263 97% 58%)",
+    vaultAddress: "0x0000000000000000000000000000000000000000",
+    apps: [],
+    channels: ["General"],
+    priceData: [{ value: 0.01 }],
+  };
 
   const {
     messages,
@@ -99,7 +109,7 @@ export default function LabChat() {
     id || "",
     channelType,
     address || null,
-    labInfo?.vaultAddress || null
+    labInfo.vaultAddress
   );
 
   const canSendMessages = channelType === 'open' || userRole === 'holder';
@@ -219,11 +229,11 @@ export default function LabChat() {
     );
   };
 
-  if (!labInfo) {
+  if (!id) {
     return (
       <div className="min-h-screen pt-24 pb-12 flex items-center justify-center">
         <div className="text-center">
-          <h1 className="text-4xl font-bold mb-4">Lab Chat Not Found</h1>
+          <h1 className="text-4xl font-bold mb-4">Invalid Lab ID</h1>
           <Link to="/dashboard">
             <Button>Return to Dashboard</Button>
           </Link>
