@@ -23,7 +23,7 @@ import { toast } from "sonner";
 import { useENS, formatAddress as formatAddr } from "@/hooks/useENS";
 import { ethers } from "ethers";
 import { CONTRACTS } from "@/config/contracts";
-import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI } from "@/contracts/abis";
+import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI, BondingCurveFacet_ABI } from "@/contracts/abis";
 
 // Mock data for lab display info only
 const labInfoData: Record<string, {
@@ -198,14 +198,14 @@ export default function LabChat() {
         throw new Error('Wallet provider not available');
       }
 
-      // Fetch bonding curve address dynamically
+      // Fetch bonding curve address dynamically (same as Dashboard)
       const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-      const diamond = new ethers.Contract(
+      const bondingCurveFacet = new ethers.Contract(
         CONTRACTS.H1Diamond,
-        ['function getLabBondingCurve(uint256) view returns (address)'],
+        BondingCurveFacet_ABI,
         rpc
       );
-      const curveAddress = await diamond.getLabBondingCurve(parseInt(id!));
+      const curveAddress = await bondingCurveFacet.getBondingCurve(parseInt(id!));
       
       if (!curveAddress || curveAddress === ethers.ZeroAddress) {
         throw new Error('Bonding curve not deployed for this lab yet');
