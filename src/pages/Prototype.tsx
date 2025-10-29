@@ -968,31 +968,60 @@ export default function Prototype() {
           return;
         }
         
-        // The result might be a bundle/call ID, not a tx hash
-        addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for transaction to be mined...');
+        // wallet_sendCalls returns a bundle ID, not a tx hash
+        // We need to poll wallet_getCallsStatus to get the actual transaction
+        const bundleId = result;
+        console.log('📦 Got bundle ID:', bundleId);
+        addLog('info', 'Stage 1: Create Lab', '⏳ Polling for transaction status...');
         
-        // Try to extract transaction hash from the result
-        let txHash: string;
-        if (typeof result === 'string') {
-          txHash = result;
-        } else if (result && typeof result === 'object' && 'hash' in result) {
-          txHash = (result as any).hash;
-        } else {
-          console.error('Unexpected result format:', result);
-          addLog('error', 'Stage 1: Create Lab', `❌ Unexpected wallet response: ${JSON.stringify(result)}`);
-          toast.error('Unexpected wallet response format');
-          setLoading(null);
-          return;
+        let txHash: string | null = null;
+        let receipt = null;
+        let statusAttempts = 0;
+        const maxStatusAttempts = 60; // 60 seconds timeout
+        
+        while (!txHash && statusAttempts < maxStatusAttempts) {
+          await new Promise(resolve => setTimeout(resolve, 1000));
+          
+          try {
+            const callsStatus = await walletProvider.request({
+              method: 'wallet_getCallsStatus',
+              params: [bundleId],
+            });
+            
+            console.log('📊 Calls status:', callsStatus);
+            
+            if (callsStatus.status === 'CONFIRMED') {
+              // Extract transaction hash from receipt
+              txHash = callsStatus.receipts?.[0]?.transactionHash;
+              if (!txHash) {
+                console.error('No transaction hash in receipt:', callsStatus);
+                throw new Error('Transaction confirmed but no hash returned');
+              }
+              
+              console.log('✅ Got transaction hash:', txHash);
+              addLog('success', 'Stage 1: Create Lab', `✅ Transaction hash: ${txHash}`);
+              break;
+            } else if (callsStatus.status === 'FAILED') {
+              throw new Error('Transaction failed in bundle');
+            }
+            // Otherwise status is PENDING, keep polling
+          } catch (statusErr: any) {
+            console.error('Error polling call status:', statusErr);
+            // Continue polling - might just be temporary
+          }
+          
+          statusAttempts++;
         }
         
-        console.log('📝 Using transaction hash:', txHash);
-        addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for confirmation...');
+        if (!txHash) {
+          throw new Error('Transaction timeout - bundle still pending after 60 seconds');
+        }
         
-        // Wait for transaction to be mined
+        // Now wait for the transaction to be fully mined and get receipt
+        addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for transaction to be fully confirmed...');
         const rpcProvider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
-        let receipt = null;
-        let attempts = 0;
-        while (!receipt && attempts < 60) {
+        let receiptAttempts = 0;
+        while (!receipt && receiptAttempts < 30) {
           try {
             receipt = await rpcProvider.getTransactionReceipt(txHash);
             if (receipt) break;
@@ -1000,11 +1029,11 @@ export default function Prototype() {
             // Transaction not yet available
           }
           await new Promise(resolve => setTimeout(resolve, 2000));
-          attempts++;
+          receiptAttempts++;
         }
         
         if (!receipt) {
-          throw new Error('Transaction not confirmed after 2 minutes');
+          throw new Error('Transaction not confirmed after polling');
         }
         addLog('success', 'Stage 1: Create Lab', `✅ Transaction confirmed in block ${receipt.blockNumber}`);
         
