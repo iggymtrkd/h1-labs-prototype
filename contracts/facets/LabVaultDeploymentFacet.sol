@@ -4,6 +4,7 @@ pragma solidity ^0.8.20;
 import { LibH1Storage } from "../libraries/LibH1Storage.sol";
 import { LibBondingCurveFactory } from "../libraries/LibBondingCurveFactory.sol";
 import { LibH1Distribution } from "../libraries/LibH1Distribution.sol";
+import { LibLabVaultFactory } from "../libraries/LibLabVaultFactory.sol";
 
 /// @title LabVaultDeploymentFacet
 /// @notice Handles lab and vault creation in a single transaction
@@ -45,7 +46,21 @@ contract LabVaultDeploymentFacet {
         hs.labs[labId].level = _calcLevel(hs.stakedBalances[msg.sender]);
 
         // Deploy vault using factory
-        vault = _deployVault(hs.vaultFactory, name, symbol, domain, hs);
+        vault = LibLabVaultFactory.deployVault(
+            hs.vaultFactory,
+            LibLabVaultFactory.VaultParams({
+                labsToken: hs.labsToken,
+                h1Name: name,
+                h1Symbol: symbol,
+                labDisplayName: domain,
+                cooldownSeconds: hs.defaultCooldown,
+                epochExitCapBps: hs.defaultExitCapBps,
+                admin: msg.sender,
+                labOwner: msg.sender,
+                treasury: hs.protocolTreasury,
+                diamond: address(this)
+            })
+        );
         if (vault == address(0)) revert InvalidVaultAddress();
 
         hs.labIdToVault[labId] = vault;
@@ -96,64 +111,5 @@ contract LabVaultDeploymentFacet {
 
     function _calcLevel(uint256 bal) private pure returns (uint8) {
         return bal >= 500_000e18 ? 3 : (bal >= 250_000e18 ? 2 : 1);
-    }
-
-    /// @notice Deploy vault using factory's two-step pattern
-    /// @dev Calls createVault then finalizeVault to avoid stack depth
-    /// @dev address(this) is the diamond in delegatecall context
-    function _deployVault(
-        address factory,
-        string calldata name,
-        string calldata symbol,
-        string calldata domain,
-        LibH1Storage.H1Storage storage hs
-    ) private returns (address vault) {
-        // Step 1: Create vault with metadata
-        (bool ok1, bytes memory data1) = factory.call(
-            abi.encodeWithSignature(
-                "createVault(string,string,string)",
-                name,
-                symbol,
-                domain
-            )
-        );
-        
-        if (!ok1) {
-            if (data1.length > 0) {
-                assembly {
-                    let returndata_size := mload(data1)
-                    revert(add(32, data1), returndata_size)
-                }
-            }
-            revert VaultDeploymentFailed("Factory createVault call failed");
-        }
-        
-        vault = abi.decode(data1, (address));
-        
-        // Step 2: Finalize vault configuration
-        // address(this) = diamond (in delegatecall context of facet)
-        (bool ok2, bytes memory data2) = factory.call(
-            abi.encodeWithSignature(
-                "finalizeVault(address,address,uint64,uint16,address,address,address,address)",
-                vault,
-                hs.labsToken,
-                hs.defaultCooldown,
-                hs.defaultExitCapBps,
-                msg.sender,           // admin
-                msg.sender,           // labOwner
-                hs.protocolTreasury,  // treasury
-                address(this)         // diamond reference for vault
-            )
-        );
-        
-        if (!ok2) {
-            if (data2.length > 0) {
-                assembly {
-                    let returndata_size := mload(data2)
-                    revert(add(32, data2), returndata_size)
-                }
-            }
-            revert VaultDeploymentFailed("Factory finalizeVault call failed");
-        }
     }
 }
