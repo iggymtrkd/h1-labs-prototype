@@ -42,6 +42,9 @@ library LibH1Distribution {
     m[0]=a.owner; m[1]=a.curve; m[2]=a.scholar; m[3]=a.dev; m[4]=a.treasury;
     ILabVault(vault).initialMint(a.total, r, m);
     
+    // Decrease staked balance by the amount of LABS used for this lab
+    hs.stakedBalances[sender] -= a.total;
+    
     uint256 vid = IH1VestingFacet(address(this)).createVestingSchedule(labId, sender, a.owner, VESTING_TYPE_OWNER, vault);
     hs.labDistributions[labId] = LibH1Storage.H1Distribution(a.total, a.owner, a.curve, a.scholar, a.dev, a.treasury, vid, true);
     emit H1Distributed(labId, a.total, a.owner, a.curve, a.scholar, a.dev, a.treasury, vid);

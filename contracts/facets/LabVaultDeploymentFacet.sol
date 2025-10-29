@@ -78,8 +78,21 @@ contract LabVaultDeploymentFacet {
         );
         hs.labIdToCurve[labId] = curve;
 
-        // Distribute H1 tokens
-        LibH1Distribution.distribute(labId, vault, curve, hs.stakedBalances[msg.sender], msg.sender);
+        // Distribute H1 tokens - use only the exact amount needed for this lab level
+        uint256 stakedBalance = hs.stakedBalances[msg.sender];
+        uint8 labLevel = _calcLevel(stakedBalance);
+        
+        // Calculate exact LABS needed based on lab level
+        uint256 labsToUse;
+        if (labLevel == 3) {
+            labsToUse = 500_000e18;      // Level 3: 500k LABS
+        } else if (labLevel == 2) {
+            labsToUse = 250_000e18;      // Level 2: 250k LABS
+        } else {
+            labsToUse = 100_000e18;      // Level 1: 100k LABS
+        }
+        
+        LibH1Distribution.distribute(labId, vault, curve, labsToUse, msg.sender);
 
         emit LabDistributionComplete(labId, curve);
     }

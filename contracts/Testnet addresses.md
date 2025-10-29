@@ -5,7 +5,7 @@ OwnershipFacet at 0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9
 SecurityFacet at 0x330c418951a0237d4c28685c0a7dbdb5b42eb441
 RevenueFacet at 0xbe14097af4ad6f9ffd9ec39b404121ab44a5b112
 LABSCoreFacet at 0xdf972c8cf5b1757d133aebbce1a704aeb65a2b29 (✅ REMOVED: domain requirements)
-LabVaultDeploymentFacet at 0x965f74BD50C564440a8082f29e5347509294aB7d
+LabVaultDeploymentFacet at 0xd5ab80005ac67540c281c090b4502774d4ec2f07
 VaultFacet at 0xVaultFacetAddress (if still needed)
 BondingCurveFacet at 0x90c81d864d4d71af2449153091733cb1249706c6
 LabPassFacet at 0x799cb349e8feec8ce0155abe0a2f258307a66834
@@ -85,3 +85,4 @@ OLD TestingFacet at 0xb44e262cb6039689873e9a721c1495fa1028cbbb (✅ UPDATED: Wit
 OLD LabVaultFactory 0xbe9295fc5f7b9b0262911152132a1eeb5cd3cc0e
 OLD LabVaultFactory 0xb26922366a9eecb4c8452c8d1745dcef0b7ec7c8
 OLD LabDistributionFacet at 0xfb7c840eb842e99837fd13aa957d499f5ad223df step2
+OLD LabVaultDeploymentFacet 0x965f74BD50C564440a8082f29e5347509294aB7d

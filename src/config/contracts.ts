@@ -22,7 +22,7 @@ export const CONTRACTS = {
   // Core Contracts (✅ DEPLOYED)
   H1Diamond: "0x29a7297e84df485aff8def2d27e467f3a37619c0",
   LABSToken: "0xcbdc032c9525b307d3c2b4b8e099feedbd9024fd",
-  LabVaultFactory: "0xd7dc1f9b3cd8c0eeb44e3cdf8c14447540f05e9f", // ✅ UPDATED 2025-10-29: New factory with two-step initialization
+  LabVaultFactory: "0xd5ab80005ac67540c281c090b4502774d4ec2f07", // ✅ UPDATED 2025-10-29: New factory with two-step initialization
   
   // Diamond Facets (✅ ALL DEPLOYED)
   DiamondCutFacet: "0x0c21433be788016a7bf7471308dbf3918b827f9e",
