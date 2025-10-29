@@ -2484,14 +2484,10 @@ export default function Prototype() {
 
           // Prepare batch calls for wallet_sendCalls (EIP-5792)
           const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
-          const walletProvider = (window as any).ethereum;
           
           if (!walletProvider) {
             throw new Error('Wallet provider not available');
           }
-
-          const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
-          const fromAddress = accounts[0];
 
           addLog('info', 'H1 Marketplace', '📤 Requesting batch transaction (1 wallet confirmation)...');
           
@@ -2502,7 +2498,7 @@ export default function Prototype() {
               method: 'wallet_sendCalls',
               params: [{
                 version: '1.0',
-                from: fromAddress,
+                from: address,
                 chainId: chainIdHex,
                 calls: [
                   {
@@ -2587,8 +2583,149 @@ export default function Prototype() {
           return;
         }
       } else {
-        // Sell functionality (redeem from vault)
-        toast.info('Sell/Redeem functionality coming soon - requires vault redemption flow');
+        // Sell H1 tokens (redeem from vault)
+        addLog('info', 'H1 Marketplace', `🎯 STARTING: Sell ${tradeAmount} ${lab.symbol} H1 tokens`);
+
+        const amountWei = ethers.parseEther(tradeAmount);
+
+        // Step 0: Check H1 balance
+        addLog('info', 'H1 Marketplace', '🔍 Step 0/2: Checking H1 token balance...');
+        try {
+          const vault = new ethers.Contract(lab.vaultAddress, ['function balanceOf(address) view returns (uint256)'], provider);
+          const balance = await vault.balanceOf(address);
+          addLog('info', 'H1 Marketplace', `💰 Your ${lab.symbol} balance: ${ethers.formatEther(balance)} H1`);
+          if (balance < amountWei) {
+            const shortfall = ethers.formatEther(amountWei - balance);
+            addLog('error', 'H1 Marketplace', `❌ Insufficient H1 balance. Need ${shortfall} more ${lab.symbol}`);
+            toast.error(`Insufficient H1 balance. You need ${shortfall} more ${lab.symbol}`);
+            return;
+          }
+        } catch (balanceError) {
+          addLog('warning', 'H1 Marketplace', '⚠️ Could not verify balance, proceeding with transaction');
+        }
+
+        // Step 1: Batch transaction (approve + sell in single wallet confirmation)
+        addLog('info', 'H1 Marketplace', '📝 Step 1/2: 📦 Batch transaction (approve + sell)...');
+        try {
+          // Check if curve is paused
+          try {
+            const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, provider);
+            const isPaused = await curve.paused();
+            if (isPaused) {
+              throw new Error('Bonding curve is paused for maintenance');
+            }
+          } catch (pauseCheckError: any) {
+            addLog('warning', 'H1 Marketplace', '⚠️ Could not check pause status');
+          }
+
+          // Encode approval call (vault shares)
+          const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
+          const approvalData = vaultInterface.encodeFunctionData('approve', [lab.curveAddress, amountWei]);
+          
+          // Encode sell call
+          const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
+          const sellData = curveInterface.encodeFunctionData('sell', [amountWei, address, 0]);
+
+          // Prepare batch calls for wallet_sendCalls (EIP-5792)
+          const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
+          
+          if (!walletProvider) {
+            throw new Error('Wallet provider not available');
+          }
+
+          addLog('info', 'H1 Marketplace', '📤 Requesting batch transaction (1 wallet confirmation)...');
+          
+          let bundleId: string;
+          try {
+            // Send both calls in a single batch via wallet_sendCalls (EIP-5792)
+            bundleId = await walletProvider.request({
+              method: 'wallet_sendCalls',
+              params: [{
+                version: '1.0',
+                from: address,
+                chainId: chainIdHex,
+                calls: [
+                  {
+                    to: lab.vaultAddress,
+                    data: approvalData,
+                    value: '0x0'
+                  },
+                  {
+                    to: lab.curveAddress,
+                    data: sellData,
+                    value: '0x0'
+                  }
+                ]
+              }]
+            }) as string;
+            
+            addLog('success', 'H1 Marketplace', `✅ Batch transaction submitted!`);
+            addLog('info', 'H1 Marketplace', '⏳ Polling for batch confirmation...');
+            
+            // Poll for batch completion using wallet_getCallsStatus
+            let txHash: string | null = null;
+            let statusAttempts = 0;
+            const maxStatusAttempts = 120; // 2 minutes max
+            
+            while (!txHash && statusAttempts < maxStatusAttempts) {
+              await new Promise(resolve => setTimeout(resolve, 1000));
+              
+              try {
+                const callsStatus = await walletProvider.request({
+                  method: 'wallet_getCallsStatus',
+                  params: [bundleId],
+                }) as any;
+                
+                console.log(`📊 Batch status (attempt ${statusAttempts + 1}):`, callsStatus);
+                
+                if (callsStatus?.status === 'CONFIRMED') {
+                  txHash = callsStatus?.receipts?.[0]?.transactionHash || bundleId;
+                  addLog('success', 'H1 Marketplace', `✅ Batch confirmed!`);
+                  break;
+                } else if (callsStatus?.status === 'FAILED') {
+                  throw new Error(`Batch transaction failed: ${callsStatus?.receipts?.[0]?.revert || 'Unknown error'}`);
+                }
+              } catch (statusErr: any) {
+                // Continue polling, ignore status check errors
+                console.log('Status check error (continuing):', statusErr?.message);
+              }
+              
+              statusAttempts++;
+            }
+            
+            if (!txHash && statusAttempts >= maxStatusAttempts) {
+              throw new Error('Batch transaction timed out');
+            }
+
+            addLog('success', 'H1 Marketplace', `✅ COMPLETE: Sold ${tradeAmount} ${lab.symbol} H1 tokens!`);
+            toast.success(`Successfully sold ${lab.symbol} H1 tokens!`);
+            
+            // Refresh marketplace data
+            await loadMarketplaceLabs();
+            setTradeAmount('1');
+            
+          } catch (batchErr: any) {
+            console.error('❌ Batch error:', batchErr);
+            addLog('error', 'H1 Marketplace', `❌ Batch error: ${batchErr?.message || String(batchErr)}`);
+            
+            // Provide specific guidance
+            let userMessage = batchErr.message || 'Batch transaction failed';
+            if (userMessage.includes('allowance')) {
+              userMessage = 'Insufficient allowance. Check your approval.';
+            } else if (userMessage.includes('balance')) {
+              userMessage = 'Insufficient H1 token balance.';
+            } else if (userMessage.includes('paused')) {
+              userMessage = 'Bonding curve is paused.';
+            }
+            
+            toast.error(userMessage);
+            return;
+          }
+        } catch (sellError: any) {
+          addLog('error', 'H1 Marketplace', `❌ Transaction failed: ${sellError.message || sellError}`);
+          toast.error(sellError.message || 'Transaction failed');
+          return;
+        }
       }
     } catch (error: any) {
       console.error('Trade error:', error);
