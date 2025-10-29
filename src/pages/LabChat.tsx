@@ -546,58 +546,36 @@ export default function LabChat() {
               </Button>
             </Link>
 
-            {/* Buy/Sell H1 Section - Always visible */}
-            <div className="space-y-3">
-              <Card className="p-4 bg-gradient-to-br from-green-500/10 to-red-500/10 border-primary/20">
-                <div className="mb-3">
-                  <h3 className="text-sm font-bold mb-1">💎 Trade {labInfo.symbol} H1</h3>
-                  <p className="text-xs text-muted-foreground">Buy or sell H1 tokens on the bonding curve</p>
+            {bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress && (
+              <div className="mb-4 p-3 bg-muted/30 rounded-lg space-y-2">
+                <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
+                  <SelectTrigger className="h-8 text-sm">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="buy">🟢 Buy H1</SelectItem>
+                    <SelectItem value="sell">🔴 Sell H1</SelectItem>
+                  </SelectContent>
+                </Select>
+                <div className="flex gap-2">
+                  <Input
+                    type="number"
+                    placeholder={tradeAction === 'buy' ? 'Amount in LABS' : 'Amount in H1'}
+                    value={tradeAmount}
+                    onChange={(e) => setTradeAmount(e.target.value)}
+                    className="h-8 text-sm"
+                  />
+                  <Button 
+                    size="sm" 
+                    onClick={handleTrade}
+                    disabled={trading || !isConnected}
+                    className="whitespace-nowrap"
+                  >
+                    {trading ? <Loader2 className="h-3 w-3 animate-spin" /> : '💎 Trade'}
+                  </Button>
                 </div>
-                
-                {bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress ? (
-                  <div className="space-y-3">
-                    <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
-                      <SelectTrigger className="h-9">
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="buy">🟢 Buy H1</SelectItem>
-                        <SelectItem value="sell">🔴 Sell H1</SelectItem>
-                      </SelectContent>
-                    </Select>
-                    
-                    <Input
-                      type="number"
-                      placeholder={tradeAction === 'buy' ? 'Amount in LABS' : 'Amount in H1'}
-                      value={tradeAmount}
-                      onChange={(e) => setTradeAmount(e.target.value)}
-                      className="h-9"
-                    />
-                    
-                    <Button 
-                      onClick={handleTrade}
-                      disabled={trading || !isConnected}
-                      className={`w-full h-10 ${tradeAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`}
-                    >
-                      {trading ? (
-                        <><Loader2 className="h-4 w-4 animate-spin mr-2" /> Processing...</>
-                      ) : (
-                        <>{tradeAction === 'buy' ? '🟢 Buy' : '🔴 Sell'} {tradeAmount || '0'} {tradeAction === 'buy' ? 'LABS' : 'H1'}</>
-                      )}
-                    </Button>
-                  </div>
-                ) : (
-                  <div className="text-center py-4">
-                    <p className="text-xs text-muted-foreground mb-2">
-                      {bondingCurveAddress === null ? '⏳ Loading bonding curve...' : '⚠️ Bonding curve not deployed yet'}
-                    </p>
-                    <p className="text-xs text-muted-foreground">
-                      Lab owner needs to deploy the curve first
-                    </p>
-                  </div>
-                )}
-              </Card>
-            </div>
+              </div>
+            )}
 
             <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
               <p className="font-semibold text-foreground mb-2">Chat Info</p>
