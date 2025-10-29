@@ -84,6 +84,7 @@ export default function LabChat() {
   const [tradeAmount, setTradeAmount] = useState('100');
   const [trading, setTrading] = useState(false);
   const [bondingCurveAddress, setBondingCurveAddress] = useState<string | null>(null);
+  const [userH1Balance, setUserH1Balance] = useState<string>('0');
 
   // Use mock data if available, otherwise create a default lab info
   const labInfo = labInfoData[id || ""] || {
@@ -139,6 +140,35 @@ export default function LabChat() {
 
     fetchBondingCurve();
   }, [id]);
+
+  const hasBondingCurve = bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress;
+
+  // Fetch user's H1 balance for this lab
+  useEffect(() => {
+    const fetchH1Balance = async () => {
+      if (!address || !isConnected || !sdk) return;
+      
+      try {
+        const walletProvider = sdk.getProvider();
+        const provider = new ethers.BrowserProvider(walletProvider as any);
+        
+        // Get vault address from bonding curve
+        if (hasBondingCurve && bondingCurveAddress) {
+          const curve = new ethers.Contract(bondingCurveAddress, BondingCurveSale_ABI, provider);
+          const vaultAddress = await curve.vault();
+          
+          // Get user's vault share balance
+          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+          const balance = await vault.balanceOf(address);
+          setUserH1Balance(ethers.formatEther(balance));
+        }
+      } catch (error) {
+        console.error('Error fetching H1 balance:', error);
+      }
+    };
+    
+    fetchH1Balance();
+  }, [address, isConnected, sdk, hasBondingCurve, bondingCurveAddress]);
 
   useEffect(() => {
     if (scrollRef.current) {
@@ -230,7 +260,17 @@ export default function LabChat() {
         if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully bought ${labInfo.symbol} H1 tokens!`);
         
-        // Refresh and reset
+        // Refresh H1 balance
+        if (hasBondingCurve && bondingCurveAddress) {
+          const provider = new ethers.BrowserProvider(walletProvider as any);
+          const curve = new ethers.Contract(bondingCurveAddress, BondingCurveSale_ABI, provider);
+          const vaultAddress = await curve.vault();
+          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+          const balance = await vault.balanceOf(address);
+          setUserH1Balance(ethers.formatEther(balance));
+        }
+        
+        // Reset
         setTradeAmount('100');
         
       } else {
@@ -294,7 +334,17 @@ export default function LabChat() {
         if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully sold ${labInfo.symbol} H1 tokens!`);
         
-        // Refresh and reset
+        // Refresh H1 balance
+        if (hasBondingCurve && bondingCurveAddress) {
+          const provider = new ethers.BrowserProvider(walletProvider as any);
+          const curve = new ethers.Contract(bondingCurveAddress, BondingCurveSale_ABI, provider);
+          const vaultAddress = await curve.vault();
+          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+          const balance = await vault.balanceOf(address);
+          setUserH1Balance(ethers.formatEther(balance));
+        }
+        
+        // Reset
         setTradeAmount('100');
       }
     } catch (error: any) {
@@ -546,7 +596,7 @@ export default function LabChat() {
               </Button>
             </Link>
 
-            {bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress && (
+            {hasBondingCurve && (
               <div className="mb-4 p-3 bg-muted/30 rounded-lg space-y-2">
                 <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
                   <SelectTrigger className="h-8 text-sm">
@@ -573,6 +623,17 @@ export default function LabChat() {
                   >
                     {trading ? <Loader2 className="h-3 w-3 animate-spin" /> : '💎 Trade'}
                   </Button>
+                </div>
+              </div>
+            )}
+
+            {parseFloat(userH1Balance) > 0 && (
+              <div className="mb-4 p-2 bg-primary/10 rounded-lg border border-primary/20">
+                <div className="flex items-center justify-between">
+                  <span className="text-xs text-muted-foreground">You own:</span>
+                  <span className="text-sm font-bold text-primary">
+                    {parseFloat(userH1Balance).toFixed(4)} {labInfo.symbol} H1
+                  </span>
                 </div>
               </div>
             )}
