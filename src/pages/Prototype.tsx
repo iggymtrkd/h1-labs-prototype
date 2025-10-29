@@ -2365,28 +2365,110 @@ export default function Prototype() {
         // Amount in wei
         const amountWei = ethers.parseEther(tradeAmount);
 
-        // Step 1: Approve LABS spending
-        addLog('info', 'H1 Marketplace', '📝 Step 1/2: Requesting approval to spend LABS tokens...');
-        const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
-        addLog('info', 'H1 Marketplace', '⏳ Mining approval transaction...');
-        await approveTx.wait();
-        addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
+        // Step 0: Check LABS balance
+        addLog('info', 'H1 Marketplace', '🔍 Step 0/3: Checking LABS balance...');
+        try {
+          const balance = await labsToken.balanceOf(address);
+          addLog('info', 'H1 Marketplace', `💰 Your LABS balance: ${ethers.formatEther(balance)} LABS`);
+          if (balance < amountWei) {
+            const shortfall = ethers.formatEther(amountWei - balance);
+            addLog('error', 'H1 Marketplace', `❌ Insufficient LABS balance. Need ${shortfall} more LABS`);
+            toast.error(`Insufficient LABS balance. You need ${shortfall} more LABS`);
+            return;
+          }
+        } catch (balanceError) {
+          addLog('warning', 'H1 Marketplace', '⚠️ Could not verify balance, proceeding with transaction');
+        }
 
-        // Step 2: Buy H1 tokens via bonding curve
-        addLog('info', 'H1 Marketplace', `📝 Step 2/2: Buying H1 ${lab.symbol} tokens...`);
-        const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
-        const minSharesOut = 0; // Could add slippage protection here
-        const buyTx = await curve.buy(amountWei, address, minSharesOut);
-        addLog('info', 'H1 Marketplace', '⏳ Mining buy transaction...');
-        const receipt = await buyTx.wait();
-        
-        addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`, buyTx.hash);
-        toast.success(`Successfully bought H1 ${lab.symbol}!`);
-        
-        // Refresh marketplace data
-        await loadMarketplaceLabs();
-        
-        setTradeAmount('1');
+        // Step 1: Approve LABS spending
+        addLog('info', 'H1 Marketplace', '📝 Step 1/3: Requesting approval to spend LABS tokens...');
+        try {
+          const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
+          addLog('info', 'H1 Marketplace', '⏳ Mining approval transaction...');
+          const approveReceipt = await approveTx.wait();
+          if (!approveReceipt) {
+            throw new Error('Approval transaction failed - no receipt');
+          }
+          addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
+        } catch (approveError: any) {
+          addLog('error', 'H1 Marketplace', `❌ Approval failed: ${approveError.message || approveError}`);
+          toast.error(`Approval failed: ${approveError.message || 'Unknown error'}`);
+          return;
+        }
+
+        // Step 2: Validate vault exists and has initial mint
+        addLog('info', 'H1 Marketplace', '📝 Step 2/3: Validating vault...');
+        try {
+          const vault = new ethers.Contract(lab.vaultAddress, LabVault_ABI, provider);
+          const initialMintCompleted = await vault.initialMintCompleted();
+          if (!initialMintCompleted) {
+            addLog('warning', 'H1 Marketplace', '⚠️ Vault initial mint not yet completed');
+          }
+          const assetsPerShare = await vault.assetsPerShare();
+          addLog('info', 'H1 Marketplace', `📊 Vault NAV: ${ethers.formatEther(assetsPerShare)} LABS per share`);
+        } catch (vaultError: any) {
+          addLog('warning', 'H1 Marketplace', `⚠️ Could not validate vault: ${vaultError.message}`);
+        }
+
+        // Step 3: Buy H1 tokens via bonding curve
+        addLog('info', 'H1 Marketplace', `📝 Step 3/3: Buying H1 ${lab.symbol} tokens...`);
+        try {
+          const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
+          
+          // Check if curve is paused
+          try {
+            const isPaused = await curve.paused();
+            if (isPaused) {
+              throw new Error('Bonding curve is paused for maintenance');
+            }
+          } catch (pauseCheckError) {
+            addLog('warning', 'H1 Marketplace', '⚠️ Could not check pause status');
+          }
+
+          // Get current price for info
+          try {
+            const currentPrice = await curve.price();
+            addLog('info', 'H1 Marketplace', `💵 Current price: ${ethers.formatEther(currentPrice)} LABS per share`);
+          } catch {
+            addLog('warning', 'H1 Marketplace', '⚠️ Could not fetch current price');
+          }
+
+          const minSharesOut = 0; // Could add slippage protection here
+          const buyTx = await curve.buy(amountWei, address, minSharesOut);
+          addLog('info', 'H1 Marketplace', '⏳ Mining buy transaction...');
+          const receipt = await buyTx.wait();
+          
+          if (!receipt) {
+            throw new Error('Buy transaction failed - no receipt');
+          }
+
+          addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`, buyTx.hash);
+          toast.success(`Successfully bought H1 ${lab.symbol}!`);
+          
+          // Refresh marketplace data
+          await loadMarketplaceLabs();
+          
+          setTradeAmount('1');
+        } catch (buyError: any) {
+          addLog('error', 'H1 Marketplace', `❌ Buy transaction failed: ${buyError.message || buyError}`);
+          
+          // Provide specific guidance based on error
+          let userMessage = buyError.message || 'Failed to execute buy transaction';
+          if (userMessage.includes('transfer')) {
+            userMessage = 'Token transfer failed. Check your balance and approval.';
+          } else if (userMessage.includes('SlippageExceeded')) {
+            userMessage = 'Slippage exceeded. Try again with a smaller amount.';
+          } else if (userMessage.includes('PriceOutOfBounds')) {
+            userMessage = 'Price is out of bounds. Please try again.';
+          } else if (userMessage.includes('TransferFailed')) {
+            userMessage = 'Transfer failed. Ensure you have approved and have sufficient balance.';
+          } else if (userMessage.includes('paused')) {
+            userMessage = 'Bonding curve is paused. Please try again later.';
+          }
+          
+          toast.error(userMessage);
+          return;
+        }
       } else {
         // Sell functionality (redeem from vault)
         toast.info('Sell/Redeem functionality coming soon - requires vault redemption flow');
@@ -2394,7 +2476,7 @@ export default function Prototype() {
     } catch (error: any) {
       console.error('Trade error:', error);
       addLog('error', 'H1 Marketplace', `❌ ${error.message || 'Failed to trade H1 tokens'}`);
-      toast.error('Failed to trade H1 tokens');
+      toast.error(error.message || 'Failed to trade H1 tokens');
     } finally {
       setLoading(null);
     }
@@ -3166,8 +3248,7 @@ export default function Prototype() {
                             </div>
                             <div>
                               <span className="text-muted-foreground">Scholar Wallet:</span>
-                              <p className="font-mono text-xs break-all">
-                                {datasetMetadata.step3 ? datasetMetadata.step3.walletAddress : 'Not available yet'}
+                              <p className="font-mono text-xs break-all">{datasetMetadata.step3 ? datasetMetadata.step3.walletAddress : 'Not available yet'}
                               </p>
                               <p className="text-xs text-green-500">{datasetMetadata.step3 ? '✓ Real (onchain)' : ''}</p>
                             </div>
@@ -3180,9 +3261,7 @@ export default function Prototype() {
                             </div>
                             <div>
                               <span className="text-muted-foreground">Enriched Data IDs:</span>
-                              <p className="font-mono text-xs">
-                                {datasetMetadata.step2?.dataId ? `#${datasetMetadata.step2.dataId}` : 'Not available yet'}
-                              </p>
+                              <p className="font-mono text-xs">#{datasetMetadata.step2?.dataId || 'N/A'}</p>
                               <p className="text-xs text-yellow-500">⚠ Linked from Step 2</p>
                             </div>
                             <div>
@@ -3222,16 +3301,13 @@ export default function Prototype() {
                             </div>
                             <div>
                               <span className="text-muted-foreground">Buyer Wallet:</span>
-                              <p className="font-mono text-xs break-all">
-                                {datasetMetadata.step4 ? datasetMetadata.step4.buyer : 'Not available yet'}
+                              <p className="font-mono text-xs break-all">{datasetMetadata.step4 ? datasetMetadata.step4.buyer : 'Not available yet'}
                               </p>
                               <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real (onchain)' : ''}</p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">Timestamp:</span>
-                              <p className="font-mono text-xs">
-                                {datasetMetadata.step4 ? datasetMetadata.step4.purchaseTimestamp.toLocaleString() : 'Not available yet'}
-                              </p>
+                              <p className="font-mono text-xs">{datasetMetadata.step4 ? datasetMetadata.step4.purchaseTimestamp.toLocaleString() : 'Not available yet'}</p>
                               <p className="text-xs text-green-500">{datasetMetadata.step4 ? '✓ Real' : ''}</p>
                             </div>
                             <div>
