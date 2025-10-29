@@ -294,35 +294,66 @@ export default function LabChat() {
           throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(h1Balance)} but need ${tradeAmount}`);
         }
         
-        // Encode approval call for vault shares (H1 tokens) - use simple approve like buy function
-        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
-        const approvalData = vaultInterface.encodeFunctionData('approve', [curveAddress, amountWei]);
+        // Check current allowance before approving
+        const currentAllowance = await vault.allowance(address, curveAddress);
+        
+        console.log('[SELL] Current allowance:', ethers.formatEther(currentAllowance), 'H1');
+        console.log('[SELL] Amount to sell:', tradeAmount, 'H1');
         
         // Encode sell call
         const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
         const sellData = curveInterface.encodeFunctionData('sell', [amountWei, address, 0]);
-
-        // Send batched transaction
-        const bundleId = await walletProvider.request({
-          method: 'wallet_sendCalls',
-          params: [{
-            version: '1.0',
-            from: address,
-            chainId: chainIdHex,
-            calls: [
-              {
-                to: vaultAddress,
-                data: approvalData,
-                value: '0x0'
-              },
-              {
+        
+        const chainIdHex = `0x${CONTRACTS.CHAIN_ID.toString(16)}`;
+        let bundleId: string;
+        
+        if (currentAllowance >= amountWei) {
+          // Sufficient allowance - skip approval
+          toast.info('Selling H1 tokens (1 confirmation)...');
+          console.log('[SELL] Sufficient allowance, skipping approval');
+          
+          bundleId = await walletProvider.request({
+            method: 'wallet_sendCalls',
+            params: [{
+              version: '1.0',
+              from: address,
+              chainId: chainIdHex,
+              calls: [{
                 to: curveAddress,
                 data: sellData,
                 value: '0x0'
-              }
-            ]
-          }]
-        }) as string;
+              }]
+            }]
+          }) as string;
+        } else {
+          // Need approval - use infinite approval
+          toast.info('Approving H1 tokens for trading (1 confirmation)...');
+          console.log('[SELL] Insufficient allowance, approving infinite amount');
+          
+          const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
+          const approvalData = vaultInterface.encodeFunctionData('approve', [curveAddress, ethers.MaxUint256]);
+          
+          bundleId = await walletProvider.request({
+            method: 'wallet_sendCalls',
+            params: [{
+              version: '1.0',
+              from: address,
+              chainId: chainIdHex,
+              calls: [
+                {
+                  to: vaultAddress,
+                  data: approvalData,
+                  value: '0x0'
+                },
+                {
+                  to: curveAddress,
+                  data: sellData,
+                  value: '0x0'
+                }
+              ]
+            }]
+          }) as string;
+        }
 
         // Poll for confirmation
         let confirmed = false;
