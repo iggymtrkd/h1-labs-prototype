@@ -731,13 +731,30 @@ export default function Prototype() {
         // Check 1: Verify staked balance on-chain
         try {
           const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
-          const stakedBalance = await testingFacet.getStakedBalance(address);
+          
+          // CRITICAL: Check if stake is under the smart wallet address
+          const signerAddress = await signer.getAddress();
+          addLog('info', 'Pre-flight', `🔍 Your EOA: ${address}`);
+          addLog('info', 'Pre-flight', `🔍 Smart Wallet (msg.sender): ${signerAddress}`);
+          
+          const stakedBalance = await testingFacet.getStakedBalance(signerAddress);
           const stakedAmount = parseFloat(ethers.formatEther(stakedBalance));
-          addLog('info', 'Pre-flight', `✓ Staked balance: ${stakedAmount.toLocaleString()} LABS (need 100,000)`);
+          addLog('info', 'Pre-flight', `✓ Staked balance (smart wallet): ${stakedAmount.toLocaleString()} LABS`);
+          
+          // Also check EOA stake for comparison
+          const eoaStake = await testingFacet.getStakedBalance(address);
+          const eoaStakeAmount = parseFloat(ethers.formatEther(eoaStake));
+          addLog('info', 'Pre-flight', `✓ Staked balance (EOA): ${eoaStakeAmount.toLocaleString()} LABS`);
           
           if (stakedBalance < ethers.parseEther('100000')) {
-            throw new Error(`Insufficient stake: ${stakedAmount.toFixed(2)} LABS staked, need 100,000 LABS`);
+            addLog('error', 'Pre-flight', '❌ PROBLEM FOUND: Stake is under your EOA, but contract sees smart wallet address!');
+            addLog('error', 'Pre-flight', `❌ Your smart wallet (${signerAddress}) has ${stakedAmount.toFixed(2)} LABS staked`);
+            addLog('error', 'Pre-flight', `✓ Your EOA (${address}) has ${eoaStakeAmount.toFixed(2)} LABS staked`);
+            addLog('error', 'Pre-flight', '📝 SOLUTION: You need to stake via your SMART WALLET, not your EOA');
+            throw new Error(`Smart wallet has insufficient stake: ${stakedAmount.toFixed(2)} LABS (need 100,000 LABS)`);
           }
+          
+          addLog('success', 'Pre-flight', `✅ Smart wallet has sufficient stake: ${stakedAmount.toLocaleString()} LABS`);
         } catch (e: any) {
           console.error('Failed to check staked balance:', e);
           addLog('error', 'Pre-flight', `❌ Could not verify staked balance: ${e?.message}`);
