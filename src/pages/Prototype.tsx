@@ -2309,23 +2309,19 @@ export default function Prototype() {
 
       // Prepare batch calls for wallet_sendCalls (EIP-5792)
       const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
-      const ethProvider = (window as any).ethereum;
       
-      if (!ethProvider) {
+      if (!walletProvider) {
         throw new Error('Wallet provider not available');
       }
-
-      const accounts = await ethProvider.request({ method: 'eth_requestAccounts' }) as string[];
-      const fromAddress = accounts[0];
 
       addLog('info', 'Buy H1', '📤 Requesting batch transaction (1 wallet confirmation)...');
       
       // Send both calls in a single batch via wallet_sendCalls (EIP-5792)
-      const bundleId = await ethProvider.request({
+      const bundleId = await walletProvider.request({
         method: 'wallet_sendCalls',
         params: [{
           version: '1.0',
-          from: fromAddress,
+          from: address,
           chainId: chainIdHex,
           calls: [
             {
@@ -2354,7 +2350,7 @@ export default function Prototype() {
         await new Promise(resolve => setTimeout(resolve, 1000));
         
         try {
-          const callsStatus = await ethProvider.request({
+          const callsStatus = await walletProvider.request({
             method: 'wallet_getCallsStatus',
             params: [bundleId],
           }) as any;
