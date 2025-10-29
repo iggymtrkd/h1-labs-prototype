@@ -182,11 +182,6 @@ export default function LabChat() {
       return;
     }
 
-    if (!bondingCurveAddress || bondingCurveAddress === ethers.ZeroAddress) {
-      toast.error('Bonding curve not deployed for this lab yet');
-      return;
-    }
-
     if (!tradeAmount || isNaN(Number(tradeAmount)) || Number(tradeAmount) <= 0) {
       toast.error('Enter a valid amount');
       return;
@@ -204,13 +199,32 @@ export default function LabChat() {
         throw new Error('Wallet provider not available');
       }
 
+      // Fetch bonding curve address dynamically if not already loaded
+      let curveAddress = bondingCurveAddress;
+      if (!curveAddress || curveAddress === ethers.ZeroAddress) {
+        console.log('[LabChat] Fetching bonding curve address dynamically...');
+        const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+        const diamond = new ethers.Contract(
+          CONTRACTS.H1Diamond,
+          ['function getLabBondingCurve(uint256) view returns (address)'],
+          rpc
+        );
+        curveAddress = await diamond.getLabBondingCurve(parseInt(id!));
+        setBondingCurveAddress(curveAddress);
+        console.log('[LabChat] Dynamically fetched curve address:', curveAddress);
+        
+        if (!curveAddress || curveAddress === ethers.ZeroAddress) {
+          throw new Error('Bonding curve address not found');
+        }
+      }
+
       if (tradeAction === 'buy') {
         // Batch: approve + buy in single transaction
         toast.info('Preparing to buy H1 tokens (1 confirmation)...');
         
         // Encode approval call
         const labsTokenInterface = new ethers.Interface(LABSToken_ABI);
-        const approvalData = labsTokenInterface.encodeFunctionData('approve', [bondingCurveAddress, amountWei]);
+        const approvalData = labsTokenInterface.encodeFunctionData('approve', [curveAddress, amountWei]);
         
         // Encode buy call
         const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
@@ -230,7 +244,7 @@ export default function LabChat() {
                 value: '0x0'
               },
               {
-                to: bondingCurveAddress,
+                to: curveAddress,
                 data: buyData,
                 value: '0x0'
               }
@@ -261,14 +275,12 @@ export default function LabChat() {
         toast.success(`Successfully bought ${labInfo.symbol} H1 tokens!`);
         
         // Refresh H1 balance
-        if (hasBondingCurve && bondingCurveAddress) {
-          const provider = new ethers.BrowserProvider(walletProvider as any);
-          const curve = new ethers.Contract(bondingCurveAddress, BondingCurveSale_ABI, provider);
-          const vaultAddress = await curve.vault();
-          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
-          const balance = await vault.balanceOf(address);
-          setUserH1Balance(ethers.formatEther(balance));
-        }
+        const provider = new ethers.BrowserProvider(walletProvider as any);
+        const curve = new ethers.Contract(curveAddress, BondingCurveSale_ABI, provider);
+        const vaultAddress = await curve.vault();
+        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+        const balance = await vault.balanceOf(address);
+        setUserH1Balance(ethers.formatEther(balance));
         
         // Reset
         setTradeAmount('100');
@@ -279,12 +291,12 @@ export default function LabChat() {
         
         // Get vault address (needed for batch transaction)
         const provider = new ethers.BrowserProvider(walletProvider as any);
-        const curve = new ethers.Contract(bondingCurveAddress!, BondingCurveSale_ABI, provider);
+        const curve = new ethers.Contract(curveAddress!, BondingCurveSale_ABI, provider);
         const vaultAddress = await curve.vault();
         
         // Encode approval call for vault shares (H1 tokens)
         const vaultInterface = new ethers.Interface(LabVault_ABI);
-        const approvalData = vaultInterface.encodeFunctionData('approve', [bondingCurveAddress, amountWei]);
+        const approvalData = vaultInterface.encodeFunctionData('approve', [curveAddress, amountWei]);
         
         // Encode sell call
         const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
@@ -304,7 +316,7 @@ export default function LabChat() {
                 value: '0x0'
               },
               {
-                to: bondingCurveAddress,
+                to: curveAddress,
                 data: sellData,
                 value: '0x0'
               }
@@ -334,15 +346,10 @@ export default function LabChat() {
         if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully sold ${labInfo.symbol} H1 tokens!`);
         
-        // Refresh H1 balance
-        if (hasBondingCurve && bondingCurveAddress) {
-          const provider = new ethers.BrowserProvider(walletProvider as any);
-          const curve = new ethers.Contract(bondingCurveAddress, BondingCurveSale_ABI, provider);
-          const vaultAddress = await curve.vault();
-          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
-          const balance = await vault.balanceOf(address);
-          setUserH1Balance(ethers.formatEther(balance));
-        }
+        // Refresh H1 balance (reuse existing vaultAddress from above)
+        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+        const balance = await vault.balanceOf(address);
+        setUserH1Balance(ethers.formatEther(balance));
         
         // Reset
         setTradeAmount('100');
