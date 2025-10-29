@@ -1157,6 +1157,9 @@ export default function Prototype() {
         setLabName('');
         setLabSymbol('');
         setLabDomain('healthcare');
+        
+        // ✅ FIX: Reset loading state
+        setLoading(null);
     } catch (error: any) {
       console.error('❌ Create lab error (FULL OBJECT):', error);
       console.error('❌ Error data:', error?.data);
@@ -2402,11 +2405,14 @@ export default function Prototype() {
     if (!sdk || !address) return;
     
     try {
+      // ✅ FIX: Call the comprehensive loadBlockchainLabs function
+      await loadBlockchainLabs();
+      
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
       const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, provider);
       
-      // Load labs by querying lab IDs (1-50 range for demo)
+      // Also update the dropdown lab IDs
       const labs: number[] = [];
       for (let labId = 1; labId <= 50; labId++) {
         try {
@@ -2419,8 +2425,6 @@ export default function Prototype() {
         }
       }
       setCreatedLabIds(labs);
-      
-      // Data IDs are tracked locally from creation (not enumerable on-chain without events)
       
     } catch (error) {
       console.error('Error loading blockchain labs:', error);
@@ -2664,16 +2668,11 @@ export default function Prototype() {
                 </Button>
 
                 {(loading === 'stake' || stakeSteps.approve !== 'idle' || stakeSteps.stake !== 'idle') && <div className="rounded-md bg-muted/50 p-3">
-                    <div className="text-xs font-semibold mb-2">Signing Progress</div>
+                    <div className="text-xs font-semibold mb-2">Batch Transaction</div>
                     <div className="space-y-2 text-xs">
                       <div className="flex items-center gap-2">
-                        {statusIcon(stakeSteps.approve)}
-                        <span>Step 1: Approve LABS</span>
-                        <span className="ml-auto text-muted-foreground">{statusText[stakeSteps.approve]}</span>
-                      </div>
-                      <div className="flex items-center gap-2">
                         {statusIcon(stakeSteps.stake)}
-                        <span>Step 2: Stake LABS</span>
+                        <span>Wallet confirmation: Approve + Stake LABS</span>
                         <span className="ml-auto text-muted-foreground">{statusText[stakeSteps.stake]}</span>
                       </div>
                     </div>
