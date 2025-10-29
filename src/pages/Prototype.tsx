@@ -631,76 +631,55 @@ export default function Prototype() {
       return;
     }
     try {
-      // CRITICAL FIX: Use direct window.ethereum instead of smart wallet SDK
-      // Why? Smart wallets have a different msg.sender than the EOA that staked LABS
-      // The contract checks stakedBalances[msg.sender], which would be 0 for smart wallet
-      
-      if (!window.ethereum) {
-        toast.error('No wallet detected. Please install MetaMask or another Web3 wallet.');
-        addLog('error', 'Diagnostics', '❌ No window.ethereum provider found');
-        setLoading(null);
-        return;
-      }
-      
-      addLog('info', 'Diagnostics', '🔍 Using direct EOA wallet connection for lab creation...');
+      const walletProvider = sdk.getProvider();
       
       // Check network first
-      const chainIdHex = await window.ethereum.request({ method: 'eth_chainId' }) as string;
+      addLog('info', 'Diagnostics', '🔍 Checking wallet network...');
+      const chainIdHex = await walletProvider.request({ method: 'eth_chainId' }) as string;
       const currentChainId = parseInt(chainIdHex, 16);
       
       if (currentChainId !== CONTRACTS.CHAIN_ID) {
-        addLog('info', 'Diagnostics', '🌐 Switching to Base Sepolia...');
-        const targetChainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
+        addLog('info', 'Diagnostics', '🌐 Attempting to switch wallet to Base Sepolia...');
         try {
-          await window.ethereum.request({
+          const targetChainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
+          await walletProvider.request({
             method: 'wallet_switchEthereumChain',
             params: [{ chainId: targetChainIdHex }]
           });
-          addLog('success', 'Diagnostics', '✅ Network switched to Base Sepolia');
+          addLog('success', 'Diagnostics', '✅ Wallet switched to Base Sepolia');
         } catch (switchErr: any) {
-          if (switchErr.code === 4902) {
-            // Chain not added, add it
-            try {
-              await window.ethereum.request({
-                method: 'wallet_addEthereumChain',
-                params: [{
-                  chainId: targetChainIdHex,
-                  chainName: 'Base Sepolia',
-                  nativeCurrency: { name: 'ETH', symbol: 'ETH', decimals: 18 },
-                  rpcUrls: [CONTRACTS.RPC_URL],
-                  blockExplorerUrls: [CONTRACTS.BLOCK_EXPLORER],
-                }],
-              });
-              addLog('success', 'Diagnostics', '✅ Base Sepolia network added and switched');
-            } catch (addErr: any) {
-              addLog('error', 'Diagnostics', `❌ Failed to add network: ${addErr?.message}`);
-              toast.error('Please manually switch to Base Sepolia network');
-              setLoading(null);
-              return;
-            }
-          } else {
-            addLog('error', 'Diagnostics', `❌ Failed to switch network: ${switchErr?.message}`);
-            toast.error('Wrong network. Please switch to Base Sepolia.');
-            setLoading(null);
-            return;
-          }
+          addLog('error', 'Diagnostics', `❌ Failed to switch network: ${switchErr?.message || String(switchErr)}`);
+          toast.error('Wrong network. Please switch to Base Sepolia.');
+          setLoading(null);
+          return;
         }
       }
       
-      // Create ethers provider and signer from direct wallet connection
-      const provider = new ethers.BrowserProvider(window.ethereum);
+      // Create ethers provider and signer from Base Account SDK provider
+      const provider = new ethers.BrowserProvider(walletProvider as any);
       let signer;
       
       try {
-        signer = await provider.getSigner();
-        const signerAddress = await signer.getAddress();
-        addLog('success', 'Diagnostics', `✅ Using EOA signer: ${signerAddress.slice(0, 10)}...`);
+        // CRITICAL: Get the actual signer address (smart wallet address if using smart wallet)
+        const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
+        const signerAddress = accounts[0];
         
-        // Verify this matches the staked address
+        addLog('info', 'Diagnostics', `📍 Transaction will be from: ${signerAddress.slice(0, 10)}...`);
+        addLog('info', 'Diagnostics', `📍 Connected EOA address: ${address.slice(0, 10)}...`);
+        
+        // Check if using smart wallet (addresses differ)
         if (signerAddress.toLowerCase() !== address.toLowerCase()) {
-          addLog('info', 'Diagnostics', `⚠️ Warning: Signer (${signerAddress.slice(0,10)}...) differs from connected address (${address.slice(0,10)}...)`);
-          addLog('info', 'Diagnostics', 'This is OK if you staked from this EOA address');
+          addLog('error', 'Diagnostics', '❌ SMART WALLET DETECTED: Address mismatch!');
+          addLog('error', 'Diagnostics', `   Your EOA (${address.slice(0,10)}...) staked LABS`);
+          addLog('error', 'Diagnostics', `   But smart wallet (${signerAddress.slice(0,10)}...) will send transaction`);
+          addLog('error', 'Diagnostics', `   Contract sees 0 LABS for smart wallet address!`);
+          toast.error('Smart wallet issue: Please stake LABS from your smart wallet address first', { duration: 8000 });
+          setLoading(null);
+          return;
         }
+        
+        signer = await provider.getSigner(signerAddress);
+        addLog('success', 'Diagnostics', `✅ Signer created for address: ${signerAddress.slice(0, 10)}...`);
       } catch (signerErr: any) {
         console.error('Failed to get signer:', signerErr);
         addLog('error', 'Diagnostics', `❌ Failed to create signer: ${signerErr?.message || String(signerErr)}`);
