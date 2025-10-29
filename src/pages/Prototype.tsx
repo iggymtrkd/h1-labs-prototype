@@ -921,19 +921,7 @@ export default function Prototype() {
         
         // Send via wallet_sendCalls (Base Account method)
         const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16); // Base Sepolia = 84532 = 0x14a34
-        
-        console.log('📤 Sending wallet_sendCalls with params:', {
-          version: '1.0',
-          from: fromAddress,
-          chainId: chainIdHex,
-          calls: [{
-            to: CONTRACTS.H1Diamond,
-            data: callData.slice(0, 66) + '...', // Log first 66 chars
-            value: '0x0'
-          }]
-        });
-        
-        const result = await walletProvider.request({
+        const txHash = await walletProvider.request({
           method: 'wallet_sendCalls',
           params: [{
             version: '1.0',
@@ -945,27 +933,9 @@ export default function Prototype() {
               value: '0x0'
             }]
           }]
-        });
+        }) as string;
         
-        console.log('✅ wallet_sendCalls result:', result);
-        addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent, result: ${JSON.stringify(result)}`);
-        
-        // The result might be a bundle/call ID, not a tx hash
-        // We need to poll for the actual transaction
-        addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for transaction to be mined...');
-        
-        // Try to extract transaction hash from the result
-        let txHash: string;
-        if (typeof result === 'string') {
-          txHash = result;
-        } else if (result && typeof result === 'object' && 'hash' in result) {
-          txHash = (result as any).hash;
-        } else {
-          console.error('Unexpected result format:', result);
-          throw new Error('Could not extract transaction hash from wallet response');
-        }
-        
-        console.log('📝 Using transaction hash:', txHash);
+        addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent: ${txHash}`);
         addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for confirmation...');
         
         // Wait for transaction to be mined
