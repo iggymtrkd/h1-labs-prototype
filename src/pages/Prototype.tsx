@@ -792,50 +792,66 @@ export default function Prototype() {
         addLog('info', 'Stage 1: Create Lab', `📝 Inputs validated: "${labName}" (${labSymbol}) @ ${labDomain}`);
         
         // CRITICAL: Test the actual call with staticCall to get the real error
-        addLog('info', 'Stage 1: Create Lab', '🧪 Testing contract call (staticCall)...');
+        addLog('info', 'Stage 1: Create Lab', '🧪 Testing contract call with staticCall...');
         try {
-          await diamond.createLab.staticCall(labName, labSymbol, labDomain);
-          addLog('success', 'Stage 1: Create Lab', '✅ Contract call test passed!');
+          const result = await diamond.createLab.staticCall(labName, labSymbol, labDomain);
+          addLog('success', 'Stage 1: Create Lab', `✅ Contract call test passed! Would return: labId=${result[0]}, vault=${result[1]}, curve=${result[2]}`);
         } catch (staticErr: any) {
-          console.error('❌ StaticCall failed:', staticErr);
+          console.error('❌ StaticCall failed - FULL ERROR:', staticErr);
+          console.error('Error code:', staticErr.code);
+          console.error('Error data:', staticErr.data);
+          console.error('Error reason:', staticErr.reason);
+          console.error('Error message:', staticErr.message);
           
-          // Decode the error
-          let errorMsg = 'Contract rejected the call';
-          let needsAdminSetup = false;
+          // Try to decode the actual revert reason
+          let errorMsg = 'Contract will revert';
+          let errorDetails = '';
           
+          // Check the error object structure
           if (staticErr.data) {
-            const errorData = staticErr.data;
-            console.log('Error data:', errorData);
+            errorDetails = `Error data: ${staticErr.data}`;
+            const errorData = staticErr.data.toString();
             
-            // Check for specific errors
-            if (errorData.includes('7138356f')) {
+            // Decode known error selectors
+            if (errorData.includes('7138356f') || staticErr.message?.includes('FactoryNotSet')) {
               errorMsg = 'VaultFactory not set in Diamond storage';
-              needsAdminSetup = true;
-            } else if (errorData.includes('ccb21934')) {
-              errorMsg = 'Insufficient LABS staked in Diamond storage (your stake may not be recorded in LibH1Storage.stakedBalances)';
-              needsAdminSetup = true;
-            } else if (errorData.includes('b4fa3fb3')) {
+              errorDetails = `VaultFactory must be set to: ${CONTRACTS.LabVaultFactory}`;
+            } else if (errorData.includes('ccb21934') || staticErr.message?.includes('InsufficientStake')) {
+              errorMsg = 'Insufficient LABS staked in Diamond';
+              errorDetails = 'Check that stakeLABS was called successfully and recorded in LibH1Storage.stakedBalances';
+            } else if (errorData.includes('b4fa3fb3') || staticErr.message?.includes('InvalidInput')) {
               errorMsg = 'Invalid input parameters';
+              errorDetails = `Name: "${labName}" (${labName.length} chars), Symbol: "${labSymbol}" (${labSymbol.length} chars), Domain: "${labDomain}" (${labDomain.length} chars)`;
             }
-          } else if (staticErr.message) {
-            errorMsg = staticErr.message;
           }
           
-          addLog('error', 'Stage 1: Create Lab', `❌ ${errorMsg}`);
-          
-          if (needsAdminSetup) {
-            addLog('error', 'Stage 1: Create Lab', '⚠️ ADMIN ACTION REQUIRED:');
-            addLog('error', 'Stage 1: Create Lab', `1. Call setVaultFactory("${CONTRACTS.LabVaultFactory}") on LabVaultDeploymentFacet`);
-            addLog('error', 'Stage 1: Create Lab', '2. Ensure your stake is recorded in Diamond storage (call stakeLABS if needed)');
-            addLog('error', 'Stage 1: Create Lab', `3. VaultFactory address: ${CONTRACTS.LabVaultFactory}`);
-            toast.error('Contract needs admin initialization', {
-              description: 'Check activity log for setup steps',
-              duration: 10000,
-            });
-          } else {
-            toast.error(errorMsg, { duration: 7000 });
+          if (staticErr.reason) {
+            errorMsg = staticErr.reason;
           }
           
+          addLog('error', 'Stage 1: Create Lab', `❌ CONTRACT TEST FAILED: ${errorMsg}`);
+          if (errorDetails) {
+            addLog('error', 'Stage 1: Create Lab', `   Details: ${errorDetails}`);
+          }
+          
+          // Show what we know about the state
+          addLog('info', 'Stage 1: Create Lab', '📊 Checking contract state...');
+          try {
+            const params = await testingFacet.getProtocolParams();
+            addLog('info', 'Stage 1: Create Lab', `   LABS Token: ${params.labsToken}`);
+            addLog('info', 'Stage 1: Create Lab', `   Treasury: ${params.protocolTreasury}`);
+            addLog('info', 'Stage 1: Create Lab', `   Defaults initialized: ${params.defaultsInitialized}`);
+            
+            const stakedBal = await testingFacet.getStakedBalance(address);
+            addLog('info', 'Stage 1: Create Lab', `   Your staked balance in Diamond: ${ethers.formatEther(stakedBal)} LABS`);
+          } catch (e) {
+            addLog('error', 'Stage 1: Create Lab', '   ⚠️ Could not read contract state');
+          }
+          
+          toast.error(`Contract test failed: ${errorMsg}`, {
+            description: errorDetails || 'Check activity log for details',
+            duration: 10000,
+          });
           setLoading(null);
           return;
         }
