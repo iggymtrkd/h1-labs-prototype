@@ -294,8 +294,8 @@ export default function LabChat() {
           throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(h1Balance)} but need ${tradeAmount}`);
         }
         
-        // Encode approval call for vault shares (H1 tokens) - use simple approve ABI
-        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
+        // Encode approval call for vault shares (H1 tokens) - use LabVault ABI (mirrors buy pattern)
+        const vaultInterface = new ethers.Interface(LabVault_ABI);
         const approvalData = vaultInterface.encodeFunctionData('approve', [curveAddress, amountWei]);
         
         // Encode sell call
