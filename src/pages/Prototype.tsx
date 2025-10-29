@@ -753,6 +753,10 @@ export default function Prototype() {
       // ONE-STEP LAB CREATION: Everything happens in one transaction!
       addLog('info', 'Stage 1: Create Lab', '🚀 Creating lab with vault, bonding curve, and H1 distribution...');
       
+      // Get the actual transaction sender address FIRST
+      const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
+      const txSenderAddress = accounts[0];
+      
       let labId: number | string = "unknown";
       let vaultAddress = '';
       let bondingCurveAddress = '';
@@ -764,14 +768,21 @@ export default function Prototype() {
         // ✅ Pre-flight checks: Verify all prerequisites
         addLog('info', 'Stage 1: Create Lab', '🔍 Running pre-flight checks...');
         
-        // Check 1: Verify staked balance on-chain
+        // Check 1: Verify staked balance on-chain FOR THE TRANSACTION SENDER
         try {
           const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
-          const stakedBalance = await testingFacet.getStakedBalance(address);
+          const stakedBalance = await testingFacet.getStakedBalance(txSenderAddress);
           const stakedAmount = parseFloat(ethers.formatEther(stakedBalance));
-          addLog('info', 'Pre-flight', `✓ Staked balance: ${stakedAmount.toLocaleString()} LABS (need 100,000)`);
+          addLog('info', 'Pre-flight', `✓ Staked balance for TX sender (${txSenderAddress.slice(0,10)}...): ${stakedAmount.toLocaleString()} LABS (need 100,000)`);
           
           if (stakedBalance < ethers.parseEther('100000')) {
+            addLog('error', 'Pre-flight', `❌ INSUFFICIENT STAKE FOR TRANSACTION SENDER`);
+            addLog('error', 'Pre-flight', `   UI shows: ${address.slice(0,10)}...`);
+            addLog('error', 'Pre-flight', `   But transactions come from: ${txSenderAddress.slice(0,10)}...`);
+            addLog('error', 'Pre-flight', `   The TX sender only has ${stakedAmount.toFixed(2)} LABS staked`);
+            addLog('error', 'Pre-flight', `   💡 SOLUTION: Go to Step 1 and stake 100,000 LABS again`);
+            addLog('error', 'Pre-flight', `   This will stake from ${txSenderAddress.slice(0,10)}... (the actual TX sender)`);
+            toast.error(`Transaction sender needs 100k LABS staked. Please stake again from Step 1.`, { duration: 10000 });
             throw new Error(`Insufficient stake: ${stakedAmount.toFixed(2)} LABS staked, need 100,000 LABS`);
           }
         } catch (e: any) {
@@ -843,6 +854,7 @@ export default function Prototype() {
         
         // CRITICAL: Test the actual call with staticCall to get the real error
         addLog('info', 'Stage 1: Create Lab', '🧪 Testing contract call with staticCall...');
+        
         try {
           const result = await diamond.createLab.staticCall(labName, labSymbol, labDomain);
           addLog('success', 'Stage 1: Create Lab', `✅ Contract call test passed! Would return: labId=${result[0]}, vault=${result[1]}, curve=${result[2]}`);
@@ -921,21 +933,59 @@ export default function Prototype() {
         
         // Send via wallet_sendCalls (Base Account method)
         const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16); // Base Sepolia = 84532 = 0x14a34
-        const txHash = await walletProvider.request({
-          method: 'wallet_sendCalls',
-          params: [{
-            version: '1.0',
-            from: fromAddress,
-            chainId: chainIdHex,
-            calls: [{
-              to: CONTRACTS.H1Diamond,
-              data: callData,
-              value: '0x0'
-            }]
-          }]
-        }) as string;
         
-        addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent: ${txHash}`);
+        console.log('📤 Preparing wallet_sendCalls...');
+        addLog('info', 'Stage 1: Create Lab', '📤 Sending transaction to wallet...');
+        
+        let result;
+        try {
+          result = await walletProvider.request({
+            method: 'wallet_sendCalls',
+            params: [{
+              version: '2.0.0', // Base Account requires version 2.0.0
+              from: fromAddress,
+              chainId: chainIdHex,
+              calls: [{
+                to: CONTRACTS.H1Diamond,
+                data: callData,
+                value: '0x0'
+              }]
+            }]
+          });
+          
+          console.log('✅ wallet_sendCalls result:', result);
+          addLog('success', 'Stage 1: Create Lab', `✅ Wallet accepted transaction`);
+        } catch (walletErr: any) {
+          console.error('❌ wallet_sendCalls failed:', walletErr);
+          addLog('error', 'Stage 1: Create Lab', `❌ Wallet error: ${walletErr?.message || String(walletErr)}`);
+          
+          if (walletErr?.code === 4001) {
+            toast.error('Transaction rejected by user');
+          } else {
+            toast.error(`Wallet error: ${walletErr?.message || 'Unknown error'}`);
+          }
+          setLoading(null);
+          return;
+        }
+        
+        // The result might be a bundle/call ID, not a tx hash
+        addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for transaction to be mined...');
+        
+        // Try to extract transaction hash from the result
+        let txHash: string;
+        if (typeof result === 'string') {
+          txHash = result;
+        } else if (result && typeof result === 'object' && 'hash' in result) {
+          txHash = (result as any).hash;
+        } else {
+          console.error('Unexpected result format:', result);
+          addLog('error', 'Stage 1: Create Lab', `❌ Unexpected wallet response: ${JSON.stringify(result)}`);
+          toast.error('Unexpected wallet response format');
+          setLoading(null);
+          return;
+        }
+        
+        console.log('📝 Using transaction hash:', txHash);
         addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for confirmation...');
         
         // Wait for transaction to be mined
