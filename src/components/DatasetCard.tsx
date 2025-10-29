@@ -64,20 +64,9 @@ export function DatasetCard({
             </Badge>
           </div>
 
-          {/* Checkbox */}
-          <input
-            type="checkbox"
-            checked={isSelected}
-            onChange={(e) => {
-              e.stopPropagation();
-              onToggle(dataset.id);
-            }}
-            className="w-5 h-5 rounded cursor-pointer"
-          />
+          {/* File Stack Icon */}
+          <FileStack className="h-12 w-12 text-primary" />
         </div>
-
-        {/* File Stack Icon */}
-        <FileStack className="absolute top-4 right-16 h-12 w-12 text-primary/20" />
 
         {/* Description */}
         <p className="text-slate-400 text-sm mb-4 line-clamp-2">
