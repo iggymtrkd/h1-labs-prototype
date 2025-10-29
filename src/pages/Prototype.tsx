@@ -657,29 +657,51 @@ export default function Prototype() {
       
       // Create ethers provider and signer from Base Account SDK provider
       const provider = new ethers.BrowserProvider(walletProvider as any);
+      
+      // Import ABIs needed for lab creation (moved up to use in diagnostics)
+      const { LabVaultDeploymentFacet_ABI, TestingFacet_ABI: TestingFacetABI } = await import('@/contracts/abis');
+      
       let signer;
       
       try {
-        // CRITICAL: Get the actual signer address (smart wallet address if using smart wallet)
+        // CRITICAL: Get the actual transaction sender address
         const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
-        const signerAddress = accounts[0];
+        const txSenderAddress = accounts[0];
         
-        addLog('info', 'Diagnostics', `📍 Transaction will be from: ${signerAddress.slice(0, 10)}...`);
-        addLog('info', 'Diagnostics', `📍 Connected EOA address: ${address.slice(0, 10)}...`);
+        addLog('info', 'Diagnostics', '═══════════════════════════════════════');
+        addLog('info', 'Diagnostics', '🔍 WALLET ADDRESS DIAGNOSTIC');
+        addLog('info', 'Diagnostics', `📍 Connected address (UI): ${address.slice(0, 10)}...${address.slice(-8)}`);
+        addLog('info', 'Diagnostics', `📍 Transaction sender: ${txSenderAddress.slice(0, 10)}...${txSenderAddress.slice(-8)}`);
+        
+        // Check staked balance for BOTH addresses
+        const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacetABI, provider);
+        
+        const stakedUI = await testingFacet.getStakedBalance(address);
+        const stakedTx = await testingFacet.getStakedBalance(txSenderAddress);
+        
+        addLog('info', 'Diagnostics', `💰 LABS staked by UI address: ${ethers.formatEther(stakedUI)} LABS`);
+        addLog('info', 'Diagnostics', `💰 LABS staked by TX address: ${ethers.formatEther(stakedTx)} LABS`);
+        addLog('info', 'Diagnostics', '═══════════════════════════════════════');
         
         // Check if using smart wallet (addresses differ)
-        if (signerAddress.toLowerCase() !== address.toLowerCase()) {
-          addLog('error', 'Diagnostics', '❌ SMART WALLET DETECTED: Address mismatch!');
-          addLog('error', 'Diagnostics', `   Your EOA (${address.slice(0,10)}...) staked LABS`);
-          addLog('error', 'Diagnostics', `   But smart wallet (${signerAddress.slice(0,10)}...) will send transaction`);
-          addLog('error', 'Diagnostics', `   Contract sees 0 LABS for smart wallet address!`);
-          toast.error('Smart wallet issue: Please stake LABS from your smart wallet address first', { duration: 8000 });
-          setLoading(null);
-          return;
+        if (txSenderAddress.toLowerCase() !== address.toLowerCase()) {
+          if (stakedTx < ethers.parseEther('100000')) {
+            addLog('error', 'Diagnostics', '❌ PROBLEM IDENTIFIED: Smart Wallet with Insufficient Stake');
+            addLog('error', 'Diagnostics', `   Your UI shows ${address.slice(0,10)}... but transactions come from ${txSenderAddress.slice(0,10)}...`);
+            addLog('error', 'Diagnostics', `   The smart wallet (${txSenderAddress.slice(0,10)}...) has only ${ethers.formatEther(stakedTx)} LABS staked`);
+            addLog('error', 'Diagnostics', `   CONTRACT WILL REVERT: Need 100,000 LABS staked by ${txSenderAddress.slice(0,10)}...`);
+            addLog('info', 'Diagnostics', '💡 SOLUTION: Go back to Step 1 and stake 100,000 LABS again');
+            addLog('info', 'Diagnostics', '   This will stake from your smart wallet address and allow lab creation');
+            toast.error('Smart wallet needs to stake LABS. Please stake 100,000 LABS from Step 1 again.', { duration: 10000 });
+            setLoading(null);
+            return;
+          } else {
+            addLog('success', 'Diagnostics', '✅ Smart wallet has sufficient stake - proceeding...');
+          }
         }
         
-        signer = await provider.getSigner(signerAddress);
-        addLog('success', 'Diagnostics', `✅ Signer created for address: ${signerAddress.slice(0, 10)}...`);
+        signer = await provider.getSigner(txSenderAddress);
+        addLog('success', 'Diagnostics', `✅ Signer created for: ${txSenderAddress.slice(0, 10)}...`);
       } catch (signerErr: any) {
         console.error('Failed to get signer:', signerErr);
         addLog('error', 'Diagnostics', `❌ Failed to create signer: ${signerErr?.message || String(signerErr)}`);
@@ -688,12 +710,9 @@ export default function Prototype() {
         return;
       }
       
-      // Import ABIs needed for lab creation
-      const { LabVaultDeploymentFacet_ABI, TestingFacet_ABI } = await import('@/contracts/abis');
-      
       // Initialize Diamond storage if needed (one-time setup)
       addLog('info', 'Initialization', '⚙️ Checking Diamond configuration...');
-      const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
+      const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacetABI, signer);
       const deploymentFacet = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
       
       try {
