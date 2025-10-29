@@ -98,6 +98,7 @@ export const LabVault_ABI = [
   "function requestRedeem(uint256 shares) external returns (uint256 requestId)",
   "function redeem(uint256 shares, address receiver, address owner) external returns (uint256 assets)",
   "function approve(address spender, uint256 amount) external returns (bool)",
+  "function allowance(address owner, address spender) external view returns (uint256)",
   "function getLevel() external view returns (uint8)",
   "function initialMintCompleted() external view returns (bool)"
 ];
