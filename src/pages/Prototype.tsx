@@ -801,16 +801,19 @@ export default function Prototype() {
           
           // Decode the error
           let errorMsg = 'Contract rejected the call';
+          let needsAdminSetup = false;
+          
           if (staticErr.data) {
-            // Try to decode custom error
             const errorData = staticErr.data;
             console.log('Error data:', errorData);
             
             // Check for specific errors
             if (errorData.includes('7138356f')) {
-              errorMsg = 'VaultFactory not set in Diamond (admin must configure it)';
+              errorMsg = 'VaultFactory not set in Diamond storage';
+              needsAdminSetup = true;
             } else if (errorData.includes('ccb21934')) {
-              errorMsg = 'Insufficient LABS staked (need 100,000 LABS)';
+              errorMsg = 'Insufficient LABS staked in Diamond storage (your stake may not be recorded in LibH1Storage.stakedBalances)';
+              needsAdminSetup = true;
             } else if (errorData.includes('b4fa3fb3')) {
               errorMsg = 'Invalid input parameters';
             }
@@ -819,7 +822,20 @@ export default function Prototype() {
           }
           
           addLog('error', 'Stage 1: Create Lab', `❌ ${errorMsg}`);
-          toast.error(errorMsg, { duration: 7000 });
+          
+          if (needsAdminSetup) {
+            addLog('error', 'Stage 1: Create Lab', '⚠️ ADMIN ACTION REQUIRED:');
+            addLog('error', 'Stage 1: Create Lab', `1. Call setVaultFactory("${CONTRACTS.LabVaultFactory}") on LabVaultDeploymentFacet`);
+            addLog('error', 'Stage 1: Create Lab', '2. Ensure your stake is recorded in Diamond storage (call stakeLABS if needed)');
+            addLog('error', 'Stage 1: Create Lab', `3. VaultFactory address: ${CONTRACTS.LabVaultFactory}`);
+            toast.error('Contract needs admin initialization', {
+              description: 'Check activity log for setup steps',
+              duration: 10000,
+            });
+          } else {
+            toast.error(errorMsg, { duration: 7000 });
+          }
+          
           setLoading(null);
           return;
         }
