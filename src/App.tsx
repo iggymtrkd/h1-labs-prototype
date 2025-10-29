@@ -115,68 +115,25 @@ const AppContent = () => {
       }`}>
         <Routes>
           <Route path="/" element={<Home onConnect={handleConnectWallet} showHowItWorksDialog={showHowItWorks} onDialogClose={() => setShowHowItWorks(false)} />} />
-          <Route 
-            path="/get-started" 
-            element={isConnected ? <GetStarted /> : <Home onConnect={handleConnectWallet} />} 
-          />
+          <Route path="/get-started" element={<GetStarted />} />
           <Route path="/dashboard" element={<Dashboard />} />
-          <Route 
-            path="/staking" 
-            element={isConnected ? <Staking labsBalance={labsBalance} /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route 
-            path="/apps" 
-            element={isConnected ? <AppStore /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route
-            path="/profile"
-            element={isConnected ? <Profile address={address} labsBalance={labsBalance} /> : <Home onConnect={handleConnectWallet} />}
-          />
+          <Route path="/staking" element={<Staking labsBalance={labsBalance} />} />
+          <Route path="/apps" element={<AppStore />} />
+          <Route path="/profile" element={<Profile address={address} labsBalance={labsBalance} />} />
           <Route path="/whitepaper" element={<Whitepaper />} />
           <Route path="/about" element={<About />} />
           <Route path="/mission" element={<Mission />} />
           <Route path="/faq" element={<FAQ onConnect={handleConnectWallet} />} />
-          <Route 
-            path="/lab/:id" 
-            element={isConnected ? <LabDetail /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route 
-            path="/lab/:id/chat" 
-            element={isConnected ? <LabChat /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route 
-            path="/settings" 
-            element={isConnected ? <Settings /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route 
-            path="/deploy-pool" 
-            element={isConnected ? <DeployPool /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          {/* Dataset Marketplace Routes */}
-          <Route
-            path="/marketplace"
-            element={isConnected ? <DatasetMarketplace /> : <Home onConnect={handleConnectWallet} />}
-          />
-          <Route
-            path="/dataset/:id"
-            element={isConnected ? <DatasetDetails /> : <Home onConnect={handleConnectWallet} />}
-          />
-          <Route
-            path="/checkout"
-            element={isConnected ? <CheckoutCart /> : <Home onConnect={handleConnectWallet} />}
-          />
-          <Route 
-            path="/prototype" 
-            element={isConnected ? <Prototype /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route 
-            path="/medatlas" 
-            element={isConnected ? <MedAtlas /> : <Home onConnect={handleConnectWallet} />} 
-          />
-          <Route 
-            path="/medtag" 
-            element={isConnected ? <MedTagger /> : <Home onConnect={handleConnectWallet} />} 
-          />
+          <Route path="/lab/:id" element={<LabDetail />} />
+          <Route path="/lab/:id/chat" element={<LabChat />} />
+          <Route path="/settings" element={<Settings />} />
+          <Route path="/deploy-pool" element={<DeployPool />} />
+          <Route path="/marketplace" element={<DatasetMarketplace />} />
+          <Route path="/dataset/:id" element={<DatasetDetails />} />
+          <Route path="/checkout" element={<CheckoutCart />} />
+          <Route path="/prototype" element={<Prototype />} />
+          <Route path="/medatlas" element={<MedAtlas />} />
+          <Route path="/medtag" element={<MedTagger />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="*" element={<NotFound />} />
