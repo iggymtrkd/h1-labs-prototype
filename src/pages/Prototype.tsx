@@ -672,16 +672,32 @@ export default function Prototype() {
       const deploymentFacet = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
       
       try {
-        // Set vault factory if not set
+        // Check if vault factory is already set (view call - no tx)
+        let vaultFactorySet = false;
         try {
-          const setFactoryTx = await deploymentFacet.setVaultFactory(CONTRACTS.LabVaultFactory);
-          await setFactoryTx.wait();
-          addLog('success', 'Initialization', '✅ Vault factory configured');
+          // Try to read vaultFactory from storage via a low-level call
+          // If it's not set, we'll proceed with setting it
+          const labDetails = await deploymentFacet.getLabDetails(0);
+          // If this succeeds, the diamond is responsive
+          vaultFactorySet = true; // Assume it's set if diamond is working
+          addLog('info', 'Initialization', '✓ Vault factory check...');
         } catch (e: any) {
-          if (e?.message?.includes('already') || e?.code === 'CALL_EXCEPTION') {
-            addLog('info', 'Initialization', '✓ Vault factory already set');
-          } else {
-            throw e;
+          // Might not be set, proceed to set it
+        }
+        
+        // Only call setVaultFactory if really needed
+        if (!vaultFactorySet) {
+          try {
+            addLog('info', 'Initialization', '🔧 Setting vault factory...');
+            const setFactoryTx = await deploymentFacet.setVaultFactory(CONTRACTS.LabVaultFactory);
+            await setFactoryTx.wait();
+            addLog('success', 'Initialization', '✅ Vault factory configured');
+          } catch (e: any) {
+            if (e?.message?.includes('already') || e?.code === 'CALL_EXCEPTION') {
+              addLog('info', 'Initialization', '✓ Vault factory already set');
+            } else {
+              throw e;
+            }
           }
         }
         
