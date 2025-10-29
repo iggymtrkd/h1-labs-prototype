@@ -788,6 +788,38 @@ export default function Prototype() {
         
         addLog('success', 'Pre-flight', '✅ All checks passed! Proceeding with lab creation...');
         
+        // Validate inputs before sending
+        if (!labName || labName.length === 0 || labName.length > 50) {
+          throw new Error(`Invalid lab name length: ${labName?.length || 0} (must be 1-50 chars)`);
+        }
+        if (!labSymbol || labSymbol.length === 0 || labSymbol.length > 10) {
+          throw new Error(`Invalid symbol length: ${labSymbol?.length || 0} (must be 1-10 chars)`);
+        }
+        if (!labDomain || labDomain.length === 0 || labDomain.length > 100) {
+          throw new Error(`Invalid domain length: ${labDomain?.length || 0} (must be 1-100 chars)`);
+        }
+        
+        addLog('info', 'Stage 1: Create Lab', `📝 Creating lab: "${labName}" (${labSymbol}) @ ${labDomain}`);
+        
+        // Try to estimate gas first to catch errors early
+        try {
+          const gasEstimate = await diamond.createLab.estimateGas(labName, labSymbol, labDomain);
+          addLog('info', 'Stage 1: Create Lab', `⛽ Gas estimate: ${gasEstimate.toString()}`);
+        } catch (gasErr: any) {
+          console.error('Gas estimation failed:', gasErr);
+          addLog('error', 'Stage 1: Create Lab', `❌ Gas estimation failed: ${gasErr?.message || String(gasErr)}`);
+          
+          // Try to get more details about why it failed
+          if (gasErr?.message?.includes('InsufficientStake')) {
+            throw new Error('Insufficient LABS staked (need 100,000 LABS)');
+          } else if (gasErr?.message?.includes('FactoryNotSet')) {
+            throw new Error('VaultFactory not configured in Diamond');
+          } else if (gasErr?.message?.includes('InvalidInput')) {
+            throw new Error('Invalid input parameters (check name/symbol/domain)');
+          }
+          throw gasErr;
+        }
+        
         // Call createLab - does everything in ONE transaction!
         const tx = await diamond.createLab(labName, labSymbol, labDomain);
         addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation transaction (creating vault, bonding curve, distributing H1)...');
