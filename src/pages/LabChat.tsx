@@ -597,42 +597,32 @@ export default function LabChat() {
             </Link>
 
             <div className="mb-4 p-3 bg-muted/30 rounded-lg space-y-2">
-              {hasBondingCurve ? (
-                <>
-                  <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
-                    <SelectTrigger className="h-8 text-sm">
-                      <SelectValue />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="buy">🟢 Buy H1</SelectItem>
-                      <SelectItem value="sell">🔴 Sell H1</SelectItem>
-                    </SelectContent>
-                  </Select>
-                  <div className="flex gap-2">
-                    <Input
-                      type="number"
-                      placeholder={tradeAction === 'buy' ? 'Amount in LABS' : 'Amount in H1'}
-                      value={tradeAmount}
-                      onChange={(e) => setTradeAmount(e.target.value)}
-                      className="h-8 text-sm"
-                    />
-                    <Button 
-                      size="sm" 
-                      onClick={handleTrade}
-                      disabled={trading || !isConnected}
-                      className="whitespace-nowrap"
-                    >
-                      {trading ? <Loader2 className="h-3 w-3 animate-spin" /> : '💎 Trade'}
-                    </Button>
-                  </div>
-                </>
-              ) : (
-                <div className="text-center py-2">
-                  <p className="text-xs text-muted-foreground">
-                    ⚠️ Bonding curve not deployed yet
-                  </p>
-                </div>
-              )}
+              <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
+                <SelectTrigger className="h-8 text-sm">
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="buy">🟢 Buy H1</SelectItem>
+                  <SelectItem value="sell">🔴 Sell H1</SelectItem>
+                </SelectContent>
+              </Select>
+              <div className="flex gap-2">
+                <Input
+                  type="number"
+                  placeholder={tradeAction === 'buy' ? 'Amount in LABS' : 'Amount in H1'}
+                  value={tradeAmount}
+                  onChange={(e) => setTradeAmount(e.target.value)}
+                  className="h-8 text-sm"
+                />
+                <Button 
+                  size="sm" 
+                  onClick={handleTrade}
+                  disabled={trading || !isConnected}
+                  className="whitespace-nowrap"
+                >
+                  {trading ? <Loader2 className="h-3 w-3 animate-spin" /> : '💎 Trade'}
+                </Button>
+              </div>
             </div>
 
             {parseFloat(userH1Balance) > 0 && (
