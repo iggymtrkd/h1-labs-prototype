@@ -170,16 +170,22 @@ export default function MedAtlas() {
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 to-slate-800 p-6">
       <div className="max-w-7xl mx-auto">
-        {/* Header with Back Button */}
+        {/* Back Button - Top Right */}
+        {fromChat && (
+          <div className="flex justify-end mb-4">
+            <Button
+              variant="outline"
+              onClick={() => navigate(fromChat)}
+              className="text-white border-white/20 hover:bg-white/10"
+            >
+              <ArrowLeft className="w-4 h-4 mr-2" />
+              Back to Chat
+            </Button>
+          </div>
+        )}
+        
+        {/* Header */}
         <div className="mb-8">
-          <Button
-            variant="ghost"
-            onClick={() => navigate(fromChat || '/prototype')}
-            className="mb-4 text-slate-400 hover:text-white"
-          >
-            <ArrowLeft className="w-4 h-4 mr-2" />
-            Back to {fromChat ? 'Chat' : 'Prototype'}
-          </Button>
           <div className="flex items-center gap-3 mb-2">
             <Shield className="w-8 h-8 text-emerald-500" />
             <h1 className="text-4xl font-bold text-white">MedAtlas</h1>

@@ -235,19 +235,23 @@ export default function DatasetMarketplace() {
 
   return (
     <div className="min-h-screen bg-gradient-to-br from-slate-900 via-slate-800 to-slate-900">
+      {/* Back Button - Top Right (Fixed Position) */}
+      {fromChat && (
+        <div className="fixed top-4 right-4 z-50">
+          <Button
+            variant="outline"
+            onClick={() => navigate(fromChat)}
+            className="text-white border-white/20 hover:bg-white/10 bg-slate-900/80 backdrop-blur"
+          >
+            <ArrowLeft className="w-4 h-4 mr-2" />
+            Back to Chat
+          </Button>
+        </div>
+      )}
+      
       {/* Header */}
       <div className="sticky top-0 z-40 border-b border-slate-700 bg-slate-900/80 backdrop-blur">
         <div className="max-w-7xl mx-auto px-4 py-4">
-          {fromChat && (
-            <Button
-              variant="ghost"
-              onClick={() => navigate(fromChat)}
-              className="mb-2 text-slate-400 hover:text-white"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Chat
-            </Button>
-          )}
           <div className="flex items-center justify-between mb-4">
             <div>
               <h1 className="text-3xl font-bold text-white">
