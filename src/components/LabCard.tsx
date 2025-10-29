@@ -5,11 +5,11 @@ import { Button } from "@/components/ui/button";
 import { Badge } from "@/components/ui/badge";
 import { Input } from "@/components/ui/input";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useBaseAccount } from "@/hooks/useBaseAccount";
 import { ethers } from "ethers";
 import { CONTRACTS } from "@/config/contracts";
-import { LABSToken_ABI, BondingCurveSale_ABI, LabDistributionFacet_ABI } from "@/contracts/abis";
+import { LABSToken_ABI, BondingCurveSale_ABI, LabDistributionFacet_ABI, LabVault_ABI } from "@/contracts/abis";
 import { toast } from "sonner";
 
 export interface Lab {
@@ -42,9 +42,37 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
   const [tradeAction, setTradeAction] = useState<'buy' | 'sell'>('buy');
   const [tradeAmount, setTradeAmount] = useState('100');
   const [loading, setLoading] = useState(false);
+  const [userH1Balance, setUserH1Balance] = useState<string>('0');
 
   const hasBondingCurve = lab.bondingCurveAddress && lab.bondingCurveAddress !== ethers.ZeroAddress;
   const isOwner = address && lab.owner && address.toLowerCase() === lab.owner.toLowerCase();
+
+  // Fetch user's H1 balance for this lab
+  useEffect(() => {
+    const fetchH1Balance = async () => {
+      if (!address || !isConnected || !sdk) return;
+      
+      try {
+        const walletProvider = sdk.getProvider();
+        const provider = new ethers.BrowserProvider(walletProvider as any);
+        
+        // Get vault address from bonding curve
+        if (hasBondingCurve && lab.bondingCurveAddress) {
+          const curve = new ethers.Contract(lab.bondingCurveAddress, BondingCurveSale_ABI, provider);
+          const vaultAddress = await curve.vault();
+          
+          // Get user's vault share balance
+          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+          const balance = await vault.balanceOf(address);
+          setUserH1Balance(ethers.formatEther(balance));
+        }
+      } catch (error) {
+        console.error('Error fetching H1 balance:', error);
+      }
+    };
+    
+    fetchH1Balance();
+  }, [address, isConnected, sdk, hasBondingCurve, lab.bondingCurveAddress]);
 
   const handleDeployBondingCurve = async () => {
     if (!isConnected || !sdk || !address) {
@@ -164,18 +192,36 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
 
         if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully bought ${lab.symbol} H1 tokens!`);
+        
+        // Refresh H1 balance
+        if (hasBondingCurve && lab.bondingCurveAddress) {
+          const provider = new ethers.BrowserProvider(walletProvider as any);
+          const curve = new ethers.Contract(lab.bondingCurveAddress, BondingCurveSale_ABI, provider);
+          const vaultAddress = await curve.vault();
+          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+          const balance = await vault.balanceOf(address);
+          setUserH1Balance(ethers.formatEther(balance));
+        }
 
       } else {
-        // Batch: get vault + approve + sell in single transaction
+        // Sell: get vault + check balance + approve + sell in single transaction
         toast.info('Preparing to sell H1 tokens (1 confirmation)...');
         
-        // Get vault address
+        // Get vault address and check balance
         const provider = new ethers.BrowserProvider(walletProvider as any);
         const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, provider);
         const vaultAddress = await curve.vault();
+        
+        // Check if user has enough vault shares
+        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+        const userBalance = await vault.balanceOf(address);
+        
+        if (userBalance < amountWei) {
+          throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(userBalance)} H1`);
+        }
 
-        // Encode approval call (vault shares)
-        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
+        // Encode approval call for vault shares (H1 tokens)
+        const vaultInterface = new ethers.Interface(LabVault_ABI);
         const approvalData = vaultInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, amountWei]);
         
         // Encode sell call
@@ -225,6 +271,10 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
 
         if (!confirmed) throw new Error('Transaction timeout');
         toast.success(`Successfully sold ${lab.symbol} H1 tokens!`);
+        
+        // Refresh H1 balance
+        const balance = await vault.balanceOf(address);
+        setUserH1Balance(ethers.formatEther(balance));
       }
     } catch (error: any) {
       console.error('Trade error:', error);
@@ -333,6 +383,17 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
           <span>{lab.datasets} datasets</span>
         </div>
       </div>
+      
+      {parseFloat(userH1Balance) > 0 && (
+        <div className="mb-4 p-2 bg-primary/10 rounded-lg border border-primary/20">
+          <div className="flex items-center justify-between">
+            <span className="text-xs text-muted-foreground">You own:</span>
+            <span className="text-sm font-bold text-primary">
+              {parseFloat(userH1Balance).toFixed(4)} {lab.symbol} H1
+            </span>
+          </div>
+        </div>
+      )}
 
       <div className="flex gap-2">
         <Link to={`/lab/${lab.id}`} className="flex-1">
