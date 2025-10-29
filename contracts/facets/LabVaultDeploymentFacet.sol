@@ -97,14 +97,6 @@ contract LabVaultDeploymentFacet {
         return (lab.owner, lab.h1Token, lab.domain, lab.active, lab.level);
     }
 
-    /// @notice Set the vault factory address
-    /// @dev Only callable by diamond owner (enforced by storage pattern)
-    function setVaultFactory(address factory) external {
-        require(factory != address(0), "Invalid factory");
-        LibH1Storage.H1Storage storage hs = LibH1Storage.h1Storage();
-        hs.vaultFactory = factory;
-    }
-
     // ============================================
     // PRIVATE HELPERS
     // ============================================

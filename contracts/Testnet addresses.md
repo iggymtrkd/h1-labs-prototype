@@ -5,7 +5,7 @@ OwnershipFacet at 0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9
 SecurityFacet at 0x330c418951a0237d4c28685c0a7dbdb5b42eb441
 RevenueFacet at 0xbe14097af4ad6f9ffd9ec39b404121ab44a5b112
 LABSCoreFacet at 0xdf972c8cf5b1757d133aebbce1a704aeb65a2b29 (✅ REMOVED: domain requirements)
-LabVaultDeploymentFacet at 0x965f74bd50c564440a8082f29e5347509294ab7d
+LabVaultDeploymentFacet at 0x965f74BD50C564440a8082f29e5347509294aB7d
 VaultFacet at 0xVaultFacetAddress (if still needed)
 BondingCurveFacet at 0x90c81d864d4d71af2449153091733cb1249706c6
 LabPassFacet at 0x799cb349e8feec8ce0155abe0a2f258307a66834
@@ -18,7 +18,7 @@ LabVaultFactory 0xd7dc1f9b3cd8c0eeb44e3cdf8c14447540f05e9f
 DataValidationFacet at 0xb607b954ed414bcdba321a02f487991518a795c0
 CredentialFacet at 0x3ffab9fa9568c68bf60c88891f238556f8d99387
 
-TestingFacet at 0xb44e262cb6039689873e9a721c1495fa1028cbbb (✅ UPDATED: With defaults + init function)
+TestingFacet at 0xdbbe4c25826cca72b849b24f08ecfa93056a8808
 ConfigurationFacet at TBD (ready to deploy for mainnet)
 
 LABSToken at 0xcbdc032c9525b307d3c2b4b8e099feedbd9024fd
@@ -81,7 +81,7 @@ OLD LabVaultDeploymentFacet 0x20b8349e6611c7416a5459742d9dbc694b4565ae
 OLD LabVaultDeploymentFacet 0xc53e0eac63508a05169e22b3faa5a3839e9446a9
 OLD LabVaultDeploymentFacet  0x6943C4461d142828e7144F2e1FEF40bf5d16F6F4
 OLD LabVaultDeploymentFacet 0x66a0279c45f6d5b1f84c34aec8614d6c3e53f662 (✅ ONE-STEP: createLab() does everything in 1 tx)
-
+OLD TestingFacet at 0xb44e262cb6039689873e9a721c1495fa1028cbbb (✅ UPDATED: With defaults + init function)
 OLD LabVaultFactory 0xbe9295fc5f7b9b0262911152132a1eeb5cd3cc0e
 OLD LabVaultFactory 0xb26922366a9eecb4c8452c8d1745dcef0b7ec7c8
 OLD LabDistributionFacet at 0xfb7c840eb842e99837fd13aa957d499f5ad223df step2

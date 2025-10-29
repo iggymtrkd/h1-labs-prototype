@@ -39,7 +39,7 @@ export const CONTRACTS = {
   TreasuryFacet: "0x65c38321d60b3e2fdbf30a474ff7063eadc9f509",
   DataValidationFacet: "0xb607b954ed414bcdba321a02f487991518a795c0",
   CredentialFacet: "0x3ffab9fa9568c68bf60c88891f238556f8d99387",
-  TestingFacet: "0xb44e262cb6039689873e9a721c1495fa1028cbbb",
+  TestingFacet: "0xdbbe4c25826cca72b849b24f08ecfa93056a8808",
   H1VestingFacet: "0x084c94e1f226393df32a6662abb4fdb75b3da54b", // ✅ H1 vesting schedules
   
   // Uniswap V3 (Base Sepolia)

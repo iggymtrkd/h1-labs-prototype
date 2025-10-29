@@ -1,17 +1,17 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.30;
 
 /// @title ERC20Base
-/// @notice Gas-optimized ERC20 base implementation
-/// @dev Simplified for Remix compilation compatibility
+/// @notice Gas-optimized ERC20 base implementation with assembly optimizations
+/// @dev Uses assembly for critical path operations to minimize gas costs
 abstract contract ERC20Base {
   string internal _name;
   string internal _symbol;
   uint8 internal _decimals;
-  uint256 internal _totalSupply;
+  uint256 private _totalSupply;
 
-  mapping(address => uint256) internal _balances;
-  mapping(address => mapping(address => uint256)) internal _allowances;
+  mapping(address => uint256) private _balances;
+  mapping(address => mapping(address => uint256)) private _allowances;
 
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
@@ -47,18 +47,39 @@ abstract contract ERC20Base {
     return true;
   }
 
-  /// @notice Internal transfer function
-  /// @dev Simplified for stack depth compatibility
+  /// @notice Internal transfer function with assembly optimization
+  /// @dev Uses assembly for gas-efficient balance updates
   /// @param from Address to transfer from
   /// @param to Address to transfer to
   /// @param amount Amount to transfer
   function _transfer(address from, address to, uint256 amount) internal {
     require(from != address(0) && to != address(0), "ERC20: zero address");
-    require(_balances[from] >= amount, "ERC20: transfer exceeds balance");
     
-    unchecked {
-      _balances[from] -= amount;
-      _balances[to] += amount;
+    // Assembly optimized balance operations
+    assembly {
+      // Load balance storage slot for 'from'
+      mstore(0x00, from)
+      mstore(0x20, _balances.slot)
+      let fromBalanceSlot := keccak256(0x00, 0x40)
+      let fromBalance := sload(fromBalanceSlot)
+      
+      // Check sufficient balance
+      if lt(fromBalance, amount) {
+        mstore(0x00, 0x08c379a000000000000000000000000000000000000000000000000000000000) // Error selector
+        mstore(0x04, 0x20)
+        mstore(0x24, 27)
+        mstore(0x44, "ERC20: transfer exceeds balance")
+        revert(0x00, 0x64)
+      }
+      
+      // Update from balance
+      sstore(fromBalanceSlot, sub(fromBalance, amount))
+      
+      // Load and update balance storage slot for 'to'
+      mstore(0x00, to)
+      let toBalanceSlot := keccak256(0x00, 0x40)
+      let toBalance := sload(toBalanceSlot)
+      sstore(toBalanceSlot, add(toBalance, amount))
     }
     
     emit Transfer(from, to, amount);
@@ -85,7 +106,7 @@ abstract contract ERC20Base {
     emit Transfer(from, address(0), amount);
   }
 
-  /// @notice Batch transfer tokens to multiple recipients
+  /// @notice Batch transfer tokens to multiple recipients (gas optimized)
   /// @dev Useful for airdrops and mass distributions
   /// @param recipients Array of recipient addresses
   /// @param amounts Array of amounts to transfer
@@ -102,5 +123,3 @@ abstract contract ERC20Base {
     return true;
   }
 }
-
-

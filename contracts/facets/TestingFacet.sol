@@ -237,10 +237,25 @@ contract TestingFacet {
     emit ProtocolConfigurationUpdated("labsToken", uint256(uint160(labsToken)));
   }
   
+  /// @notice Set vault factory address
+  /// @dev TESTNET ONLY - Allows anyone to set factory for easier testing
+  /// @param factory Address of the LabVaultFactory contract
+  function setVaultFactory(address factory) external onlyOwner {
+    if (factory == address(0)) revert InvalidAddress();
+    LibH1Storage.h1Storage().vaultFactory = factory;
+    emit ProtocolConfigurationUpdated("vaultFactory", uint256(uint160(factory)));
+  }
+  
   /// @notice Get LABS token address
   /// @return labsToken Current LABS token address
   function getLABSToken() external view returns (address labsToken) {
     labsToken = LibH1Storage.h1Storage().labsToken;
+  }
+  
+  /// @notice Get vault factory address
+  /// @return factory Current vault factory address
+  function getVaultFactory() external view returns (address factory) {
+    factory = LibH1Storage.h1Storage().vaultFactory;
   }
   
   // ============================================

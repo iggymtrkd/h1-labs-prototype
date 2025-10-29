@@ -1,7 +1,7 @@
 // SPDX-License-Identifier: MIT
-pragma solidity ^0.8.20;
+pragma solidity ^0.8.30;
 
-import { ERC20Base } from "./ERC20Base.sol";
+import { ERC20Base } from "../tokens/ERC20Base.sol";
 
 interface IH1TokenRevenue {
   function transferRevenue(uint256 amount) external returns (bool);
