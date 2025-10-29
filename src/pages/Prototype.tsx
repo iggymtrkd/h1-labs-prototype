@@ -29,7 +29,7 @@ const AVAILABLE_DOMAINS = ['healthcare', 'medical', 'biotech', 'finance', 'legal
 interface LogEntry {
   id: string;
   timestamp: Date;
-  type: 'info' | 'success' | 'error';
+  type: 'info' | 'success' | 'error' | 'warning';
   stage: string;
   message: string;
   txHash?: string;
@@ -1921,28 +1921,53 @@ export default function Prototype() {
       const diamondBondingCurve = new ethers.Contract(CONTRACTS.H1Diamond, BondingCurveFacet_ABI, provider);
       const diamondVesting = new ethers.Contract(CONTRACTS.H1Diamond, H1VestingFacet_ABI, provider);
 
-      // Use event scanning to find all labs created by this user
-      const result = await fetchAllLabEvents();
+      // METHOD 1: Use event scanning to find labs
+      let userLabIds: Set<number> = new Set();
       
-      if (!result.success || result.logs.length === 0) {
-        addLog('info', 'Blockchain Labs', '📊 No labs found for your wallet on-chain');
+      try {
+        const result = await fetchAllLabEvents();
+        
+        if (result.success && result.logs.length > 0) {
+          // Filter labs owned by the connected user
+          const userEventLabs = result.logs.filter(
+            (log) => log.owner.toLowerCase() === address.toLowerCase()
+          );
+          
+          userEventLabs.forEach(lab => userLabIds.add(parseInt(lab.labId)));
+          addLog('info', 'Blockchain Labs', `📊 Found ${userEventLabs.length} lab(s) from events`);
+        }
+      } catch (eventErr) {
+        console.error('Event scanning failed:', eventErr);
+        addLog('warning', 'Blockchain Labs', '⚠️ Event API slow, scanning directly...');
+      }
+      
+      // METHOD 2: Direct scan (fallback + catch new labs not yet indexed)
+      // Scan lab IDs 1-100 to find owned labs
+      addLog('info', 'Blockchain Labs', '🔍 Scanning for additional labs...');
+      for (let labId = 1; labId <= 100; labId++) {
+        try {
+          const [owner] = await diamondLabCore.getLabDetails(labId);
+          if (owner.toLowerCase() === address.toLowerCase()) {
+            userLabIds.add(labId);
+          }
+        } catch {
+          // Lab doesn't exist, continue
+        }
+      }
+      
+      if (userLabIds.size === 0) {
+        addLog('info', 'Blockchain Labs', '📊 No labs found for your wallet');
         setBlockchainLabs([]);
         setLabsOwned(0);
+        setLoadingBlockchainLabs(false);
         return;
       }
 
-      // Filter labs owned by the connected user
-      const userLabs = result.logs.filter(
-        (log) => log.owner.toLowerCase() === address.toLowerCase()
-      );
-
-      addLog('info', 'Blockchain Labs', `📊 Found ${userLabs.length} lab(s) owned by your wallet`);
+      addLog('info', 'Blockchain Labs', `📊 Found ${userLabIds.size} total lab(s) owned by your wallet`);
 
       // Fetch detailed info for each lab
       const labsData: BlockchainLab[] = await Promise.all(
-        userLabs.map(async (labEvent) => {
-          const labId = parseInt(labEvent.labId);
-          
+        Array.from(userLabIds).map(async (labId) => {
           try {
             // Get lab details
             const [owner, h1Token, domain, active, level] = await diamondLabCore.getLabDetails(labId);
@@ -1998,9 +2023,9 @@ export default function Prototype() {
 
             return {
               labId,
-              name: labEvent.name || `Lab #${labId}`,
-              symbol: labEvent.symbol || `H1L${labId}`,
-              domain: labEvent.domain || 'unknown',
+              name: `Lab #${labId}`, // Will be populated from contract in future enhancement
+              symbol: `H1L${labId}`,
+              domain: domain || 'unknown',
               owner,
               level: Number(level),
               active,
@@ -2009,20 +2034,20 @@ export default function Prototype() {
               h1Distribution,
               h1Price,
               tvl,
-              createdTimestamp: new Date(parseInt(labEvent.blockNumber) * 12000) // Approximate timestamp
+              createdTimestamp: new Date() // Current timestamp as placeholder
             };
           } catch (error) {
             console.error(`Error loading lab ${labId}:`, error);
-            // Return basic data from event
+            // Return minimal data if lab exists but details fail
             return {
               labId,
-              name: labEvent.name || `Lab #${labId}`,
-              symbol: labEvent.symbol || `H1L${labId}`,
-              domain: labEvent.domain || 'unknown',
-              owner: labEvent.owner,
+              name: `Lab #${labId}`,
+              symbol: `H1L${labId}`,
+              domain: 'unknown',
+              owner: address, // Current user since we found this lab
               level: 1,
               active: true,
-              vaultAddress: labEvent.vault,
+              vaultAddress: '0x0000000000000000000000000000000000000000',
               bondingCurveAddress: '0x0000000000000000000000000000000000000000',
               h1Distribution: null,
               h1Price: '0',
