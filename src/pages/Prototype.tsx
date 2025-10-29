@@ -4307,6 +4307,62 @@ export default function Prototype() {
                                 </div>
                               )}
                               
+                              {/* Buy/Sell H1 Tokens Section */}
+                              {lab.curveAddress && lab.curveAddress !== ethers.ZeroAddress && (
+                                <div className="mt-3 pt-3 border-t border-border">
+                                  <div className="mb-2">
+                                    <h5 className="text-xs font-semibold text-primary mb-1">💎 Trade H1 Tokens</h5>
+                                  </div>
+                                  <div className="space-y-2">
+                                    <Select 
+                                      value={selectedLabForTrade === lab.labId ? marketplaceAction : 'buy'} 
+                                      onValueChange={v => {
+                                        setMarketplaceAction(v as 'buy' | 'sell');
+                                        setSelectedLabForTrade(lab.labId);
+                                      }}
+                                    >
+                                      <SelectTrigger className="text-sm h-8">
+                                        <SelectValue placeholder="Buy / Sell" />
+                                      </SelectTrigger>
+                                      <SelectContent className="bg-background">
+                                        <SelectItem value="buy">🟢 Buy H1 Token</SelectItem>
+                                        <SelectItem value="sell">🔴 Sell H1 Token</SelectItem>
+                                      </SelectContent>
+                                    </Select>
+
+                                    <Input 
+                                      type="number" 
+                                      placeholder={marketplaceAction === 'buy' ? 'Amount in LABS' : 'Amount in H1'}
+                                      step="0.01" 
+                                      value={selectedLabForTrade === lab.labId ? tradeAmount : ''} 
+                                      onChange={e => {
+                                        setSelectedLabForTrade(lab.labId);
+                                        setTradeAmount(e.target.value);
+                                      }} 
+                                      className="text-sm h-8" 
+                                    />
+
+                                    <Button 
+                                      size="sm" 
+                                      className={`w-full text-xs h-8 ${marketplaceAction === 'buy' ? 'bg-green-600 hover:bg-green-700' : 'bg-red-600 hover:bg-red-700'}`} 
+                                      disabled={
+                                        loading === 'marketplace' || 
+                                        !tradeAmount || 
+                                        selectedLabForTrade !== lab.labId ||
+                                        (marketplaceAction === 'buy' && userLabsBalance && Number(userLabsBalance) < Number(tradeAmount))
+                                      }
+                                      onClick={() => handleTradeH1(lab.labId, marketplaceAction)}
+                                    >
+                                      {loading === 'marketplace' && selectedLabForTrade === lab.labId ? (
+                                        <Loader2 className="h-3 w-3 animate-spin" />
+                                      ) : (
+                                        marketplaceAction === 'buy' ? '🟢 Buy H1' : '🔴 Sell H1'
+                                      )}
+                                    </Button>
+                                  </div>
+                                </div>
+                              )}
+                              
                               {/* Current H1 Balance */}
                               {lab.ownerH1Balance && (
                                 <div className="mt-3 pt-3 border-t border-border">
