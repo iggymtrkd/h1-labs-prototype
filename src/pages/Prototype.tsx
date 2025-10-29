@@ -2293,26 +2293,92 @@ export default function Prototype() {
     try {
       const walletProvider = sdk.getProvider();
       const provider = new ethers.BrowserProvider(walletProvider as any);
-      const signer = await provider.getSigner(address);
 
       const amountWei = ethers.parseEther(amount);
 
-      // Step 1: Approve LABS spending
-      addLog('info', 'Buy H1', '📝 Step 1/2: Approving LABS tokens...');
-      const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-      const approveTx = await labsToken.approve(lab.bondingCurveAddress, amountWei);
-      await approveTx.wait();
-      addLog('success', 'Buy H1', '✅ LABS tokens approved');
+      // Batch transaction (approve + buy in single wallet confirmation)
+      addLog('info', 'Buy H1', '📦 Preparing batch transaction (single confirmation)...');
 
-      // Step 2: Buy H1 tokens
-      addLog('info', 'Buy H1', `📝 Step 2/2: Buying ${lab.symbol} H1 tokens...`);
-      const curve = new ethers.Contract(lab.bondingCurveAddress, BondingCurveSale_ABI, signer);
-      const minSharesOut = 0; // Could add slippage protection
-      const buyTx = await curve.buy(amountWei, address, minSharesOut);
-      addLog('info', 'Buy H1', '⏳ Mining buy transaction...');
-      await buyTx.wait();
+      // Encode approval call
+      const labsTokenInterface = new ethers.Interface(LABSToken_ABI);
+      const approvalData = labsTokenInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, amountWei]);
+      
+      // Encode buy call
+      const curveInterface = new ethers.Interface(BondingCurveSale_ABI);
+      const buyData = curveInterface.encodeFunctionData('buy', [amountWei, address, 0]);
 
-      addLog('success', 'Buy H1', `✅ Successfully purchased ${lab.symbol} H1 tokens!`, buyTx.hash);
+      // Prepare batch calls for wallet_sendCalls (EIP-5792)
+      const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
+      const ethProvider = (window as any).ethereum;
+      
+      if (!ethProvider) {
+        throw new Error('Wallet provider not available');
+      }
+
+      const accounts = await ethProvider.request({ method: 'eth_requestAccounts' }) as string[];
+      const fromAddress = accounts[0];
+
+      addLog('info', 'Buy H1', '📤 Requesting batch transaction (1 wallet confirmation)...');
+      
+      // Send both calls in a single batch via wallet_sendCalls (EIP-5792)
+      const bundleId = await ethProvider.request({
+        method: 'wallet_sendCalls',
+        params: [{
+          version: '1.0',
+          from: fromAddress,
+          chainId: chainIdHex,
+          calls: [
+            {
+              to: CONTRACTS.LABSToken,
+              data: approvalData,
+              value: '0x0'
+            },
+            {
+              to: lab.bondingCurveAddress,
+              data: buyData,
+              value: '0x0'
+            }
+          ]
+        }]
+      }) as string;
+      
+      addLog('success', 'Buy H1', `✅ Batch transaction submitted!`);
+      addLog('info', 'Buy H1', '⏳ Polling for confirmation...');
+      
+      // Poll for batch completion using wallet_getCallsStatus
+      let txHash: string | null = null;
+      let statusAttempts = 0;
+      const maxStatusAttempts = 120; // 2 minutes max
+      
+      while (!txHash && statusAttempts < maxStatusAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        try {
+          const callsStatus = await ethProvider.request({
+            method: 'wallet_getCallsStatus',
+            params: [bundleId],
+          }) as any;
+          
+          if (callsStatus?.status === 'CONFIRMED') {
+            txHash = callsStatus?.receipts?.[0]?.transactionHash || bundleId;
+            addLog('success', 'Buy H1', `✅ Batch confirmed!`);
+            break;
+          } else if (callsStatus?.status === 'FAILED') {
+            throw new Error(`Batch transaction failed: ${callsStatus?.receipts?.[0]?.revert || 'Unknown error'}`);
+          }
+        } catch (statusErr: any) {
+          // Continue polling, ignore status check errors
+          console.log('Status check error (continuing):', statusErr?.message);
+        }
+        
+        statusAttempts++;
+      }
+      
+      if (!txHash && statusAttempts >= maxStatusAttempts) {
+        throw new Error('Batch transaction timed out');
+      }
+
+      addLog('success', 'Buy H1', `✅ Successfully purchased ${lab.symbol} H1 tokens!`, txHash);
       toast.success(`Successfully bought ${lab.symbol} H1!`);
 
       // Refresh blockchain labs data
