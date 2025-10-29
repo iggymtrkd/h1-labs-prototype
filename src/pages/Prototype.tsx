@@ -922,36 +922,41 @@ export default function Prototype() {
         // Send via wallet_sendCalls (Base Account method)
         const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16); // Base Sepolia = 84532 = 0x14a34
         
-        console.log('📤 Sending wallet_sendCalls with params:', {
-          version: '1.0',
-          from: fromAddress,
-          chainId: chainIdHex,
-          calls: [{
-            to: CONTRACTS.H1Diamond,
-            data: callData.slice(0, 66) + '...', // Log first 66 chars
-            value: '0x0'
-          }]
-        });
+        console.log('📤 Preparing wallet_sendCalls...');
+        addLog('info', 'Stage 1: Create Lab', '📤 Sending transaction to wallet...');
         
-        const result = await walletProvider.request({
-          method: 'wallet_sendCalls',
-          params: [{
-            version: '1.0',
-            from: fromAddress,
-            chainId: chainIdHex,
-            calls: [{
-              to: CONTRACTS.H1Diamond,
-              data: callData,
-              value: '0x0'
+        let result;
+        try {
+          result = await walletProvider.request({
+            method: 'wallet_sendCalls',
+            params: [{
+              version: '2.0.0', // Base Account requires version 2.0.0
+              from: fromAddress,
+              chainId: chainIdHex,
+              calls: [{
+                to: CONTRACTS.H1Diamond,
+                data: callData,
+                value: '0x0'
+              }]
             }]
-          }]
-        });
-        
-        console.log('✅ wallet_sendCalls result:', result);
-        addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent, result: ${JSON.stringify(result)}`);
+          });
+          
+          console.log('✅ wallet_sendCalls result:', result);
+          addLog('success', 'Stage 1: Create Lab', `✅ Wallet accepted transaction`);
+        } catch (walletErr: any) {
+          console.error('❌ wallet_sendCalls failed:', walletErr);
+          addLog('error', 'Stage 1: Create Lab', `❌ Wallet error: ${walletErr?.message || String(walletErr)}`);
+          
+          if (walletErr?.code === 4001) {
+            toast.error('Transaction rejected by user');
+          } else {
+            toast.error(`Wallet error: ${walletErr?.message || 'Unknown error'}`);
+          }
+          setLoading(null);
+          return;
+        }
         
         // The result might be a bundle/call ID, not a tx hash
-        // We need to poll for the actual transaction
         addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for transaction to be mined...');
         
         // Try to extract transaction hash from the result
@@ -962,7 +967,10 @@ export default function Prototype() {
           txHash = (result as any).hash;
         } else {
           console.error('Unexpected result format:', result);
-          throw new Error('Could not extract transaction hash from wallet response');
+          addLog('error', 'Stage 1: Create Lab', `❌ Unexpected wallet response: ${JSON.stringify(result)}`);
+          toast.error('Unexpected wallet response format');
+          setLoading(null);
+          return;
         }
         
         console.log('📝 Using transaction hash:', txHash);
