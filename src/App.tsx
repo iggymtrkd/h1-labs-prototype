@@ -41,6 +41,7 @@ const AppContent = () => {
   const isHomePage = location.pathname === "/";
   const isGetStartedPage = location.pathname === "/get-started";
   const isPrototypePage = location.pathname === "/prototype";
+  const isTrainingAppPage = ["/medatlas", "/medtag", "/marketplace"].includes(location.pathname);
   const { isConnected, address, labsBalance, connectWallet } = useBaseAccount();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
@@ -79,23 +80,25 @@ const AppContent = () => {
 
   return (
     <div className="min-h-screen flex w-full bg-background">
-      {/* Pre-login top navigation */}
-      <Navigation 
-        onConnect={handleConnectWallet}
-        isConnected={isConnected}
-        address={address}
-        labsBalance={labsBalance}
-        showOnHomePage={isHomePage}
-        onHowItWorksClick={() => {
-          setShowHowItWorks(true);
-          if (!isHomePage) {
-            navigate('/');
-          }
-        }}
-      />
+      {/* Top navigation */}
+      {!isTrainingAppPage && (
+        <Navigation 
+          onConnect={handleConnectWallet}
+          isConnected={isConnected}
+          address={address}
+          labsBalance={labsBalance}
+          showOnHomePage={isHomePage}
+          onHowItWorksClick={() => {
+            setShowHowItWorks(true);
+            if (!isHomePage) {
+              navigate('/');
+            }
+          }}
+        />
+      )}
 
       {/* Platform sidebar (desktop only, when connected and not on home/choice/prototype page) */}
-      {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && (
+      {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && !isTrainingAppPage && (
         <PlatformSidebar
           address={address} 
           labsBalance={labsBalance}
@@ -109,7 +112,7 @@ const AppContent = () => {
 
       {/* Main content area */}
       <main className={`flex-1 transition-all duration-300 ${
-        isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage
+        isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && !isTrainingAppPage
           ? `mb-20 md:mb-0 ${sidebarCollapsed ? "md:ml-20" : "md:ml-64"}` 
           : ""
       }`}>
@@ -141,7 +144,7 @@ const AppContent = () => {
       </main>
 
       {/* Mobile bottom navigation (when connected and not on home/choice/prototype page) */}
-      {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && <MobileBottomNav />}
+      {isConnected && !isHomePage && !isGetStartedPage && !isPrototypePage && !isTrainingAppPage && <MobileBottomNav />}
     </div>
   );
 };
