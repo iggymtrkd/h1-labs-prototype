@@ -6,6 +6,8 @@ import {
   TrendingUp,
   Users,
   Zap,
+  FileStack,
+  ShoppingCart,
 } from "lucide-react";
 
 export interface Dataset {
@@ -48,8 +50,9 @@ export function DatasetCard({
       className={`bg-slate-800 border-slate-700 hover:border-blue-500 transition cursor-pointer overflow-hidden group ${
         isSelected ? "ring-2 ring-blue-500" : ""
       }`}
+      onClick={() => onViewDetails(dataset.id)}
     >
-      <div className="p-6">
+      <div className="p-6 relative">
         {/* Header */}
         <div className="flex items-start justify-between mb-4">
           <div>
@@ -65,10 +68,16 @@ export function DatasetCard({
           <input
             type="checkbox"
             checked={isSelected}
-            onChange={() => onToggle(dataset.id)}
+            onChange={(e) => {
+              e.stopPropagation();
+              onToggle(dataset.id);
+            }}
             className="w-5 h-5 rounded cursor-pointer"
           />
         </div>
+
+        {/* File Stack Icon */}
+        <FileStack className="absolute top-4 right-16 h-12 w-12 text-primary/20" />
 
         {/* Description */}
         <p className="text-slate-400 text-sm mb-4 line-clamp-2">
@@ -148,13 +157,28 @@ export function DatasetCard({
               ${dataset.price.toLocaleString()}
             </div>
           </div>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={() => onViewDetails(dataset.id)}
-          >
-            Details
-          </Button>
+          <div className="flex gap-2">
+            <Button
+              variant="outline"
+              size="icon"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Add to cart logic here
+              }}
+            >
+              <ShoppingCart className="h-4 w-4" />
+            </Button>
+            <Button
+              variant="default"
+              size="sm"
+              onClick={(e) => {
+                e.stopPropagation();
+                // Buy now logic here
+              }}
+            >
+              Buy Now
+            </Button>
+          </div>
         </div>
       </div>
 
