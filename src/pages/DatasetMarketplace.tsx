@@ -16,6 +16,7 @@ import {
   X,
   Download,
   ArrowLeft,
+  FileStack,
 } from "lucide-react";
 
 // Mock dataset inventory
@@ -456,8 +457,11 @@ export default function DatasetMarketplace() {
               
               {/* Dataset Summary Tab */}
               <TabsContent value="dataset" className="space-y-4 mt-4">
-                <div className="border border-primary/20 rounded-lg p-4 bg-primary/5">
-                  <h3 className="font-bold text-lg mb-4">Dataset Overview</h3>
+                <div className="border border-primary/20 rounded-lg p-4 bg-primary/5 relative">
+                  <div className="flex items-start justify-between mb-4">
+                    <h3 className="font-bold text-lg">Dataset Overview</h3>
+                    <FileStack className="h-16 w-16 text-primary" />
+                  </div>
                   <div className="space-y-3 text-sm">
                     <div className="grid grid-cols-2 gap-4">
                       <div>
