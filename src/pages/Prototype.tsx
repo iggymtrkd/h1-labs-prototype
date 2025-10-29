@@ -2359,15 +2359,12 @@ export default function Prototype() {
         // Buy H1 tokens with LABS
         addLog('info', 'H1 Marketplace', `🎯 STARTING: Buy H1 ${lab.symbol} with ${tradeAmount} LABS`);
 
-        // Get LABS token contract
-        const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
-        
-        // Amount in wei
         const amountWei = ethers.parseEther(tradeAmount);
 
         // Step 0: Check LABS balance
-        addLog('info', 'H1 Marketplace', '🔍 Step 0/3: Checking LABS balance...');
+        addLog('info', 'H1 Marketplace', '🔍 Step 0/2: Checking LABS balance...');
         try {
+          const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider);
           const balance = await labsToken.balanceOf(address);
           addLog('info', 'H1 Marketplace', `💰 Your LABS balance: ${ethers.formatEther(balance)} LABS`);
           if (balance < amountWei) {
@@ -2380,24 +2377,8 @@ export default function Prototype() {
           addLog('warning', 'H1 Marketplace', '⚠️ Could not verify balance, proceeding with transaction');
         }
 
-        // Step 1: Approve LABS spending
-        addLog('info', 'H1 Marketplace', '📝 Step 1/3: Requesting approval to spend LABS tokens...');
-        try {
-          const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
-          addLog('info', 'H1 Marketplace', '⏳ Mining approval transaction...');
-          const approveReceipt = await approveTx.wait();
-          if (!approveReceipt) {
-            throw new Error('Approval transaction failed - no receipt');
-          }
-          addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
-        } catch (approveError: any) {
-          addLog('error', 'H1 Marketplace', `❌ Approval failed: ${approveError.message || approveError}`);
-          toast.error(`Approval failed: ${approveError.message || 'Unknown error'}`);
-          return;
-        }
-
-        // Step 2: Validate vault exists and has initial mint
-        addLog('info', 'H1 Marketplace', '📝 Step 2/3: Validating vault...');
+        // Step 1: Validate vault exists and has initial mint
+        addLog('info', 'H1 Marketplace', '📝 Step 1/2: Validating vault...');
         try {
           const vault = new ethers.Contract(lab.vaultAddress, LabVault_ABI, provider);
           const initialMintCompleted = await vault.initialMintCompleted();
@@ -2410,50 +2391,98 @@ export default function Prototype() {
           addLog('warning', 'H1 Marketplace', `⚠️ Could not validate vault: ${vaultError.message}`);
         }
 
-        // Step 3: Buy H1 tokens via bonding curve
-        addLog('info', 'H1 Marketplace', `📝 Step 3/3: Buying H1 ${lab.symbol} tokens...`);
+        // Step 2: Batch transaction (approve + buy in single wallet confirmation)
+        addLog('info', 'H1 Marketplace', '📝 Step 2/2: 📦 Batch transaction (approve + buy)...');
         try {
-          const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
-          
           // Check if curve is paused
           try {
+            const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, provider);
             const isPaused = await curve.paused();
             if (isPaused) {
               throw new Error('Bonding curve is paused for maintenance');
             }
-          } catch (pauseCheckError) {
+            // Get current price for info
+            try {
+              const currentPrice = await curve.price();
+              addLog('info', 'H1 Marketplace', `💵 Current price: ${ethers.formatEther(currentPrice)} LABS per share`);
+            } catch {
+              addLog('warning', 'H1 Marketplace', '⚠️ Could not fetch current price');
+            }
+          } catch (pauseCheckError: any) {
             addLog('warning', 'H1 Marketplace', '⚠️ Could not check pause status');
           }
 
-          // Get current price for info
+          // Create batch calls: [approve, buy]
+          const calls = [
+            {
+              to: CONTRACTS.LABSToken,
+              data: new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, provider).interface.encodeFunctionData('approve', [lab.curveAddress, amountWei]),
+            },
+            {
+              to: lab.curveAddress,
+              data: new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, provider).interface.encodeFunctionData('buy', [amountWei, address, 0]),
+            },
+          ];
+
+          // Try EIP-5792 wallet_sendCalls (batch) first
+          let txHash: string | null = null;
           try {
-            const currentPrice = await curve.price();
-            addLog('info', 'H1 Marketplace', `💵 Current price: ${ethers.formatEther(currentPrice)} LABS per share`);
-          } catch {
-            addLog('warning', 'H1 Marketplace', '⚠️ Could not fetch current price');
+            addLog('info', 'H1 Marketplace', '⏳ Sending batch transaction (1 wallet confirmation)...');
+            const result = await (window as any).ethereum?.request({
+              method: 'wallet_sendCalls',
+              params: [{
+                calls: calls.map(call => ({
+                  to: call.to,
+                  data: call.data,
+                })),
+              }],
+            });
+            
+            if (result) {
+              txHash = result;
+              addLog('info', 'H1 Marketplace', `⏳ Mining batch transaction (${result})...`);
+            }
+          } catch (batchError: any) {
+            // Fallback to individual transactions
+            addLog('warning', 'H1 Marketplace', '⚠️ Batch mode not supported, using sequential transactions...');
+            
+            const labsToken = new ethers.Contract(CONTRACTS.LABSToken, LABSToken_ABI, signer);
+            const approveTx = await labsToken.approve(lab.curveAddress, amountWei);
+            addLog('info', 'H1 Marketplace', '⏳ Tx 1/2: Mining approval...');
+            await approveTx.wait();
+            addLog('success', 'H1 Marketplace', '✅ LABS tokens approved');
+            
+            const curve = new ethers.Contract(lab.curveAddress, BondingCurveSale_ABI, signer);
+            const buyTx = await curve.buy(amountWei, address, 0);
+            addLog('info', 'H1 Marketplace', '⏳ Tx 2/2: Mining buy...');
+            txHash = buyTx.hash;
+            await buyTx.wait();
           }
 
-          const minSharesOut = 0; // Could add slippage protection here
-          const buyTx = await curve.buy(amountWei, address, minSharesOut);
-          addLog('info', 'H1 Marketplace', '⏳ Mining buy transaction...');
-          const receipt = await buyTx.wait();
-          
-          if (!receipt) {
-            throw new Error('Buy transaction failed - no receipt');
+          // If batch was used, wait for confirmation
+          if (txHash && !txHash.includes('0x')) {
+            // It's a batch ID, wait for it to complete
+            addLog('info', 'H1 Marketplace', '⏳ Waiting for batch completion...');
+            await new Promise(resolve => setTimeout(resolve, 3000)); // Wait for batch to complete
+          } else if (txHash) {
+            // Regular tx hash, verify it
+            const receipt = await provider.getTransactionReceipt(txHash);
+            if (!receipt) {
+              throw new Error('Transaction failed - no receipt');
+            }
           }
 
-          addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`, buyTx.hash);
+          addLog('success', 'H1 Marketplace', `✅ COMPLETE: Purchased H1 ${lab.symbol} tokens with ${tradeAmount} LABS!`);
           toast.success(`Successfully bought H1 ${lab.symbol}!`);
           
           // Refresh marketplace data
           await loadMarketplaceLabs();
-          
           setTradeAmount('1');
         } catch (buyError: any) {
-          addLog('error', 'H1 Marketplace', `❌ Buy transaction failed: ${buyError.message || buyError}`);
+          addLog('error', 'H1 Marketplace', `❌ Batch transaction failed: ${buyError.message || buyError}`);
           
           // Provide specific guidance based on error
-          let userMessage = buyError.message || 'Failed to execute buy transaction';
+          let userMessage = buyError.message || 'Failed to execute transaction';
           if (userMessage.includes('transfer')) {
             userMessage = 'Token transfer failed. Check your balance and approval.';
           } else if (userMessage.includes('SlippageExceeded')) {
