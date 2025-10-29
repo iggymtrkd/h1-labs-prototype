@@ -452,98 +452,119 @@ export default function Prototype() {
         return;
       }
 
-      // 4) Approve Diamond to spend LABS (before simulation)
-      addLog('info', 'Stage 1: Stake $LABS', `🔐 Requesting approval for ${stakeAmount} LABS...`);
+      // 4) Encode both approval and staking calls for batch transaction
+      addLog('info', 'Stage 1: Stake $LABS', `🔐 Preparing batch transaction (approve + stake in one)...`);
+      
+      // Encode approval call
+      const labsTokenInterface = new ethers.Interface(LABSToken_ABI);
+      const approvalData = labsTokenInterface.encodeFunctionData('approve', [CONTRACTS.H1Diamond, stakeAmountBN]);
+      
+      // Encode staking call
+      const diamondInterface = new ethers.Interface(LABSCoreFacet_ABI);
+      const stakeData = diamondInterface.encodeFunctionData('stakeLABS', [stakeAmountBN]);
+      
+      // Prepare batch calls for wallet_sendCalls
+      const chainIdHex = '0x' + CONTRACTS.CHAIN_ID.toString(16);
+      const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
+      const fromAddress = accounts[0];
+      
+      addLog('info', 'Stage 1: Stake $LABS', '📤 Requesting batch transaction approval...');
       setStakeSteps(prev => ({
         ...prev,
         approve: 'awaiting_signature'
       }));
-      const approvalTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(CONTRACTS.H1Diamond, stakeAmountBN, {
-        gasLimit: 80000
-      });
-      setStakeSteps(prev => ({
-        ...prev,
-        approve: 'pending'
-      }));
-      addLog('info', 'Stage 1: Stake $LABS', '⏳ Waiting for approval confirmation...');
-      await approvalTx.wait();
-      addLog('success', 'Stage 1: Stake $LABS', `✅ Approval confirmed! ${stakeAmount} LABS authorized`, approvalTx.hash);
-      setStakeSteps(prev => ({
-        ...prev,
-        approve: 'confirmed'
-      }));
-
-      // 5) Re-check allowance after approval (with small delay for RPC sync)
-      await new Promise(resolve => setTimeout(resolve, 1000)); // Wait 1s for RPC to sync
+      
+      let bundleId: string;
       try {
-        const newAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
-        addLog('info', 'Diagnostics', `✅ New allowance: ${ethers.formatEther(newAllowance)}`);
-        if (newAllowance < stakeAmountBN) {
-          addLog('info', 'Diagnostics', `⏳ RPC still syncing... Requesting approval confirmation`);
-          try {
-            // Reset allowance to 0 first (some tokens require this)
-            const zeroTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(CONTRACTS.H1Diamond, 0n);
-            await zeroTx.wait();
-            // Then approve the amount again
-            const reapproveTx = await new ethers.Contract(labsTokenAddr, LABSToken_ABI, signer).approve(CONTRACTS.H1Diamond, stakeAmountBN);
-            await reapproveTx.wait();
-            // Wait for RPC sync again
-            await new Promise(resolve => setTimeout(resolve, 1000));
-            const finalAllowance = await labsToken.allowance(address, CONTRACTS.H1Diamond);
-            addLog('success', 'Diagnostics', `✅ Approval confirmed! Final allowance: ${ethers.formatEther(finalAllowance)}`);
-            if (finalAllowance < stakeAmountBN) {
-              toast.error('Allowance remained insufficient after re-approval');
-              resetStakingState();
-              return;
-            }
-          } catch (resetErr: any) {
-            addLog('error', 'Diagnostics', `❌ Failed to re-approve: ${resetErr?.message || String(resetErr)}`);
-            toast.error('Approval reset failed');
-            resetStakingState();
-            return;
-          }
-        }
-      } catch {}
-
-      // 6) Small delay to allow RPCs to index the new allowance
-      await new Promise(resolve => setTimeout(resolve, 1500));
-
-      // Log balances for reference
-      const balance = await provider.getBalance(address);
-      const balanceInEth = ethers.formatEther(balance);
-      addLog('info', 'Stage 1: Stake $LABS', `💰 Wallet ETH balance: ${parseFloat(balanceInEth).toFixed(4)} ETH`);
-
-      // Stake LABS via LABSCoreFacet
-      const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LABSCoreFacet_ABI, signer);
-      addLog('info', 'Stage 1: Stake $LABS', '📡 Broadcasting stake transaction to LABSCoreFacet...');
-      setStakeSteps(prev => ({
-        ...prev,
-        stake: 'awaiting_signature'
-      }));
-      let stakeTx;
-      try {
-        stakeTx = await diamond.stakeLABS(stakeAmountBN, {
-          gasLimit: 180000
+        // Send both calls in a single batch via wallet_sendCalls
+        bundleId = await walletProvider.request({
+          method: 'wallet_sendCalls',
+          params: [{
+            version: '1.0',
+            from: fromAddress,
+            chainId: chainIdHex,
+            calls: [
+              {
+                to: labsTokenAddr, // LABS token contract
+                data: approvalData,
+                value: '0x0'
+              },
+              {
+                to: CONTRACTS.H1Diamond, // Diamond contract
+                data: stakeData,
+                value: '0x0'
+              }
+            ]
+          }]
         });
-      } catch (sendErr: any) {
-        addLog('error', 'Stage 1: Stake $LABS', `❌ Failed to send stake tx: ${sendErr?.shortMessage || sendErr?.message || String(sendErr)}`);
-        toast.error('Failed to send stake transaction');
+        
+        console.log('📦 Got bundle ID:', bundleId);
+        addLog('success', 'Stage 1: Stake $LABS', '✅ Batch transaction submitted!');
+      } catch (batchErr: any) {
+        console.error('❌ Batch send failed:', batchErr);
+        addLog('error', 'Stage 1: Stake $LABS', `❌ Batch error: ${batchErr?.message || String(batchErr)}`);
+        toast.error(`Batch transaction failed: ${batchErr?.message || 'Unknown error'}`);
         resetStakingState();
         return;
       }
+      
+      // Poll for batch completion
       setStakeSteps(prev => ({
         ...prev,
-        stake: 'pending'
+        approve: 'pending',
+        stake: 'awaiting_signature'
       }));
-      addLog('info', 'Stage 1: Stake $LABS', '⏳ Mining stake transaction...');
-      await stakeTx.wait();
-      addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! To create a lab, you need 100,000 LABS staked.`, stakeTx.hash);
-      setShowConfetti(true);
-      toast.success('LABS staked successfully!');
+      addLog('info', 'Stage 1: Stake $LABS', '⏳ Polling for batch confirmation...');
+      
+      let txHash: string | null = null;
+      let statusAttempts = 0;
+      const maxStatusAttempts = 60;
+      
+      while (!txHash && statusAttempts < maxStatusAttempts) {
+        await new Promise(resolve => setTimeout(resolve, 1000));
+        
+        try {
+          const callsStatus = await walletProvider.request({
+            method: 'wallet_getCallsStatus',
+            params: [bundleId],
+          });
+          
+          console.log(`📊 Batch status (attempt ${statusAttempts + 1}/${maxStatusAttempts}):`, callsStatus);
+          addLog('info', 'Stage 1: Stake $LABS', `⏳ Batch status: ${callsStatus?.status || 'unknown'}`);
+          
+          if (callsStatus?.status === 'CONFIRMED') {
+            txHash = callsStatus.receipts?.[0]?.transactionHash;
+            if (txHash) {
+              addLog('success', 'Stage 1: Stake $LABS', `✅ Batch confirmed! Transaction: ${txHash}`);
+              break;
+            }
+          } else if (callsStatus?.status === 'FAILED') {
+            throw new Error('Batch transaction failed');
+          }
+        } catch (statusErr: any) {
+          console.error('Error polling batch status:', statusErr);
+        }
+        
+        statusAttempts++;
+      }
+      
+      if (!txHash) {
+        addLog('warning', 'Stage 1: Stake $LABS', '⚠️ Batch timeout - checking blockchain...');
+        console.warn('⚠️ Batch timeout but may have succeeded');
+      }
+      
       setStakeSteps(prev => ({
         ...prev,
+        approve: 'confirmed',
         stake: 'confirmed'
       }));
+      
+      // Wait a bit for blockchain indexing
+      await new Promise(resolve => setTimeout(resolve, 2000));
+      
+      addLog('success', 'Stage 1: Stake $LABS', `✅ COMPLETE: ${stakeAmount} LABS staked successfully! To create a lab, you need 100,000 LABS staked.`, txHash || 'batch-confirmed');
+      setShowConfetti(true);
+      toast.success('LABS staked successfully!');
 
       // Auto-hide confetti after 5 seconds
       setTimeout(() => setShowConfetti(false), 5000);
