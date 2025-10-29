@@ -16,22 +16,25 @@ export type Database = {
     Tables: {
       lab_messages: {
         Row: {
+          channel_type: string
           content: string
-          created_at: string
+          created_at: string | null
           id: string
           lab_id: string
           sender_address: string
         }
         Insert: {
+          channel_type: string
           content: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           lab_id: string
           sender_address: string
         }
         Update: {
+          channel_type?: string
           content?: string
-          created_at?: string
+          created_at?: string | null
           id?: string
           lab_id?: string
           sender_address?: string

@@ -78,7 +78,7 @@ export default function LabChat() {
   const { id } = useParams();
   const { address, isConnected, sdk } = useBaseAccount();
   const [messageInput, setMessageInput] = useState("");
-  const [isHoldersOnly, setIsHoldersOnly] = useState(false);
+  const [channelType, setChannelType] = useState<'open' | 'holders'>('open');
   const scrollRef = useRef<HTMLDivElement>(null);
   const [tradeAction, setTradeAction] = useState<'buy' | 'sell'>('buy');
   const [tradeAmount, setTradeAmount] = useState('100');
@@ -97,12 +97,12 @@ export default function LabChat() {
     error: chatError,
   } = useLabChat(
     id || "",
+    channelType,
     address || null,
-    labInfo?.vaultAddress || null,
-    isHoldersOnly
+    labInfo?.vaultAddress || null
   );
 
-  const canSendMessages = !isHoldersOnly || userRole === 'holder';
+  const canSendMessages = channelType === 'open' || userRole === 'holder';
 
   // Fetch bonding curve address for this lab
   useEffect(() => {
@@ -184,7 +184,7 @@ export default function LabChat() {
   const handleSendMessage = async () => {
     if (!messageInput.trim() || isSendingMessage) return;
 
-    if (isHoldersOnly && !canSendMessages) {
+    if (channelType === 'holders' && !canSendMessages) {
       toast.error("You need to hold lab tokens to send messages in holders chat");
       return;
     }
@@ -263,13 +263,13 @@ export default function LabChat() {
               </Badge>
             )}
             <Button
-              variant={isHoldersOnly ? "default" : "outline"}
+              variant={channelType === 'holders' ? "default" : "outline"}
               size="sm"
-              onClick={() => setIsHoldersOnly(!isHoldersOnly)}
+              onClick={() => setChannelType(channelType === 'holders' ? 'open' : 'holders')}
               className="gap-2"
             >
               <Key className="h-4 w-4" />
-              {isHoldersOnly ? "Holders Chat" : "Open Chat"}
+              {channelType === 'holders' ? "Holders Chat" : "Open Chat"}
             </Button>
           </div>
         </div>
@@ -288,7 +288,7 @@ export default function LabChat() {
           </Alert>
         )}
 
-        {isHoldersOnly && !canSendMessages && address && (
+        {channelType === 'holders' && !canSendMessages && address && (
           <Alert className="m-4">
             <AlertDescription>
               You need to hold {labInfo.symbol} tokens to access holders chat. Token Balance: {tokenBalance}
@@ -296,8 +296,8 @@ export default function LabChat() {
           </Alert>
         )}
 
-        <ScrollArea className={`flex-1 p-4 ${isHoldersOnly ? "bg-primary/5" : ""}`} ref={scrollRef}>
-          {isHoldersOnly && (
+        <ScrollArea className={`flex-1 p-4 ${channelType === 'holders' ? "bg-primary/5" : ""}`} ref={scrollRef}>
+          {channelType === 'holders' && (
             <div className="max-w-4xl mb-4 px-4 py-3 bg-primary/20 border border-primary/30 rounded-lg flex items-center gap-2">
               <Key className="h-4 w-4 text-primary" />
               <span className="text-sm font-medium text-primary">
@@ -348,8 +348,8 @@ export default function LabChat() {
           </div>
         </ScrollArea>
 
-        <div className={`p-4 border-t border-border ${isHoldersOnly ? "bg-primary/5" : ""}`}>
-          <div className={`flex items-center gap-2 rounded-lg px-4 py-2 ${isHoldersOnly ? "bg-primary/10 border border-primary/20" : "bg-muted/30"}`}>
+        <div className={`p-4 border-t border-border ${channelType === 'holders' ? "bg-primary/5" : ""}`}>
+          <div className={`flex items-center gap-2 rounded-lg px-4 py-2 ${channelType === 'holders' ? "bg-primary/10 border border-primary/20" : "bg-muted/30"}`}>
             <Input
               value={messageInput}
               onChange={(e) => setMessageInput(e.target.value)}
@@ -357,11 +357,11 @@ export default function LabChat() {
               placeholder={
                 !address
                   ? "Connect wallet to chat..."
-                  : isHoldersOnly && !canSendMessages
+                  : channelType === 'holders' && !canSendMessages
                   ? "Hold tokens to send messages in holders chat"
                   : "Type your message"
               }
-              disabled={!address || (isHoldersOnly && !canSendMessages) || isSendingMessage}
+              disabled={!address || (channelType === 'holders' && !canSendMessages) || isSendingMessage}
               className="border-0 bg-transparent focus-visible:ring-0 focus-visible:ring-offset-0"
             />
             <Button
@@ -369,7 +369,7 @@ export default function LabChat() {
               size="icon"
               className="h-8 w-8"
               onClick={handleSendMessage}
-              disabled={!address || (isHoldersOnly && !canSendMessages) || isSendingMessage || !messageInput.trim()}
+              disabled={!address || (channelType === 'holders' && !canSendMessages) || isSendingMessage || !messageInput.trim()}
             >
               {isSendingMessage ? (
                 <Loader2 className="h-5 w-5 animate-spin" />
@@ -460,7 +460,7 @@ export default function LabChat() {
               <p>💬 Server-side messaging</p>
               <p>📊 Balance: {parseFloat(tokenBalance).toFixed(2)} tokens</p>
               <p>👤 Role: {userRole}</p>
-              <p>💬 Mode: {isHoldersOnly ? "Holders Only" : "Open Chat"}</p>
+              <p>💬 Mode: {channelType === 'holders' ? "Holders Only" : "Open Chat"}</p>
             </div>
           </div>
         </ScrollArea>

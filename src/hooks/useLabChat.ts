@@ -21,9 +21,9 @@ interface UseLabChatReturn {
 
 export function useLabChat(
   labId: string,
+  channelType: 'open' | 'holders',
   userAddress: string | null,
-  labVaultAddress: string | null,
-  isHoldersOnly: boolean
+  labVaultAddress: string | null
 ): UseLabChatReturn {
   const [messages, setMessages] = useState<LabChatMessage[]>([]);
   const [isLoadingMessages, setIsLoadingMessages] = useState(false);
@@ -55,7 +55,7 @@ export function useLabChat(
   }, [labVaultAddress, userAddress]);
 
   const userRole = parseFloat(tokenBalance) > 0 ? 'holder' : 'visitor';
-  const canSendMessages = !isHoldersOnly || userRole === 'holder';
+  const canSendMessages = channelType === 'open' || userRole === 'holder';
 
   // Load messages from database
   useEffect(() => {
@@ -65,7 +65,7 @@ export function useLabChat(
       setIsLoadingMessages(true);
       try {
         const { data, error } = await supabase.functions.invoke('lab-chat', {
-          body: { action: 'getMessages', labId }
+          body: { action: 'getMessages', labId, channelType }
         });
 
         if (error) throw error;
@@ -84,14 +84,14 @@ export function useLabChat(
 
     // Subscribe to realtime updates
     const channel = supabase
-      .channel(`lab-${labId}`)
+      .channel(`lab-${labId}-${channelType}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'lab_messages',
-          filter: `lab_id=eq.${labId}`,
+          filter: `lab_id=eq.${labId},channel_type=eq.${channelType}`,
         },
         (payload) => {
           console.log('[LabChat] New message received:', payload);
@@ -103,7 +103,7 @@ export function useLabChat(
     return () => {
       channel.unsubscribe();
     };
-  }, [labId]);
+  }, [labId, channelType]);
 
   // Check token balance periodically
   useEffect(() => {
@@ -119,8 +119,8 @@ export function useLabChat(
         return;
       }
 
-      if (isHoldersOnly && !canSendMessages) {
-        setError('Only token holders can send messages in this lab');
+      if (channelType === 'holders' && !canSendMessages) {
+        setError('Only token holders can send messages in holders channel');
         return;
       }
 
@@ -137,6 +137,7 @@ export function useLabChat(
           body: {
             action: 'send',
             labId,
+            channelType,
             senderAddress: userAddress,
             content: content.trim(),
           }
@@ -151,7 +152,7 @@ export function useLabChat(
         setIsSendingMessage(false);
       }
     },
-    [userAddress, labId, isHoldersOnly, canSendMessages]
+    [userAddress, labId, channelType, canSendMessages]
   );
 
   return {

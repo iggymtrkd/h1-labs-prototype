@@ -16,11 +16,11 @@ Deno.serve(async (req) => {
       Deno.env.get('SUPABASE_ANON_KEY') ?? ''
     );
 
-    const { action, labId, senderAddress, content, limit = 50 } = await req.json();
+    const { action, labId, channelType, senderAddress, content, limit = 50 } = await req.json();
 
     if (action === 'send') {
       // Validate required fields
-      if (!labId || !senderAddress || !content) {
+      if (!labId || !channelType || !senderAddress || !content) {
         return new Response(
           JSON.stringify({ error: 'Missing required fields' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
@@ -32,6 +32,7 @@ Deno.serve(async (req) => {
         .from('lab_messages')
         .insert({
           lab_id: labId,
+          channel_type: channelType,
           sender_address: senderAddress.toLowerCase(),
           content: content
         })
@@ -54,9 +55,9 @@ Deno.serve(async (req) => {
 
     if (action === 'getMessages') {
       // Validate required fields
-      if (!labId) {
+      if (!labId || !channelType) {
         return new Response(
-          JSON.stringify({ error: 'Missing labId' }),
+          JSON.stringify({ error: 'Missing labId or channelType' }),
           { status: 400, headers: { ...corsHeaders, 'Content-Type': 'application/json' } }
         );
       }
@@ -66,6 +67,7 @@ Deno.serve(async (req) => {
         .from('lab_messages')
         .select('*')
         .eq('lab_id', labId)
+        .eq('channel_type', channelType)
         .order('created_at', { ascending: true })
         .limit(limit);
 
