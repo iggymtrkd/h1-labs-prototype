@@ -212,8 +212,18 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
         const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, provider);
         const vaultAddress = await curve.vault();
         
-        // Encode approval call for vault shares (H1 tokens)
-        const vaultInterface = new ethers.Interface(LabVault_ABI);
+        // Check H1 balance before proceeding
+        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+        const h1Balance = await vault.balanceOf(address);
+        
+        if (h1Balance < amountWei) {
+          const shortfall = ethers.formatEther(amountWei - h1Balance);
+          toast.error(`Insufficient H1 balance. Need ${shortfall} more ${lab.symbol}`);
+          throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(h1Balance)} but need ${tradeAmount}`);
+        }
+        
+        // Encode approval call for vault shares (H1 tokens) - use simple approve ABI
+        const vaultInterface = new ethers.Interface(['function approve(address,uint256) returns (bool)']);
         const approvalData = vaultInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, amountWei]);
         
         // Encode sell call
