@@ -632,28 +632,20 @@ export default function Prototype() {
     }
     try {
       const walletProvider = sdk.getProvider();
-      let provider = new ethers.BrowserProvider(walletProvider as any);
-      let signer = await provider.getSigner(address);
-      try {
-        const signerAddr = await signer.getAddress();
-        if (signerAddr.toLowerCase() !== (address as string).toLowerCase()) {
-          signer = await provider.getSigner(address);
-        }
-      } catch {}
       
-      // Ensure wallet is on the expected network (Base Sepolia)
+      // Check network first
       addLog('info', 'Diagnostics', '🔍 Checking wallet network...');
-      let net = await provider.getNetwork();
-      if (Number(net.chainId) !== CONTRACTS.CHAIN_ID) {
+      const chainIdHex = await walletProvider.request({ method: 'eth_chainId' }) as string;
+      const currentChainId = parseInt(chainIdHex, 16);
+      
+      if (currentChainId !== CONTRACTS.CHAIN_ID) {
         addLog('info', 'Diagnostics', '🌐 Attempting to switch wallet to Base Sepolia...');
         try {
-          const chainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
-          await provider.send('wallet_switchEthereumChain', [{ chainId: chainIdHex }]);
-          
-          // Recreate provider and signer after network switch
-          const freshWalletProvider = sdk.getProvider();
-          provider = new ethers.BrowserProvider(freshWalletProvider as any);
-          signer = await provider.getSigner(address);
+          const targetChainIdHex = '0x' + Number(CONTRACTS.CHAIN_ID).toString(16);
+          await walletProvider.request({
+            method: 'wallet_switchEthereumChain',
+            params: [{ chainId: targetChainIdHex }]
+          });
           addLog('success', 'Diagnostics', '✅ Wallet switched to Base Sepolia');
         } catch (switchErr: any) {
           addLog('error', 'Diagnostics', `❌ Failed to switch network: ${switchErr?.message || String(switchErr)}`);
@@ -661,6 +653,22 @@ export default function Prototype() {
           setLoading(null);
           return;
         }
+      }
+      
+      // Create ethers provider and signer from Base Account SDK provider
+      const provider = new ethers.BrowserProvider(walletProvider as any);
+      let signer;
+      
+      try {
+        signer = await provider.getSigner(address);
+        const signerAddress = await signer.getAddress();
+        addLog('success', 'Diagnostics', `✅ Signer created for address: ${signerAddress.slice(0, 10)}...`);
+      } catch (signerErr: any) {
+        console.error('Failed to get signer:', signerErr);
+        addLog('error', 'Diagnostics', `❌ Failed to create signer: ${signerErr?.message || String(signerErr)}`);
+        toast.error('Wallet connection issue. Please reconnect your wallet.');
+        setLoading(null);
+        return;
       }
       
       // Import ABIs needed for lab creation
@@ -834,9 +842,13 @@ export default function Prototype() {
         }
         
         // Call createLab - does everything in ONE transaction!
+        addLog('info', 'Stage 1: Create Lab', `📤 Calling createLab("${labName}", "${labSymbol}", "${labDomain}")...`);
         const tx = await diamond.createLab(labName, labSymbol, labDomain);
+        addLog('info', 'Stage 1: Create Lab', `✅ Transaction sent: ${tx.hash}`);
         addLog('info', 'Stage 1: Create Lab', '⏳ Mining lab creation transaction (creating vault, bonding curve, distributing H1)...');
+        
         const receipt = await tx.wait();
+        addLog('success', 'Stage 1: Create Lab', `✅ Transaction mined in block ${receipt.blockNumber}`);
         
         console.log('✅ Lab creation transaction mined:', tx.hash);
         
