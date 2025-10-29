@@ -988,25 +988,29 @@ export default function Prototype() {
               params: [bundleId],
             });
             
-            console.log('📊 Calls status:', callsStatus);
+            console.log(`📊 Calls status (attempt ${statusAttempts + 1}/${maxStatusAttempts}):`, callsStatus);
+            addLog('info', 'Stage 1: Create Lab', `⏳ Polling... status: ${callsStatus?.status || 'unknown'}`);
             
-            if (callsStatus.status === 'CONFIRMED') {
+            if (callsStatus?.status === 'CONFIRMED') {
               // Extract transaction hash from receipt
               txHash = callsStatus.receipts?.[0]?.transactionHash;
               if (!txHash) {
                 console.error('No transaction hash in receipt:', callsStatus);
-                throw new Error('Transaction confirmed but no hash returned');
+                addLog('warning', 'Stage 1: Create Lab', '⚠️ Transaction confirmed but no hash - checking blockchain...');
+                // Transaction might have succeeded, continue to check blockchain
+                break;
               }
               
               console.log('✅ Got transaction hash:', txHash);
               addLog('success', 'Stage 1: Create Lab', `✅ Transaction hash: ${txHash}`);
               break;
-            } else if (callsStatus.status === 'FAILED') {
+            } else if (callsStatus?.status === 'FAILED') {
               throw new Error('Transaction failed in bundle');
             }
             // Otherwise status is PENDING, keep polling
           } catch (statusErr: any) {
             console.error('Error polling call status:', statusErr);
+            addLog('warning', 'Stage 1: Create Lab', `⚠️ Polling error: ${statusErr?.message}`);
             // Continue polling - might just be temporary
           }
           
@@ -1014,7 +1018,17 @@ export default function Prototype() {
         }
         
         if (!txHash) {
-          throw new Error('Transaction timeout - bundle still pending after 60 seconds');
+          // Transaction might have succeeded but we didn't get the hash
+          // Check if any new labs were created
+          addLog('warning', 'Stage 1: Create Lab', '⚠️ Timeout polling wallet - checking if lab was created...');
+          console.warn('⚠️ Transaction timeout - but lab might have been created. Refreshing...');
+          
+          // Refresh blockchain data to see if lab appeared
+          await loadBlockchainLabsAndData();
+          
+          toast.warning('Transaction status unknown - please check your created labs');
+          setLoading(null);
+          return;
         }
         
         // Now wait for the transaction to be fully mined and get receipt
