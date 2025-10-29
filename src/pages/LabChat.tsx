@@ -484,7 +484,7 @@ export default function LabChat() {
             </div>
           )}
 
-          <div className="space-y-4 max-w-4xl">
+          <div className="space-y-4 w-full">
             {isLoadingMessages ? (
               <div className="flex items-center justify-center py-8">
                 <Loader2 className="h-8 w-8 animate-spin text-primary" />
