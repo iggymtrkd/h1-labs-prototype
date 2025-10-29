@@ -22,7 +22,7 @@ export const CONTRACTS = {
   // Core Contracts (✅ DEPLOYED)
   H1Diamond: "0x29a7297e84df485aff8def2d27e467f3a37619c0",
   LABSToken: "0xcbdc032c9525b307d3c2b4b8e099feedbd9024fd",
-  LabVaultFactory: "0xb26922366a9eecb4c8452c8d1745dcef0b7ec7c8", // Factory for deploying vaults
+  LabVaultFactory: "0xd7dc1f9b3cd8c0eeb44e3cdf8c14447540f05e9f", // ✅ UPDATED 2025-10-29: New factory with two-step initialization
   
   // Diamond Facets (✅ ALL DEPLOYED)
   DiamondCutFacet: "0x0c21433be788016a7bf7471308dbf3918b827f9e",
@@ -30,7 +30,7 @@ export const CONTRACTS = {
   OwnershipFacet: "0xb49b55fa025b4bc0a7e5c5a35d42acdebaabe2b9",
   SecurityFacet: "0x330c418951a0237d4c28685c0a7dbdb5b42eb441",
   LABSCoreFacet: "0xdf972c8cf5b1757d133aebbce1a704aeb65a2b29", // ✅ UPDATED: Removed domain requirements
-  LabVaultDeploymentFacet: "0x6943C4461d142828e7144F2e1FEF40bf5d16F6F4", // ✅ ONE-STEP LAB CREATION: createLab() does everything
+  LabVaultDeploymentFacet: "0x965f74BD50C564440a8082f29e5347509294aB7d", // ✅ UPDATED 2025-10-29: New version with LibLabVaultFactory integration
   LabDistributionFacet: "0xfb7c840eb842e99837fd13aa957d499f5ad223df", // ✅ UPDATED
   VaultFacet: "0xd6157e381ec5c1d06aca995fa77c5d0a388ff512",
   BondingCurveFacet: "0x90c81d864d4d71af2449153091733cb1249706c6",
