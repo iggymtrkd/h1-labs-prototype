@@ -7,6 +7,8 @@ interface LabChatMessage {
   sender_address: string;
   content: string;
   created_at: string;
+  lab_id: string;
+  channel_type: string;
 }
 
 interface UseLabChatReturn {
@@ -65,6 +67,7 @@ export function useLabChat(
 
     const loadMessages = async () => {
       setIsLoadingMessages(true);
+      setMessages([]); // Clear messages when switching channels
       try {
         const { data, error } = await supabase.functions.invoke('lab-chat', {
           body: { action: 'getMessages', labId, channelType }
@@ -90,18 +93,32 @@ export function useLabChat(
     // Subscribe to realtime updates
     console.log('[LabChat] Setting up realtime subscription for lab:', labId, 'channel:', channelType);
     const channel = supabase
-      .channel(`lab-${labId}-${channelType}`)
+      .channel(`lab-chat-${labId}-${channelType}`)
       .on(
         'postgres_changes',
         {
           event: 'INSERT',
           schema: 'public',
           table: 'lab_messages',
-          filter: `lab_id=eq.${labId},channel_type=eq.${channelType}`,
         },
         (payload) => {
-          console.log('[LabChat] New message received via realtime:', payload);
-          setMessages((prev) => [...prev, payload.new as LabChatMessage]);
+          console.log('[LabChat] Realtime event received:', payload);
+          const newMessage = payload.new as LabChatMessage;
+          
+          // Only add messages for current lab and channel
+          if (newMessage.lab_id === labId && newMessage.channel_type === channelType) {
+            console.log('[LabChat] Adding message from realtime:', newMessage);
+            setMessages((prev) => {
+              // Prevent duplicates
+              if (prev.some(msg => msg.id === newMessage.id)) {
+                console.log('[LabChat] Duplicate message detected, skipping');
+                return prev;
+              }
+              return [...prev, newMessage];
+            });
+          } else {
+            console.log('[LabChat] Ignoring message for different lab/channel');
+          }
         }
       )
       .subscribe((status) => {
@@ -157,14 +174,7 @@ export function useLabChat(
         console.log('[LabChat] Send response:', { data, error: sendError });
 
         if (sendError) throw sendError;
-        
-        // Immediately add the message to local state for instant feedback
-        if (data?.message) {
-          console.log('[LabChat] Adding message to local state immediately');
-          setMessages((prev) => [...prev, data.message]);
-        }
-        
-        console.log('[LabChat] Message sent successfully:', data);
+        console.log('[LabChat] Message sent successfully, realtime will update UI');
       } catch (err: any) {
         console.error('[LabChat] Error sending message:', err);
         setError(err.message || 'Failed to send message');
