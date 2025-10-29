@@ -61,6 +61,8 @@ export function useLabChat(
   useEffect(() => {
     if (!labId) return;
 
+    console.log('[LabChat] Loading messages for lab:', labId, 'channel:', channelType);
+
     const loadMessages = async () => {
       setIsLoadingMessages(true);
       try {
@@ -68,8 +70,11 @@ export function useLabChat(
           body: { action: 'getMessages', labId, channelType }
         });
 
+        console.log('[LabChat] Messages response:', { data, error });
+
         if (error) throw error;
         if (data?.messages) {
+          console.log('[LabChat] Loaded', data.messages.length, 'messages');
           setMessages(data.messages);
         }
       } catch (err) {
@@ -83,6 +88,7 @@ export function useLabChat(
     loadMessages();
 
     // Subscribe to realtime updates
+    console.log('[LabChat] Setting up realtime subscription for lab:', labId, 'channel:', channelType);
     const channel = supabase
       .channel(`lab-${labId}-${channelType}`)
       .on(
@@ -94,13 +100,16 @@ export function useLabChat(
           filter: `lab_id=eq.${labId},channel_type=eq.${channelType}`,
         },
         (payload) => {
-          console.log('[LabChat] New message received:', payload);
+          console.log('[LabChat] New message received via realtime:', payload);
           setMessages((prev) => [...prev, payload.new as LabChatMessage]);
         }
       )
-      .subscribe();
+      .subscribe((status) => {
+        console.log('[LabChat] Subscription status:', status);
+      });
 
     return () => {
+      console.log('[LabChat] Cleaning up subscription');
       channel.unsubscribe();
     };
   }, [labId, channelType]);
@@ -129,6 +138,8 @@ export function useLabChat(
         return;
       }
 
+      console.log('[LabChat] Sending message:', { labId, channelType, userAddress: userAddress.slice(0, 10) });
+
       setIsSendingMessage(true);
       setError(null);
 
@@ -143,11 +154,14 @@ export function useLabChat(
           }
         });
 
+        console.log('[LabChat] Send response:', { data, error: sendError });
+
         if (sendError) throw sendError;
         console.log('[LabChat] Message sent successfully:', data);
       } catch (err: any) {
         console.error('[LabChat] Error sending message:', err);
         setError(err.message || 'Failed to send message');
+        throw err;
       } finally {
         setIsSendingMessage(false);
       }
