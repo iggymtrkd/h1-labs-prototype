@@ -906,24 +906,62 @@ export default function Prototype() {
           return;
         }
         
-        // Call createLab with explicit gas limit for complex deployment
-        addLog('info', 'Stage 1: Create Lab', `📤 Calling createLab("${labName}", "${labSymbol}", "${labDomain}")...`);
-        const createLabTx = await diamond.createLab(labName, labSymbol, labDomain, {
-          gasLimit: 5000000 // Lab creation deploys vault + curve + distributes tokens
-        });
-        addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent: ${createLabTx.hash}`);
+        // Call createLab using wallet_sendCalls for Base Account compatibility
+        addLog('info', 'Stage 1: Create Lab', `📤 Encoding createLab("${labName}", "${labSymbol}", "${labDomain}")...`);
+        
+        // Encode the function call
+        const contractInterface = new ethers.Interface(LabVaultDeploymentFacet_ABI);
+        const callData = contractInterface.encodeFunctionData('createLab', [labName, labSymbol, labDomain]);
+        
+        // Get wallet provider and address
+        const accounts = await walletProvider.request({ method: 'eth_requestAccounts' }) as string[];
+        const fromAddress = accounts[0];
+        
+        addLog('info', 'Stage 1: Create Lab', '📤 Sending transaction via wallet_sendCalls...');
+        
+        // Send via wallet_sendCalls (Base Account method)
+        const txHash = await walletProvider.request({
+          method: 'wallet_sendCalls',
+          params: [{
+            version: '1.0',
+            from: fromAddress,
+            calls: [{
+              to: CONTRACTS.H1Diamond,
+              data: callData,
+              value: '0x0'
+            }]
+          }]
+        }) as string;
+        
+        addLog('success', 'Stage 1: Create Lab', `✅ Transaction sent: ${txHash}`);
         addLog('info', 'Stage 1: Create Lab', '⏳ Waiting for confirmation...');
         
-        const receipt = await createLabTx.wait();
+        // Wait for transaction to be mined
+        const rpcProvider = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
+        let receipt = null;
+        let attempts = 0;
+        while (!receipt && attempts < 60) {
+          try {
+            receipt = await rpcProvider.getTransactionReceipt(txHash);
+            if (receipt) break;
+          } catch (e) {
+            // Transaction not yet available
+          }
+          await new Promise(resolve => setTimeout(resolve, 2000));
+          attempts++;
+        }
+        
+        if (!receipt) {
+          throw new Error('Transaction not confirmed after 2 minutes');
+        }
         addLog('success', 'Stage 1: Create Lab', `✅ Transaction confirmed in block ${receipt.blockNumber}`);
         
-        console.log('✅ Lab creation transaction confirmed:', createLabTx.hash);
+        console.log('✅ Lab creation transaction confirmed:', txHash);
         
         // Parse both events from the single transaction
-        const iface = new ethers.Interface(LabVaultDeploymentFacet_ABI);
         for (const log of receipt.logs) {
           try {
-            const decoded = iface.parseLog(log);
+            const decoded = contractInterface.parseLog(log);
             if (decoded && decoded.name === "LabVaultDeployed") {
               labId = ethers.toNumber(decoded.args[0]); // labId
               vaultAddress = decoded.args[2]; // vault address
@@ -932,7 +970,7 @@ export default function Prototype() {
             } else if (decoded && decoded.name === "LabDistributionComplete") {
               bondingCurveAddress = decoded.args[1]; // curve address
               console.log('✅ LabDistributionComplete event decoded, curve:', bondingCurveAddress);
-              addLog('success', 'Stage 1: Create Lab', `✅ Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, createLabTx.hash);
+              addLog('success', 'Stage 1: Create Lab', `✅ Bonding curve deployed at ${bondingCurveAddress.slice(0, 10)}... and H1 tokens distributed!`, txHash);
             }
           } catch (e) {
             continue;
@@ -965,10 +1003,10 @@ export default function Prototype() {
         setUserCreatedLabs(prev => [newLab, ...prev]);
         
         if (vestingData?.h1Distribution) {
-          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, createLabTx.hash);
+          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with ${vestingData.h1Distribution.totalMinted} H1 tokens distributed!`, txHash);
           toast.success(`Lab Created! ${parseFloat(vestingData.h1Distribution.totalMinted).toFixed(0)} H1 tokens distributed`);
         } else {
-          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, createLabTx.hash);
+          addLog('success', 'Stage 1: Create Lab', `✅ LAB CREATION COMPLETE: Lab "${labName}" created (ID: ${labId}, Level ${eventLevel}) with vault deployed!`, txHash);
           toast.success(`Lab Created! Lab ID: ${labId} (Level ${eventLevel})`);
         }
         
@@ -994,7 +1032,7 @@ export default function Prototype() {
           step1: {
             labId: numericLabId,
             timestamp: new Date(),
-            txHash: createLabTx.hash,
+            txHash: txHash,
             walletAddress: address as string
           }
         }));
