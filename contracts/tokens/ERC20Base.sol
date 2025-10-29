@@ -16,10 +16,10 @@ abstract contract ERC20Base {
   event Transfer(address indexed from, address indexed to, uint256 value);
   event Approval(address indexed owner, address indexed spender, uint256 value);
 
-  constructor() {
-    // Zero-parameter constructor to avoid stack depth issues
-    // Subclasses can directly set _name and _symbol (internal access)
-    _decimals = 18;
+  constructor(string memory name_, string memory symbol_, uint8 decimals_) {
+    _name = name_;
+    _symbol = symbol_;
+    _decimals = decimals_;
   }
 
   function name() public view returns (string memory) { return _name; }
