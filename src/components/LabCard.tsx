@@ -204,22 +204,14 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
         }
 
       } else {
-        // Sell: get vault + check balance + approve + sell in single transaction
+        // Sell: approve + sell in single transaction (mirrors buy flow)
         toast.info('Preparing to sell H1 tokens (1 confirmation)...');
         
-        // Get vault address and check balance
+        // Get vault address (needed for batch transaction)
         const provider = new ethers.BrowserProvider(walletProvider as any);
         const curve = new ethers.Contract(lab.bondingCurveAddress!, BondingCurveSale_ABI, provider);
         const vaultAddress = await curve.vault();
         
-        // Check if user has enough vault shares
-        const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
-        const userBalance = await vault.balanceOf(address);
-        
-        if (userBalance < amountWei) {
-          throw new Error(`Insufficient H1 balance. You have ${ethers.formatEther(userBalance)} H1`);
-        }
-
         // Encode approval call for vault shares (H1 tokens)
         const vaultInterface = new ethers.Interface(LabVault_ABI);
         const approvalData = vaultInterface.encodeFunctionData('approve', [lab.bondingCurveAddress, amountWei]);
@@ -273,8 +265,14 @@ export const LabCard = ({ lab, variant = "market" }: LabCardProps) => {
         toast.success(`Successfully sold ${lab.symbol} H1 tokens!`);
         
         // Refresh H1 balance
-        const balance = await vault.balanceOf(address);
-        setUserH1Balance(ethers.formatEther(balance));
+        if (hasBondingCurve && lab.bondingCurveAddress) {
+          const provider = new ethers.BrowserProvider(walletProvider as any);
+          const curve = new ethers.Contract(lab.bondingCurveAddress, BondingCurveSale_ABI, provider);
+          const vaultAddress = await curve.vault();
+          const vault = new ethers.Contract(vaultAddress, LabVault_ABI, provider);
+          const balance = await vault.balanceOf(address);
+          setUserH1Balance(ethers.formatEther(balance));
+        }
       }
     } catch (error: any) {
       console.error('Trade error:', error);
