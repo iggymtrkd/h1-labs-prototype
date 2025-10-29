@@ -699,7 +699,7 @@ export default function Prototype() {
           }
         } catch (testingErr: any) {
           if (testingErr?.message?.includes('Function not found') || testingErr?.code === 'CALL_EXCEPTION') {
-            addLog('warning', 'Initialization', '⚠️ TestingFacet not available - skipping initialization (may already be set)');
+            addLog('info', 'Initialization', '⚠️ TestingFacet not available - skipping initialization (may already be set)');
             // Continue anyway - protocol might already be initialized
           } else {
             throw testingErr;
@@ -723,6 +723,47 @@ export default function Prototype() {
       
       try {
         const diamond = new ethers.Contract(CONTRACTS.H1Diamond, LabVaultDeploymentFacet_ABI, signer);
+        
+        // ✅ Pre-flight checks: Verify all prerequisites
+        addLog('info', 'Stage 1: Create Lab', '🔍 Running pre-flight checks...');
+        
+        // Check 1: Verify staked balance on-chain
+        try {
+          const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
+          const stakedBalance = await testingFacet.getStakedBalance(address);
+          const stakedAmount = parseFloat(ethers.formatEther(stakedBalance));
+          addLog('info', 'Pre-flight', `✓ Staked balance: ${stakedAmount.toLocaleString()} LABS (need 100,000)`);
+          
+          if (stakedBalance < ethers.parseEther('100000')) {
+            throw new Error(`Insufficient stake: ${stakedAmount.toFixed(2)} LABS staked, need 100,000 LABS`);
+          }
+        } catch (e: any) {
+          console.error('Failed to check staked balance:', e);
+          addLog('error', 'Pre-flight', `❌ Could not verify staked balance: ${e?.message}`);
+          throw e;
+        }
+        
+        // Check 2: Verify protocol parameters
+        try {
+          const testingFacet = new ethers.Contract(CONTRACTS.H1Diamond, TestingFacet_ABI, signer);
+          const params = await testingFacet.getProtocolParams();
+          addLog('info', 'Pre-flight', `✓ LABS Token: ${params.labsToken.slice(0, 10)}...`);
+          addLog('info', 'Pre-flight', `✓ Treasury: ${params.protocolTreasury.slice(0, 10)}...`);
+          addLog('info', 'Pre-flight', `✓ Defaults initialized: ${params.defaultsInitialized ? 'YES' : 'NO'}`);
+          
+          if (!params.defaultsInitialized) {
+            throw new Error('Protocol defaults not initialized');
+          }
+          if (params.labsToken === '0x0000000000000000000000000000000000000000') {
+            throw new Error('LABS token not set in Diamond storage');
+          }
+        } catch (e: any) {
+          console.error('Failed to check protocol params:', e);
+          addLog('error', 'Pre-flight', `❌ Protocol verification failed: ${e?.message}`);
+          throw e;
+        }
+        
+        addLog('success', 'Pre-flight', '✅ All checks passed! Proceeding with lab creation...');
         
         // Call createLab - does everything in ONE transaction!
         const tx = await diamond.createLab(labName, labSymbol, labDomain);
