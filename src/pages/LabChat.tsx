@@ -120,6 +120,7 @@ export default function LabChat() {
       if (!id) return;
       
       try {
+        console.log(`[LabChat] Fetching bonding curve for lab ${id}...`);
         const rpc = new ethers.JsonRpcProvider(CONTRACTS.RPC_URL);
         const diamond = new ethers.Contract(
           CONTRACTS.H1Diamond,
@@ -128,9 +129,11 @@ export default function LabChat() {
         );
         
         const curveAddr = await diamond.getLabBondingCurve(parseInt(id));
+        console.log(`[LabChat] Bonding curve address for lab ${id}:`, curveAddr);
+        console.log(`[LabChat] Is zero address?`, curveAddr === ethers.ZeroAddress);
         setBondingCurveAddress(curveAddr);
       } catch (err) {
-        console.error('Error fetching bonding curve:', err);
+        console.error('[LabChat] Error fetching bonding curve:', err);
       }
     };
 
@@ -543,14 +546,15 @@ export default function LabChat() {
               </Button>
             </Link>
 
-            {bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress ? (
-              <div className="space-y-3">
-                <Card className="p-4 bg-gradient-to-br from-green-500/10 to-red-500/10 border-primary/20">
-                  <div className="mb-3">
-                    <h3 className="text-sm font-bold mb-1">💎 Trade {labInfo.symbol} H1</h3>
-                    <p className="text-xs text-muted-foreground">Buy or sell H1 tokens on the bonding curve</p>
-                  </div>
-                  
+            {/* Buy/Sell H1 Section - Always visible */}
+            <div className="space-y-3">
+              <Card className="p-4 bg-gradient-to-br from-green-500/10 to-red-500/10 border-primary/20">
+                <div className="mb-3">
+                  <h3 className="text-sm font-bold mb-1">💎 Trade {labInfo.symbol} H1</h3>
+                  <p className="text-xs text-muted-foreground">Buy or sell H1 tokens on the bonding curve</p>
+                </div>
+                
+                {bondingCurveAddress && bondingCurveAddress !== ethers.ZeroAddress ? (
                   <div className="space-y-3">
                     <Select value={tradeAction} onValueChange={(v) => setTradeAction(v as 'buy' | 'sell')}>
                       <SelectTrigger className="h-9">
@@ -582,15 +586,18 @@ export default function LabChat() {
                       )}
                     </Button>
                   </div>
-                </Card>
-              </div>
-            ) : (
-              <Card className="p-4 bg-muted/20 border-border">
-                <p className="text-xs text-muted-foreground text-center">
-                  Bonding curve not yet deployed for this lab
-                </p>
+                ) : (
+                  <div className="text-center py-4">
+                    <p className="text-xs text-muted-foreground mb-2">
+                      {bondingCurveAddress === null ? '⏳ Loading bonding curve...' : '⚠️ Bonding curve not deployed yet'}
+                    </p>
+                    <p className="text-xs text-muted-foreground">
+                      Lab owner needs to deploy the curve first
+                    </p>
+                  </div>
+                )}
               </Card>
-            )}
+            </div>
 
             <div className="text-xs text-muted-foreground space-y-1 pt-4 border-t border-border">
               <p className="font-semibold text-foreground mb-2">Chat Info</p>
