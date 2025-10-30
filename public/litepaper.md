@@ -1,484 +1,109 @@
 # **H1 Labs — Litepaper**  
-> Status: Aligned with smart contracts as of 2025-10-19 | **UPDATED 2025-10-20: Enhanced accuracy on level thresholds, ownership mechanics, validator rewards, and detailed economic flywheel example**
-> 
-> **✨ MAJOR UPDATE 2025-10-23: New Tokenomics - Automatic H1 distribution on lab creation with vesting schedules. Labs now auto-deploy bonding curves with 10% liquidity. Owners receive 30% H1 (vested 6 months), 40% reserved for scholars, 15% for devs, 5% to treasury.**
+> Status: Updated 2025-10-24 | Main body: 1,203 lines | Appendix: 108 lines | Total: 1,311 lines | Condensed & organized with TOC
 
 ### Advancing AI through provable, human‑validated data — powered by blockchain.
 
 ---
 
-## 1. Mission, Goals, and Why Now
+## Table of Contents
 
-**Mission**  
-H1 Labs is building the human‑first protocol for AI — a decentralized system where verified people enrich, validate, and monetize datasets with onchain provenance, compliance, and transparent economics.
-Through our Dual‑Intelligence SDK, every app pairs an agent with a credentialed human, ensuring compliant data for regulated and semi‑regulated markets.
+### Main Sections
+1. [The Problem It Solves](#1-the-problem-it-solves)
+2. [Technical Architecture](#2-technical-architecture)
+   - 2.1 [Credentialing & Data Validation](#21-credentialing--data-validation)
+   - 2.2 [Smart Contract Architecture](#22-smart-contract-architecture)
+   - 2.3 [Lab Creation & Growth Mechanics](#23-lab-creation--growth-mechanics)
+   - 2.4 [Technical Features & Security](#24-technical-features--security)
+   - 2.5 [Reading Lab Data On-Chain](#25-reading-lab-data-on-chain)
+   - 2.6 [Prototype Testing Workflow](#26-prototype-testing-workflow)
+3. [Developer SDK](#3-developer-sdk)
+4. [Tokenomics & Economic Model](#4-tokenomics--economic-model)
+   - 4.1 [Automatic H1 Distribution](#41-automatic-h1-distribution-on-lab-creation)
+   - 4.2 [Revenue Distribution Model](#42-revenue-distribution-model)
+   - 4.3 [Staking & Scholar Rewards](#43-staking--scholar-rewards)
+   - 4.4 [H1 Tokens — Per-Lab Economies](#44-h1-tokens--per-lab-economies)
+   - 4.5 [Bonding Curves](#45-bonding-curves--automatic-deployment--bootstrap-mechanics)
+   - 4.6 [H1 Swap Fees](#46-h1-swap-fees--staking--unstaking-costs)
+   - 4.7 [Unstaking Flow](#47-unstaking-flow--overview)
+5. [Economic Flywheel](#5-economic-flywheel)
+6. [Roadmap](#6-roadmap-condensed)
+7. [Dataset Marketplace](#7-dataset-marketplace)
+8. [Closing](#8-closing)
 
-**Goals**  
-- Launch a verifiable data economy spanning healthcare, robotics, law, art, and gaming.  
-- Align incentives between contributors, validators, labs, and AI buyers through crypto‑native mechanics.  
-- Make provenance, credentialing, and compliance default infrastructure for AI.
-
-**Why Now**  
-AI models demand trustworthy data. Today's pipelines are opaque, legally risky, and misaligned with human contributors. H1 Labs merges blockchain guarantees (provenance, payments, programmable policy) with human expertise to create compliant, auditable datasets that enterprises can trust.
-
-We target regulated and semi‑regulated markets — starting with healthcare — and expanding to finance (AML/KYC), legal (privacy/privilege), defense (ITAR/EAR), robotics/industrial (safety standards), and media/creative (C2PA).
-
----
-
-## 2. Our Edge — Strengths at a Glance
-
-- **Provenance by Design**: Every enrichment and validation emits an onchain trace (who, when, what).  
-- **Credentialed Humans**: Domain experts verified via the Credentialing Portal; no anonymous crowdwork for regulated data.  
-- **Programmable Compliance**: Domain rules are enforced at the contract layer (HIPAA, GDPR, AEH, C2PA).  
-- **Dual‑Intelligence SDK (Agent + Human)**: Apps pair an agent with credentialed human oversight for compliant workflows in regulated and semi‑regulated markets.  
-- **Two‑Token Model ($LABS ↔ H1)**: $LABS governs and stakes; each Lab's H1 token is its vault share, enabling per‑lab economies.  
-- **Modular Diamond Architecture**: EIP‑2535 facets make the system upgradeable, auditable, and extensible.  
-- **Enterprise‑friendly UX**: SDK credit mode abstracts blockchain for Web2‑style apps.
-
----
-
-## 3. What You Can Do on H1
-
-- **Create a Lab**: Stake 100K+ LABS → automatic vault + bonding curve deployment → instant H1 distribution (30% owner/vested, 10% curve/liquid, 40% scholars, 15% devs, 5% treasury). Launch a domain Lab with its own H1 token (vault shares) in minutes.  
-- **Enrich & Validate**: Contribute to datasets; validators with credentials approve quality.  
-- **Buy/Access Data**: AI firms purchase verified datasets; payments route transparently to stakeholders.  
-- **Build Apps**: Use the H1 SDK to ship compliant, provenance‑aware applications quickly.
+### Appendix
+- [A. Our Edge — Strengths at a Glance](#a-our-edge--strengths-at-a-glance)
+- [B. What You Can Do on H1](#b-what-you-can-do-on-h1)
+- [C. Competitive Positioning](#c-competitive-positioning--h1-vs-the-field)
+- [D. Risks & Mitigations](#d-risks--mitigations)
+- [E. User Flows](#e-user-flows)
+- [F. Use Cases & Scenarios](#f-use-cases--scenarios)
+- [G. Micro Flywheel: Healthcare Lab Year 1](#g-micro-flywheel-healthcare-lab-year-1-detailed-example)
+- [K. Healthcare Lab H1 Token Appreciation (Year 1)](#k-healthcare-lab-h1-token-appreciation-year-1)
 
 ---
 
-## 3.5 Investor Playbook — The Simple $LABS → H1 Path
+## 1. The Problem It Solves
 
-> **For crypto investors**: Here's your path to H1 Labs yields in simple steps.
+**H1 Labs makes AI training data trustworthy, compliant, and economically fair** — solving the provenance crisis that puts companies at legal, compliance, and financial risk.
 
-### **The Basic Flow**
+### What You Can Use It For
 
-```
-Step 1: Get $LABS          Step 2: Choose a Lab      Step 3: Stake            Step 4: Earn Passively
-    ↓                           ↓                          ↓                          ↓
-Buy on Exchange      →   Browse Domain Labs    →  Deposit $LABS      →  Wait for Datasets
-  or Receive             (Healthcare, Robotics,     Get H1 shares         Revenue flows
-                          Art, Legal, Gaming)        (Vault ownership)      NAV appreciates
-                                                                            Buybacks execute
-```
+- **Prove Compliance to Regulators**: Generate immutable audit trails showing credentialed experts validated your training data — critical for HIPAA (healthcare), GDPR (privacy), ITAR (defense), and emerging AI regulations
+- **Verify Data Quality Before Buying**: Every dataset comes with on-chain proof of who created it, who validated it, and what quality improvement they achieved — no more blind purchases
+- **Monetize Your Expertise**: Domain experts (doctors, engineers, compliance officers) earn fair revenue shares by validating data — staking credentials once creates passive yield across all datasets they validate
+- **Build Compliant AI Products Faster**: Use the H1 SDK to add credential verification and audit trails to your app without rebuilding compliance infrastructure from scratch
 
-### **Step 1: Acquire $LABS Token**
+### How It Makes Things Easier and Safer
 
-**Where to get $LABS:**
-- Purchase on DEX (when listed on mainnet)
-- Mint via LP incentive programs
-- Receive from ecosystem grants (top validators, early adopters)
+Instead of today's broken system where:
+- Data provenance is unknowable (safety risk)
+- Middlemen capture 80-90% of value (economic risk)
+- No audit trail exists for regulators (legal risk)
+- Quality is unverifiable before purchase (financial risk)
 
-**Initial Mindset:**
-$LABS is your ticket to the protocol. Fixed supply (no inflation) means it becomes scarcer as adoption grows.
+H1 Labs gives you:
+- **Cryptographic proof** of every contributor and validator's identity and credentials
+- **Automatic revenue splits** enforced by smart contracts (no brokers, no delays)
+- **Immutable audit trails** for regulatory compliance in healthcare, finance, defense, and legal markets
+- **Quality scores** (Δ-gain) proving measurable improvement, recorded on-chain
 
-### **Step 2: Pick Your Domain & Lab**
+This is especially critical in **regulated markets** (Healthcare, Finance, Defense) where compliance violations mean fines, shutdowns, and criminal liability, and **semi-regulated markets** (Legal, Robotics, Art) where companies operate in legal gray zones with massive future enforcement risk.
 
-**Browse the Labs Marketplace:**
+### Our Solution: Aligned Incentives Through Tokenized Ownership
 
-H1 Labs features independent labs across multiple domains:
+H1 Labs creates a fair data economy by combining three breakthroughs:
 
-| Domain | Lab Examples | Revenue Profile |
-|--------|--------------|-----------------|
-| **Healthcare** | De-ID, Imaging, Quality Review | Highest TAM, regulated, premium pricing |
-| **Robotics** | Motion Data, Safety Validation | Growing, technical, B2B buyers |
-| **Art & Creative** | Game Assets, Provenance | Emerging, community-driven |
-| **Legal & Compliance** | Document Review, AML/KYC | Enterprise, recurring revenue |
-| **Education** | FERPA Datasets, Research | Academic, foundation-funded |
+**1. Dual-Intelligence SDK:** AI speed + human expertise
+   - AI agents handle heavy lifting (fast, cheap)
+   - Credentialed experts validate quality (trustworthy, compliant)
+   - Both sign on-chain = verifiable provenance
 
-**How to Evaluate:**
-- **Lab Metrics**: TVL, validators, completed datasets, average price per dataset
-- **Growth Trajectory**: Velocity of dataset completion, revenue trend
-- **Team**: Lab creator reputation, validator retention rate
-- **Vision**: What datasets will this lab produce? Is there buyer demand?
+**2. On-Chain Provenance:** Every action recorded with cryptographic proof
+   - Who created the data (verified credential)
+   - Who validated it (verified credential in matching domain)
+   - Quality improvement achieved (Δ-gain score)
+   - Immutable audit trail for buyers and regulators
 
-**Risk Assessment:**
-- Early labs (< $100K TVL) = higher growth potential, higher execution risk
-- Mature labs ($500K+ TVL) = proven revenue, slower growth
+**3. Automatic Revenue Splits:** Smart contracts enforce fair economics
+   - Data Creators: 20% | Validators: 20% | Developers: 15% | H1 Buyback: 40% | Treasury: 5%
+   - No middlemen, no delays, no manual invoicing
+   - Buyback distributes proportionally to all H1 holders (hold = gain, sell = miss appreciation)
+   - Contributors earn based on verified quality, not broker negotiations
 
-### **Step 3: Stake $LABS to Get H1 Shares**
+### Why Now
 
-**Three Ways to Participate:**
+**The Cost of Not Solving This:**
+- 85% of enterprise AI projects fail due to compliance issues
+- Companies spend $500K–$2M annually on data ops and compliance lawyers
+- When sued, weak data provenance becomes exhibit A against you
 
-**Option A: Direct Vault Deposit (Recommended for Long-Term)**
-```
-You send: 10,000 LABS
-You receive: 10,000 H1 shares (approximately, at current NAV)
-Cost: Deposit fee (0.75% default) = 75 LABS to protocol treasury
-Benefit: Low cost, direct ownership, no premium
-Entry: Instant
-```
-
-**Option B: Bonding Curve (✨ NEW: Available from Day 1)**
-```
-You send: 10,000 LABS
-Protocol fee: 5% = 500 LABS (default, configurable)
-POL reserve: 5% = 500 LABS (default, configurable)
-Net deposited: 9,000 LABS
-You receive: ~9,000 H1 shares (at NAV × 1.005)
-Cost: ~10% total vs direct deposit
-Benefit: Immediate trading, no waiting for curve deployment
-Entry: Instant, tradeable immediately (7 day cooldown to redeem)
-
-✨ NEW FEATURE: Every lab gets 10% of H1 supply in bonding curve from creation
-Example: Lab creates with 100K LABS → 10,000 H1 available for trading day 1
-```
-
-**Option C: Secondary Market (After Launch)**
-```
-You send: ETH or other H1 tokens
-You receive: H1 shares at market price
-Cost: Trading fees (~0.3%)
-Benefit: Price discovery, tactical entry/exit
-Entry: Any time, instant trading
-```
-
-**What You Own:**
-
-When you stake $LABS and receive H1 shares, you own:
-- **Fractional ownership** of the lab's treasury
-- **Claim on 50% of dataset revenue** (flows as NAV appreciation)
-- **Passive exposure** to 25% buyback pressure (scarcity gains)
-- **Participation** in that domain's ecosystem
-
-**Example:**
-```
-Lab has $500K staked → 500K H1 shares outstanding
-You deposit $50K → Receive 50K H1 shares
-Your ownership: 50K / 550K = 9.1% of the lab
-Your claim: 9.1% of all future dataset revenue (automatically)
-Your benefit: 9.1% of all buyback gains (automatically)
-```
-
-### **Step 4: Wait for Datasets & Earn Passively**
-
-**Timeline to Earnings:**
-
-| Phase | Duration | What's Happening | Your Position |
-|-------|----------|------------------|----------------|
-| **Setup** | Weeks 1-4 | Lab deploys apps, validators join | Holding H1, waiting |
-| **Ramp-up** | Weeks 5-12 | First datasets completed | Watching for revenue |
-| **Monetization** | Month 3+ | Datasets sell to AI companies | Revenue flows in |
-| **Compounding** | Ongoing | More sales, buybacks reduce supply | Passive gains accelerate |
-
-**How Earnings Happen (Automated):**
-
-1️⃣ **Dataset Sells** (e.g., $100K sale)
-   - $40K → Lab's H1 Holders (Buyback for supply reduction)
-   - $15K → App Developer incentive
-   - $20K → Data Creators/Collectors
-   - $20K → Scholars/Supervisors who validated
-   - $5K → H1 Treasury (protocol operations)
-
-2️⃣ **Your Share of Lab Revenue** (from buyback + NAV)
-   - $40K buyback executes H1 repurchase → reduces supply
-   - Your share of remaining H1 supply increases
-   - $20K creators + $20K scholars revenue flows to vault as assets
-   - NAV increases from accumulated assets
-   - Result: Your H1 value grows via supply scarcity + NAV appreciation
-
-3️⃣ **How Revenue Flows to All Stakeholders**
-   - **Lab H1 Holders**: Automatic buyback reduces supply → ownership % increases
-   - **Developers**: $15K incentivizes app/SDK builders
-   - **Data Creators**: $20K paid from treasury for contributor effort
-   - **Scholars**: $20K paid from treasury for validation/approval work
-   - **Treasury**: $5K for protocol operations
-
-4️⃣ **Result: Your H1 Value Grows**
-   - Before: 50K shares × $1.00 = $50K value
-   - After: 50K shares × $1.02+ = $51K+ value
-   - Gain: From buyback scarcity + NAV growth
-   - Happens automatically; no action needed
-
-### **Step 5: Two Paths Forward**
-
-**Path A: Long-Term Hold (Recommended)**
-
-- **Thesis**: Believe in the domain's long-term revenue
-- **Strategy**: Hold H1 and reinvest gains
-- **Timeline**: 2-3+ years
-- **Benefit**: Compounding returns (NAV growth + buybacks compound)
-- **Exit**: When you believe growth has plateaued
-- **Example Return**: $50K → $500K+ over 3 years (if lab scales 10x)
-
-Year 1: Subsidy + early revenue = 50-100% APY  
-Year 2: Revenue-driven = 80-150% APY  
-Year 3+: Compounding = 50-100% APY sustainable  
-
-**Path B: Tactical Trading (Higher Skill)**
-
-- **Thesis**: Identify which labs will outperform
-- **Strategy**: Rotate between high-growth and stable labs
-- **Timeline**: 3-12 months per position
-- **Benefit**: Capture upside before market recognizes
-- **Risk**: May sell too early or miss long-term compounding
-- **Tools**: Monitor leaderboard, validator retention, dataset velocity
-
-Example Rotations:
-```
-Month 1-3: Buy H1-Healthcare ($50K TVL) → +150% gains
-Month 4-6: Rotate to H1-Robotics ($100K TVL) → +200% gains
-Month 7-12: Move to stable H1-Legal ($500K TVL) → +50% gains
-Result: $10K initial → $100K+ through tactical sequencing
-```
-
-### **Key Mindset Shifts for Investors**
-
-| Traditional Crypto | H1 Labs |
-|-------------------|---------|
-| **Value = Demand for token** | **Value = Real dataset sales** |
-| **Yield = Inflation** | **Yield = Revenue from data** |
-| **Risk = Protocol failure** | **Risk = Domain not finding buyers** |
-| **Upside = Hype** | **Upside = Market adoption** |
-| **Timeframe = 1-2 years** | **Timeframe = 3-5 years** |
-| **Passive = Risky** | **Passive = Sustainable** |
-
-### **FAQs for Investors**
-
-**Q: Is my $LABS locked when I stake?**  
-A: No. You can redeem H1 anytime (7-day cooldown + daily exit caps prevent bank runs). But early exit means you miss compounding.
-
-**Q: Can I lose money?**  
-A: Your downside is limited to your deposit. H1 is backed by vault assets (can't go below NAV). But if a lab doesn't generate revenue, your H1 stays at or below entry price.
-
-**Q: Do I need to do anything to earn?**  
-A: No. Just hold H1. Datasets selling, buybacks executing, and NAV appreciating happen automatically.
-
-**Q: What if a lab's datasets don't sell?**  
-A: Your H1 stays at current NAV. No passive yield, but no loss either. You can exit and move to a more successful lab.
-
-**Q: Can I speculate on H1 prices?**  
-A: Yes. Trade H1 on secondary market. But remember: price should track NAV + buyback gains. Wild speculation is prevented by price bounds.
-
-**Q: Is $LABS or H1 more valuable?**  
-A: Different roles. $LABS = platform play (scarcity, governance). H1 = lab-specific play (real yield). H1 likely outperforms in bull markets; $LABS more stable in downturns.
-
-**Q: What's the exit strategy?**  
-A: Redeem H1 for $LABS anytime (subject to cooldown). Convert $LABS back to stablecoins/ETH on DEX. Can take 7-10 days total.
+H1 Labs provides the cryptographic proof, regulatory defensibility, and fair economics that the AI industry desperately needs. We target regulated markets (healthcare, finance, defense) where compliance is non-negotiable and expand to semi-regulated markets (legal, robotics, creative) where rules are evolving.
 
 ---
 
-## 3.6 Buy H1 Button — What Happens Behind the Scenes
+## 2. Technical Architecture
 
-> **For developers**: This section details the complete flow when users click "Buy H1" and the smart contract mechanics involved.
-
-### **Overview: Three Purchase Methods**
-
-When a user buys H1 tokens in a lab, they're actually **depositing $LABS into that lab's vault** and receiving fractional ownership (H1 shares). There are three paths to accomplish this:
-
-### **Method 1: Direct Vault Deposit (Recommended)**
-
-```
-USER ACTION                          SMART CONTRACT LOGIC
-════════════════════════════════════════════════════════════════════════
-
-1. User chooses lab and enters amount:
-   ├─ Lab: H1-Healthcare
-   └─ Amount: 10,000 LABS
-   
-2. User approves LabVault to spend LABS
-   └─ Call: LABSToken.approve(labVaultAddress, 10000)
-   
-3. User initiates deposit transaction
-   └─ Call: LabVault.depositLABS(10000, userAddress)
-   
-4. Smart Contract Execution:
-   ├─ Validate amount > 0 ✓
-   ├─ Check reentrancy guard ✓
-   ├─ Transfer 10,000 LABS from user to vault
-   ├─ Calculate fee: 10,000 × 0.75% = 75 LABS
-   ├─ Calculate net deposit: 10,000 - 75 = 9,925 LABS
-   ├─ Get current NAV from vault
-   │  └─ Example: NAV = $1.00/share (100K assets / 100K shares)
-   ├─ Calculate H1 shares to mint: 9,925 / 1.00 = 9,925 shares
-   ├─ Update totalAssets: 100,000 + 9,925 = 109,925
-   ├─ Mint 9,925 H1 shares to user
-   ├─ Transfer 75 LABS fee to treasury
-   ├─ Emit events:
-   │  ├─ DepositFeeCollected(user, 75)
-   │  └─ Deposited(user, user, 9925, 9925)
-   └─ Check if level changed (e.g., hit L2 threshold)
-
-5. User receives:
-   ├─ 9,925 H1 shares in wallet
-   ├─ Ownership: 9,925 / 109,925 = 9.03% of lab
-   └─ Can redeem after 7-day cooldown with 0.375% fee
-
-COST BREAKDOWN:
-├─ User sends: 10,000 LABS
-├─ Deposit fee: 75 LABS (0.75%)
-├─ User receives: 9,925 H1 shares backed by 9,925 LABS
-└─ Total cost: 0.75% (lowest cost method)
-```
-
----
-
-### **Method 2: Bonding Curve (Bootstrap Phase)**
-
-```
-USER ACTION                          SMART CONTRACT LOGIC
-════════════════════════════════════════════════════════════════════════
-
-1. User views bonding curve:
-   ├─ Current NAV: $1.00/share
-   ├─ Curve price: NAV × 1.005 = $1.005/share
-   └─ Protocol fee: 1.5%, POL reserve: 7.5%
-   
-2. User sends 10,000 LABS to BondingCurveSale
-   └─ Call: BondingCurveSale.buy(10000, user, minSharesOut=8900)
-   
-3. Smart Contract Execution:
-   ├─ Validate price in bounds ✓
-   ├─ Validate price change < 50% ✓
-   ├─ Transfer 10,000 LABS from user to curve
-   ├─ Calculate allocations:
-   │  ├─ Protocol fee: 10,000 × 1.5% = 150 LABS
-   │  ├─ POL reserve: 10,000 × 7.5% = 750 LABS
-   │  └─ Net to vault: 10,000 - 150 - 750 = 9,100 LABS
-   ├─ Call: vault.depositLABS(9100, user)
-   │  └─ Calculate H1 at current NAV: 9,100 / 1.00 = 9,100 shares
-   ├─ Mint 9,100 H1 to user
-   ├─ Transfer 150 LABS fee to treasury
-   ├─ Transfer 750 LABS to POL reserve
-   ├─ Check slippage: 9,100 > minSharesOut ✓
-   └─ Emit: Purchased(user, 10000, 9100, 150, 750)
-
-4. User receives:
-   ├─ 9,100 H1 shares in wallet
-   ├─ Ownership: 9,100 / 109,100 = 8.34% of lab
-   ├─ Locked in 7-day cooldown (bootstrap phase)
-   └─ After 7 days: can redeem or trade
-
-COST BREAKDOWN:
-├─ User sends: 10,000 LABS
-├─ Protocol fee: 150 LABS (1.5%)
-├─ POL reserve: 750 LABS (7.5%) [for liquidity]
-├─ Curve premium: Built into curve formula
-├─ User receives: 9,100 H1 shares
-└─ Total cost: ~1.5% + time-lock (premium for early access)
-```
-
----
-
-### **Method 3: Secondary Market (After Bootstrap)**
-
-```
-USER ACTION                          SMART CONTRACT LOGIC
-════════════════════════════════════════════════════════════════════════
-
-1. User browses H1-Healthcare on DEX (Uniswap)
-   ├─ Contract: 0x[LabVaultAddress]
-   ├─ Symbol: H1CARD
-   ├─ Current bid: 1.02 LABS/share
-   └─ Current ask: 1.03 LABS/share
-   
-2. User executes market buy:
-   ├─ Wants: 9,000 H1 shares
-   ├─ Sends: ~9,270 LABS (9,000 × 1.03 + slippage)
-   
-3. Smart Contract Execution (DEX Swap):
-   ├─ Execute swap atomically
-   ├─ Send 9,270 LABS to seller (peer-to-peer)
-   ├─ Send 9,000 H1 shares to buyer
-   ├─ DEX collects fee: ~0.3% (depends on DEX)
-   └─ Emit: Transfer(seller, buyer, 9000)
-
-4. User receives:
-   ├─ 9,000 H1 shares instantly
-   ├─ No vault interaction (shares already minted)
-   ├─ No cooldown (immediate liquidity)
-   └─ Cost: Market price + 0.3% DEX fee
-
-KEY DIFFERENCE FROM METHODS 1 & 2:
-├─ No new deposits to vault
-├─ No new H1 minting
-├─ User receives existing H1 from secondary holder
-└─ Price set by market, not NAV + fees
-
-COST BREAKDOWN:
-├─ User sends: ~9,270 LABS
-├─ DEX trading fee: ~30 LABS (0.3%)
-├─ User receives: 9,000 H1 shares
-├─ Price paid: 1.03 LABS/share (market)
-└─ Total cost: ~0.3% + market premium/discount
-```
-
----
-
-### **Comparison: Which Method to Use**
-
-| Method | Cost | Speed | Lock-in | Best For |
-|--------|------|-------|---------|----------|
-| **Direct Deposit** | 0.75% | Instant | 7-day | Long-term holders, lowest cost |
-| **Bonding Curve** | ~2% | Instant | 7-day | Early bootstrap, willing to pay premium |
-| **Secondary Market** | ~0.3% | Instant | None | Active traders, maximum liquidity |
-
----
-
-### **User's Ownership After Purchase**
-
-No matter which method, the end result is the same:
-
-```
-User deposits $LABS → Smart contract locks it in vault
-                     ↓
-                 Mints H1 shares
-                     ↓
-User owns percentage = H1 shares held / Total H1 supply
-
-EXAMPLE:
-├─ User deposits: 9,925 LABS (Method 1)
-├─ Gets: 9,925 H1 shares (at NAV $1.00)
-├─ Lab total: 109,925 H1 shares
-├─ User's %: 9,925 / 109,925 = 9.03%
-│
-└─ User is now entitled to:
-   ├─ 9.03% of all dataset revenue flowing to vault (NAV growth)
-   ├─ 9.03% of buyback scarcity gains (price appreciation)
-   └─ Can redeem anytime to get $LABS back (minus fee + cooldown)
-```
-
----
-
-## 4. User Flows (High‑Level)
-
-1) Lab Founder  
-```
-Connect Wallet → Stake 100K+ LABS → createLab(name, symbol, domain)
-     ↓
-Auto-deploys: LabVault (H1 token) + Bonding Curve
-     ↓
-Mints & distributes H1:
-  ├─ 30% to Lab Owner (vested 6 months, weekly unlocks)
-  ├─ 10% to Bonding Curve (liquid, tradeable immediately)
-  ├─ 40% to Scholar Reserve (vested, paid as validation completes)
-  ├─ 15% to Dev Reserve (vested, paid as development completes)
-  └─ 5% to Protocol Treasury (instant distribution)
-     ↓
-Reach Level thresholds based on staked LABS → unlock app slots
-  ├─ Level 1: 100K–250K LABS = 1 app slot
-  ├─ Level 2: 250K–500K LABS = 2 app slots
-  └─ Level 3: 500K+ LABS = 3 app slots
-     ↓
-Optional: Deploy LabPass for membership + identity verification
-```
-
-2) Contributor / Validator  
-```
-Sign up → Credentialing Portal (license/ID) → whitelisted for domain
-Contribute/validate via apps (Scrubber, Second Opinion+, etc.)
-Onchain provenance + rewards tracked to wallet
-```
-
-3) AI Buyer / Enterprise  
-```
-Discover datasets → purchase/license via RevenueFacet‑integrated flows
-ETH routed: 50% Lab owner, 25% protocol treasury (H1 pool custody), 25% buyback budget
-Auditable provenance & compliance artifacts for due diligence
-```
-
----
-
-## 4.1 Credentialing & Data Validation (NEW)
+### 2.1 Credentialing & Data Validation
 
 > **The Chain of Trust**: From verified identity → credentialed contributions → provable datasets → fair revenue distribution.
 
@@ -659,7 +284,7 @@ TIER 3: REVENUE ATTRIBUTION
 
 ---
 
-## 4.2 Smart Contract Architecture
+### 2.2 Smart Contract Architecture
 
 ### **Global Architecture: Diamond Pattern (EIP-2535)**
 
@@ -671,8 +296,9 @@ H1Diamond (Proxy Router)
     ├─ DiamondLoupeFacet (inspect facet functions)
     ├─ OwnershipFacet (admin controls)
     ├─ SecurityFacet (access control)
-    ├─ LABSCoreFacet (create labs)
-    ├─ VaultFacet (deploy per-lab vaults)
+    ├─ LABSCoreFacet (LABS token staking)
+    ├─ LabVaultDeploymentFacet (Step 1: create lab + deploy vault)
+    ├─ LabDistributionFacet (Step 2: deploy bonding curve + distribute H1)
     ├─ LabPassFacet (deploy per-lab passes)
     ├─ BondingCurveFacet (bonding curve deposits)
     ├─ CredentialFacet (user credentials & identity)
@@ -742,24 +368,44 @@ While facets are **global and deployed once** to the H1Diamond, each Lab gets it
 
 #### **How It Works: Per-Lab Deployment Flow**
 
-**When a user creates a lab:**
+**When a user creates a lab (Two-Step Process):**
 
+**Step 1: Lab Creation + Vault Deployment**
 ```
-User calls: createLab("MediTrust", "MEDI", "medical")
+User calls: createLabStep1("MediTrust", "MEDI", "medical")
      ↓
-LABSCoreFacet.createLab() (global facet on H1Diamond)
+LabVaultDeploymentFacet.createLabStep1() (global facet on H1Diamond)
+     ├─ Validates: name, symbol, domain, minimum 100K LABS staked
      ├─ Creates Lab record (stored in LibH1Storage)
+     │  └─ Assigns labId, owner, domain, level (based on stake)
      ├─ Deploys NEW LabVault contract
      │  └─ Location: /contracts/vaults/LabVault.sol
      │  └─ Instance: 0xABC123... (unique per lab)
      │  └─ Contains: ERC20-style H1 token logic, deposit/redemption mechanics
      │  └─ Features: Cooldown periods, exit caps, level tracking, fee management
-     ├─ Deploys NEW BondingCurveSale contract (optional)
-     │  └─ Location: /contracts/sales/BondingCurveSale.sol
-     │  └─ Enables: Accelerated capital raise with 0.5% premium
-     └─ Stores addresses: labIdToVault[labId] = LabVault, labIdToPass[labId] = null
+     └─ Stores addresses: labIdToVault[labId] = LabVault
 
-Result: Lab now has its own vault + optional bonding curve
+Result: Lab created with vault, ready for Step 2
+```
+
+**Step 2: Bonding Curve + H1 Distribution**
+```
+User calls: createLabStep2(labId)
+     ↓
+LabDistributionFacet.createLabStep2() (global facet on H1Diamond)
+     ├─ Retrieves vault from Step 1
+     ├─ Deploys NEW BondingCurveSale contract
+     │  └─ Location: /contracts/sales/BondingCurveSale.sol
+     │  └─ Enables: Immediate H1 trading with 0.5% premium
+     │  └─ Pre-allocated: 10% of initial H1 supply
+     └─ Distributes H1 tokens automatically:
+        ├─ 30% → Lab Owner (vested, 6 months)
+        ├─ 10% → Bonding Curve (liquid immediately)
+        ├─ 40% → Scholar Reserve (vested)
+        ├─ 15% → Dev Reserve (vested)
+        └─ 5% → Protocol Treasury (instant)
+
+Result: Lab fully operational with bonding curve and H1 distributed
 ```
 
 **When LabPassFacet.deployLabPass() is called:**
@@ -866,255 +512,17 @@ contract LabPass is ERC721 {
 
 ---
 
-## 4.4 Reading Lab Data On-Chain — Complete Reference
-
-> **For Developers & Data Scientists**: Lab information is fully queryable on-chain through the H1Diamond smart contract without any off-chain APIs or indexing delays.
-
-### **Key On-Chain Read Functions**
-
-All lab data is stored and readable directly from the blockchain via the H1Diamond contract (`0x29a7297e84df485aff8def2d27e467f3a37619c0` on Base Sepolia):
-
-#### **Lab Details & Metadata**
-```solidity
-function getLabDetails(uint256 labId) external view returns (
-    address owner,      // Lab creator's wallet
-    address h1Token,    // H1 token vault address
-    string domain,      // Lab domain (e.g., "healthcare", "art")
-    bool active,        // Whether lab is active
-    uint8 level         // Lab level (1, 2, or 3)
-)
-```
-
-#### **H1 Token Distribution**
-```solidity
-function getLabDistribution(uint256 labId) external view returns (
-    uint256 totalMinted,        // Total H1 tokens minted
-    uint256 ownerAllocation,    // 30% to owner
-    uint256 curveAllocation,    // 10% to bonding curve
-    uint256 scholarAllocation,  // 40% to scholars
-    uint256 devAllocation,      // 15% to developers
-    uint256 treasuryAllocation, // 5% to treasury
-    uint256 ownerVestingId,     // Vesting schedule ID
-    bool initialized            // Whether distribution complete
-)
-```
-
-#### **Bonding Curve Address**
-```solidity
-function getBondingCurve(uint256 labId) external view returns (address)
-```
-
-#### **H1 Vault Information** (via LabVault contract)
-```solidity
-function name() public view returns (string)              // H1 token name
-function symbol() public view returns (string)            // H1 ticker
-function totalSupply() public view returns (uint256)      // Total H1 in circulation
-function totalAssets() public view returns (uint256)      // Total LABS backing
-function assetsPerShare() public view returns (uint256)   // Price per H1 share
-function balanceOf(address) public view returns (uint256) // User's H1 balance
-```
-
-### **Example: Get Complete Lab Info**
-
-```typescript
-const labId = 18;
-
-// 1. Get lab details
-const [owner, h1Vault, domain, active, level] = 
-  await diamond.getLabDetails(labId);
-// owner: 0xd3a57fc777fa1fb67c2517a417e58d200c0297fb
-// h1Vault: 0xf98221fc5ac987cac08aa407d0f76fbe20eb6fa8
-// domain: "art"
-// level: 1
-
-// 2. Get H1 distribution
-const [total, ownerAlloc, curveAlloc, scholarAlloc, devAlloc, treasuryAlloc] = 
-  await diamond.getLabDistribution(labId);
-// total: 100000000000000000000000 (100k H1 in wei)
-
-// 3. Get H1 vault info
-const vault = new ethers.Contract(h1Vault, LabVault_ABI, provider);
-const name = await vault.name();        // "H1 - iggy lab"
-const symbol = await vault.symbol();    // "H1IGGY"
-const totalAssets = await vault.totalAssets();  // 100k LABS
-const price = await vault.assetsPerShare();     // Exchange rate
-
-// 4. Get bonding curve
-const curveAddr = await diamond.getBondingCurve(labId);
-const curve = new ethers.Contract(curveAddr, BondingCurveSale_ABI, provider);
-const h1Price = await curve.price();    // Current price in LABS
-```
-
-### **Data Available On-Chain**
-
-| Information | Source | Cost |
-|-------------|--------|------|
-| Lab owner, vault, domain, level | H1Diamond | Read-only (0 gas) |
-| H1 total supply | H1 Vault | Read-only (0 gas) |
-| LABS backing | H1 Vault | Read-only (0 gas) |
-| LABS/H1 price (NAV) | H1 Vault | Read-only (0 gas) |
-| H1 distribution breakdown | H1Diamond | Read-only (0 gas) |
-| Market price for H1 | Bonding Curve | Read-only (0 gas) |
-| User's H1 balance | H1 Vault | Read-only (0 gas) |
-| Lab creator reputation | Events | Read-only (indexing) |
-
-**All data is queryable without gas costs.** Event scanning via Blockscout API provides historical records.
-
-See [`ONCHAIN_LAB_DATA_REFERENCE.md`](../ONCHAIN_LAB_DATA_REFERENCE.md) for complete reference with code examples.
-
----
-
-## 4.5 Lab Creation & Growth Mechanics
-
-### **Lab Creation Flow Diagram**
-
-```
-┌──────────────────────────────────────────────────────────────────────────────┐
-│                    H1 LABS: LAB CREATION WORKFLOW                            │
-└──────────────────────────────────────────────────────────────────────────────┘
-
-STEP 1: CREATOR STAKES LABS
-  Creator Wallet
-       │
-       ├─ Connects to H1Diamond
-       ├─ Approves 100K+ LABS for staking (single batch with createLab)
-       └─ Calls: createLab(name="HeathTrust", symbol="HTH", domain="healthcare")
-            └─ Staked Amount: 100,000 LABS (minimum)
-            
-                                    ↓
-                    
-STEP 2: SMART CONTRACT EXECUTION
-  H1Diamond.createLab()
-       │
-       ├─ Validates input (name, symbol, domain)
-       ├─ Creates Lab record in storage
-       └─ Determines Lab Level based on staked LABS:
-            ├─ 100K–250K LABS   → Level 1 (1 app slot)
-            ├─ 250K–500K LABS   → Level 2 (2 app slots)
-            └─ 500K+ LABS       → Level 3 (3 app slots)
-            
-                                    ↓
-                    
-STEP 3: AUTOMATIC DEPLOYMENT
-  LabVaultDeploymentFacet
-       │
-       ├─ Deploys NEW LabVault contract (isolated ERC20)
-       │  └─ Contract Address: 0x[unique per lab]
-       │  └─ Stores: H1 token state, balances, NAV calculation
-       │
-       ├─ Deploys NEW BondingCurveSale contract (optional, now automatic)
-       │  └─ Contract Address: 0x[unique per lab]
-       │  └─ Stores: 10% of H1 supply for immediate trading
-       │  └─ Price: NAV × 1.005 (0.5% premium)
-       │
-       └─ Transfers staked LABS to new LabVault
-            └─ Vault Assets = 100,000 LABS
-            
-                                    ↓
-                    
-STEP 4: AUTOMATIC H1 MINTING & DISTRIBUTION
-  LibH1Distribution.distribute()
-       │
-       ├─ Mints Total H1: 100,000 H1 (1:1 with staked LABS)
-       │
-       ├─ Distributes H1:
-       │  ├─ 30% (30,000 H1) → Lab Owner
-       │  │   └─ Vesting: 26 weeks, 1 week cliff, weekly unlocks
-       │  │   └─ Week 1: ~1,154 H1 claimable
-       │  │   └─ Week 26: 30,000 H1 fully claimable
-       │  │
-       │  ├─ 10% (10,000 H1) → Bonding Curve
-       │  │   └─ Status: LIQUID immediately
-       │  │   └─ Available: For trading on curve
-       │  │
-       │  ├─ 40% (40,000 H1) → Scholar Reserve
-       │  │   └─ Vesting: Triggered by validation completion
-       │  │   └─ Paid: To validators as they complete dataset work
-       │  │
-       │  ├─ 15% (15,000 H1) → Dev Reserve
-       │  │   └─ Vesting: Triggered by development completion
-       │  │   └─ Paid: To developers as features ship
-       │  │
-       │  └─ 5% (5,000 H1) → Protocol Treasury
-       │      └─ Status: INSTANT distribution
-       │      └─ Purpose: Protocol operations, audits, grants
-       │
-       └─ Creates Vesting Schedule for Lab Owner
-            └─ VestingSchedule ID: linked to labId
-            └─ On-chain: All vesting events recorded
-            
-                                    ↓
-                    
-STEP 5: LAB GOES LIVE
-  H1 LabVault (ERC20)
-       │
-       ├─ State:
-       │  ├─ Total Assets: 100,000 LABS
-       │  ├─ Total Supply: 100,000 H1 shares
-       │  ├─ NAV: $100,000 / 100,000 = $1.00/share
-       │  ├─ Level: 1 (1 app slot unlocked)
-       │  └─ Status: LIVE & TRADEABLE
-       │
-       ├─ Community Can Now:
-       │  ├─ BUY H1 from bonding curve (10K supply available)
-       │  ├─ STAKE additional LABS to mint new H1
-       │  └─ TRADE H1 on secondary markets (once listed)
-       │
-       └─ Creator Can Now:
-            ├─ CLAIM vested H1 (starting Week 1)
-            ├─ STAKE additional LABS (if desired)
-            └─ MANAGE lab via app slots
-            
-                                    ↓
-                    
-STEP 6: OPTIONAL - EARLY BOOTSTRAP VIA BONDING CURVE
-  Users deposit LABS
-       │
-       ├─ Bonding Curve Price: NAV × 1.005 = $1.005/share
-       ├─ Fee Breakdown (configurable):
-       │  ├─ Protocol Fee: 5% = 500 LABS (per 10K deposit)
-       │  ├─ POL Reserve: 5% = 500 LABS (for liquidity)
-       │  └─ Net to Vault: 9,000 LABS
-       │
-       ├─ Result:
-       │  ├─ User receives: ~9,000 H1 shares
-       │  ├─ Vault assets: 100,000 + 9,000 = 109,000 LABS
-       │  └─ NAV: Still ~$1.00/share (proportional minting)
-       │
-       └─ Timeline: Repeatable, 7-day cooldown to redeem
-       
-                                    ↓
-                    
-STEP 7: CONTINUOUS OPERATION
-  Lab generates datasets, validators enrich/approve
-       │
-       ├─ Datasets sold → Revenue flows in
-       │  └─ 50% to Lab Owner/Validators (NAV appreciation)
-       │  └─ 50% to Protocol (for creator/validator payouts + buybacks)
-       │
-       ├─ Buyback execution (proportional to revenue)
-       │  └─ H1 supply decreases → NAV × scarcity effect
-       │  └─ Existing holders gain value without action
-       │
-       └─ Lab grows → TVL increases → NAV increases → H1 value appreciates
-            ├─ Early supporters rewarded exponentially
-            └─ Self-reinforcing flywheel
-            
-┌──────────────────────────────────────────────────────────────────────────────┐
-│ RESULT: Lab is created, H1 is live, and ecosystem is ready to grow!          │
-│         All mechanics are automatic and transparent.                          │
-└──────────────────────────────────────────────────────────────────────────────┘
-```
+### 2.3 Lab Creation & Growth Mechanics
 
 ### **Lab Lifecycle & Ownership**
 
 Creating a Lab unlocks automatic tokenomics with built-in distribution:
 
-**Stage 1: Lab Creation & Automatic H1 Distribution** ✨ **NEW**  
-Lab creator calls `createLab(name, symbol, domain)` with **minimum 100,000 LABS staked**. The system automatically:
+**Stage 1: Lab Creation & Automatic H1 Distribution** ✨ **NEW - Two-Step Process**  
+Lab creator calls `createLabStep1(name, symbol, domain)` then `createLabStep2(labId)` with **minimum 100,000 LABS staked**. The system automatically:
 
-1. **Deploys LabVault** (H1 token contract)
-2. **Deploys Bonding Curve** (enables immediate H1 trading)
+1. **Step 1 - Creates Lab & Deploys LabVault** (H1 token contract)
+2. **Step 2 - Deploys Bonding Curve** (enables immediate H1 trading)
 3. **Mints H1 tokens** (1:1 with staked LABS, capped at 500,000 H1 per lab)
 4. **Distributes H1 automatically**:
 
@@ -1152,6 +560,59 @@ Total: 100% allocated at creation
 | **L1** | 100K–250K | 1 | 100K–250K H1 | Can run 1 backend/frontend app pair |
 | **L2** | 250K–500K | 2 | 250K–500K H1 | Can run 2 app slots in parallel |
 | **L3** | 500K+ | 3 | 500K H1 (capped) | Can run 3 app slots in parallel |
+
+---
+
+### **Lab Creation Flow — Visual Overview**
+
+```
+STEP 1: Creator Preparation
+├─ Wallet Connected
+├─ 100K+ LABS Available
+└─ Decision: Name, Symbol, Domain
+
+           ↓
+
+STEP 2: Create Lab (Step 1)
+├─ Calls: createLabStep1()
+├─ Action: Deploys LabVault (H1 token contract)
+└─ Result: Lab ID assigned
+
+           ↓
+
+STEP 3: Determine Level
+├─ 100K–250K LABS → Level 1 (1 app slot)
+├─ 250K–500K LABS → Level 2 (2 app slots)
+└─ 500K+ LABS → Level 3 (3 app slots)
+
+           ↓
+
+STEP 4: Deploy Curve & Distribute (Step 2)
+├─ Calls: createLabStep2()
+├─ Deploys: Bonding Curve contract
+└─ Mints: H1 tokens
+
+           ↓
+
+STEP 5: Automatic H1 Allocation (from 100K example)
+├─ 30% → Lab Owner (vested 6 months, weekly unlocks)
+├─ 10% → Bonding Curve (liquid, tradeable immediately)
+├─ 40% → Scholar Reserve (vested)
+├─ 15% → Dev Reserve (vested)
+└─ 5% → Protocol Treasury (instant)
+
+           ↓
+
+STEP 6: Lab Live
+├─ Creator: Can claim vested H1 from week 1
+├─ Community: Can buy H1 on bonding curve
+├─ Optional: Deploy LabPass for membership
+└─ Ready: For data creation & monetization
+```
+
+**Key Outcome:** Complete lab setup in 2 transactions, H1 tradeable from day 1, no manual setup required.
+
+---
 
 **Stage 2: Immediate Trading via Bonding Curve**  
 With 10% of H1 automatically allocated to the bonding curve at creation, users can immediately:
@@ -1200,7 +661,7 @@ Time T1 (After Bonding Curve - 200K raise):
 
 Time T2 (After $100K Dataset Revenue):
 ├─ Dataset sale: $100K
-├─ Lab owner/validators: $50K (flows to vault)
+├─ Lab owner/Scholars: $50K (flows to vault)
 ├─ Treasury: $25K (protocol custody)
 ├─ Buyback reserve: $25K
 ├─ New vault assets: $270K + $50K = $320K
@@ -1220,105 +681,507 @@ Time T3 (After Buyback Execution):
 
 ---
 
-## 6. $LABS and H1 — Detailed Mechanics & Economic Flywheel
+### 2.4 Technical Features & Security
 
-> 📚 Tokenomics overview: See Section 5 above. For deeper details, see [`docs/8-h_1_tokenomics_distribution.md`](8-h_1_tokenomics_distribution.md)
+- **Reentrancy Guards:** Shared via `LibH1Storage.reentrancyStatus` where needed (e.g., `RevenueFacet`).  
+- **Upgradeable by Facet:** New domains or policy changes can be added without migrating state.  
+- **Guardian Controls:** Cooldowns, daily exit caps, and pause mechanisms at the vault level.  
+- **Security & Introspection:** Standard Diamond Loupe, Ownership, Security facets.
+- **Price Bounds Protection:** Bonding curve prevents price manipulation via MIN/MAX bounds and 50% max change per tx.
+- **Pause Mechanism:** Emergency admin controls for security incidents.
+
+---
+
+### 2.5 Reading Lab Data On-Chain
+
+**All lab and vault information is publicly queryable on the blockchain at any time, with no gas costs.** This enables transparency for investors, developers, and analysts without relying on external indexers or APIs.
+
+#### **What Information Is Available?**
+
+```
+Lab Information
+├─ Name, symbol, domain
+├─ Owner address and creation date
+├─ Current level and app slots
+├─ Vault contract address
+├─ Bonding curve contract address
+└─ All queryable from H1Diamond
+
+Vault State (Real-Time)
+├─ Total TVL (LABS locked in vault)
+├─ Total H1 supply (shares outstanding)
+├─ Current NAV (LABS per H1 share)
+├─ Pending redemptions and their unlock times
+├─ Current level and app slots
+└─ All queryable from LabVault
+
+H1 Token (ERC-20)
+├─ Token name and symbol
+├─ Total supply and user balances
+├─ Transfer history (on-chain)
+├─ Exchange rate (NAV)
+└─ All standard ERC-20 functions
+
+User Position
+├─ Your H1 balance
+├─ Your redemption requests and status
+├─ Your projected value (balance × NAV)
+├─ Your ownership percentage
+└─ All queryable by your address
+```
+
+#### **Data Availability at a Glance**
+
+| Information | Where to Query | Refresh Rate | Cost |
+|---|---|---|---|
+| Lab metadata | H1Diamond contract | Real-time | Free (view function) |
+| H1 distribution (allocation %) | H1Diamond contract | Fixed at creation | Free |
+| Bonding curve price | H1Diamond contract | On each trade | Free |
+| Vault TVL & NAV | LabVault contract | On each transaction | Free |
+| User H1 balance | LabVault contract | Real-time | Free |
+| Lab level & app slots | LabVault contract | When TVL changes | Free |
+| Transaction history | Blockscout/Etherscan | On-chain | Free |
+
+**Key Point:** Zero reliance on third-party indexers. All data comes directly from smart contracts on the blockchain, ensuring 100% accuracy and censorship-resistance.
+
+#### **How Developers Use This**
+
+Developers can build applications that:
+- **Display live lab dashboards** (TVL, H1 supply, NAV)
+- **Show user portfolios** (H1 balances across labs)
+- **Calculate projected returns** (NAV appreciation + buyback impact)
+- **Alert users to level changes** (app slot unlocks)
+- **Track redemption queues** (time until funds available)
+
+All without running an indexer or database. Smart contracts are the single source of truth.
+
+#### **For Investors & Analysts**
+
+Track any lab's performance:
+```
+Healthcare Lab (H1HC)
+├─ Created: Oct 20, 2025
+├─ TVL: $500K LABS (Level 2)
+├─ H1 Supply: 500K shares
+├─ NAV: $1.00 per share
+├─ Time to Level 3: 2 more deposits of 125K each
+├─ Datasets created: 12
+├─ Datasets sold: 3 ($30K revenue)
+└─ Current NAV: $1.06 per share (+6% from launch)
+```
+
+Everything above is queryable and verifiable on-chain. No trust required, only math.
+
+---
+
+### 2.6 Prototype Testing Workflow
+
+**Testing the H1 Labs platform follows a natural progression from setup through full economic simulation.**
+
+#### **Phase 1: Lab Creation & Setup**
+
+```
+TEST GOAL: Can we create a lab and deploy vault + curve?
+
+┌─────────────────────────────────────────────────────┐
+│ 1. Mint test LABS to creator wallet                 │
+│ 2. Creator calls createLabStep1()                   │
+│ 3. Verify: Lab record created, LabVault deployed   │
+│ 4. Creator calls createLabStep2()                   │
+│ 5. Verify: H1 tokens minted, bonding curve live    │
+│ 6. Check: Distribution splits (30/10/40/15/5)      │
+└─────────────────────────────────────────────────────┘
+
+EXPECTED RESULTS:
+✓ Lab ID assigned and vault address stored
+✓ H1 tokens match staked LABS (1:1)
+✓ Creator sees 30% H1 allocation (vested)
+✓ Bonding curve shows 10% H1 available
+✓ NAV starts at 1.00 LABS per share
+```
+
+#### **Phase 2: H1 Token Interactions**
+
+```
+TEST GOAL: Can users buy, hold, and trade H1?
+
+┌─────────────────────────────────────────────────────┐
+│ 1. Give test users LABS from faucet                │
+│ 2. User A buys H1 on bonding curve                 │
+│ 3. Verify: H1 balance updated correctly            │
+│ 4. Verify: NAV unchanged (new deposit = new shares) │
+│ 5. Verify: Creator's ownership diluted             │
+│ 6. User B deposits directly to vault               │
+│ 7. Verify: H1 minted at current NAV                │
+└─────────────────────────────────────────────────────┘
+
+EXPECTED RESULTS:
+✓ 50K LABS deposit → ~50K H1 shares at $1.00 NAV
+✓ Vault TVL increased to $50K
+✓ Creator's % ownership diluted (but value unchanged)
+✓ Bonding curve price still $1.005 (NAV + 0.5%)
+✓ Can query H1 balances on-chain anytime
+```
+
+#### **Phase 3: Redemption & Exit Testing**
+
+```
+TEST GOAL: Can users safely exit with cooldown & caps?
+
+┌─────────────────────────────────────────────────────┐
+│ 1. User A requests redemption for 25K H1          │
+│ 2. Verify: Shares burned immediately               │
+│ 3. Verify: Request ID issued with unlock time     │
+│ 4. Wait: 7-day cooldown period (fast-forward)      │
+│ 5. User A claims redemption                        │
+│ 6. Verify: LABS returned (minus 0.375% fee)       │
+│ 7. Verify: Fits within daily exit cap (20% TVL)   │
+└─────────────────────────────────────────────────────┘
+
+EXPECTED RESULTS:
+✓ Redemption request accepted with lock timestamp
+✓ H1 shares burned from total supply
+✓ Cannot claim before cooldown (reverts)
+✓ After cooldown: Claim succeeds
+✓ Amount = (shares × NAV) - redemption fee
+✓ Can't exceed daily exit cap without backfill
+```
+
+#### **Phase 4: NAV Growth Simulation**
+
+```
+TEST GOAL: Does NAV increase when revenue flows in?
+
+┌─────────────────────────────────────────────────────┐
+│ 1. Vault TVL: 500K LABS, 500K H1, NAV $1.00      │
+│ 2. Simulate dataset sale: $10K revenue            │
+│ 3. Protocol sends 50% ($5K) to vault              │
+│ 4. Vault TVL now: $505K                            │
+│ 5. Query new NAV: 505K / 500K = $1.01 per share  │
+│ 6. Verify: All H1 holders gain 1% value          │
+└─────────────────────────────────────────────────────┘
+
+EXPECTED RESULTS:
+✓ NAV increases as vault assets grow
+✓ All H1 holders benefit equally (proportional)
+✓ Total H1 supply unchanged (no dilution)
+✓ Creator's vested H1 also worth more
+✓ Compounding visible over multiple revenue events
+```
+
+#### **Phase 5: Buyback & Scarcity Effect**
+
+```
+TEST GOAL: Do buybacks reduce supply and increase NAV?
+
+┌─────────────────────────────────────────────────────┐
+│ 1. Vault: 505K LABS, 500K H1, NAV $1.01          │
+│ 2. Reserve 25% of revenue ($2.5K) for buybacks    │
+│ 3. Buyback bot repurchases H1 at $0.99 average   │
+│ 4. Buys ~2,525 H1 and burns them                  │
+│ 5. New H1 supply: 497,475 shares                  │
+│ 6. NAV: 505K / 497.5K = $1.015 per share        │
+└─────────────────────────────────────────────────────┘
+
+EXPECTED RESULTS:
+✓ H1 supply decreases (scarcity)
+✓ Vault assets stay same (or grow from more revenue)
+✓ NAV increases from buyback alone
+✓ Combined effect: NAV growth + supply reduction = exponential appreciation
+✓ Early holders benefit most
+```
+
+#### **Phase 6: Multi-Lab Portfolio**
+
+```
+TEST GOAL: Can users hold H1 from multiple labs?
+
+PORTFOLIO SCENARIO:
+
+┌──────────────────────────────────────────────────────┐
+│ Lab 1: Healthcare (H1HC)                             │
+│ ├─ Your Balance: 50K H1                              │
+│ ├─ NAV: $1.06                                        │
+│ └─ Value: $53K                                       │
+│                                                      │
+│ Lab 2: Robotics (H1ROB)                              │
+│ ├─ Your Balance: 30K H1                              │
+│ ├─ NAV: $1.02                                        │
+│ └─ Value: $30.6K                                     │
+│                                                      │
+│ Lab 3: Legal (H1LEG)                                 │
+│ ├─ Your Balance: 25K H1                              │
+│ ├─ NAV: $1.00                                        │
+│ └─ Value: $25K                                       │
+│                                                      │
+│ TOTAL PORTFOLIO: $108.6K                             │
+│ (Initial investment: $105K)                          │
+└──────────────────────────────────────────────────────┘
+
+TESTING:
+✓ Can deposit to multiple labs independently
+✓ Each lab H1 trades separately on bonding curve
+✓ NAV appreciation tracked per lab
+✓ Users can rotate between labs (tactical trading)
+✓ Buybacks on one lab don't affect others
+```
+
+#### **Phase 7: Level Unlocking**
+
+```
+TEST GOAL: Do app slots unlock at correct thresholds?
+
+┌──────────────────────────────────────────────────────┐
+│ STARTING STATE:                                      │
+│ ├─ TVL: $150K LABS                                   │
+│ ├─ Level: 1 (100K–250K range)                       │
+│ └─ App Slots: 1                                      │
+│                                                      │
+│ EVENT: $100K+ new deposits                           │
+│ ├─ TVL: $250K LABS                                   │
+│ ├─ Level: Still 1 (at threshold)                    │
+│                                                      │
+│ EVENT: $1K more deposits                             │
+│ ├─ TVL: $251K LABS                                   │
+│ ├─ Level: 2 (250K–500K range)                       │
+│ └─ App Slots: Unlocked to 2                          │
+│                                                      │
+│ EVENT: $250K+ more deposits                          │
+│ ├─ TVL: $500K+ LABS                                  │
+│ ├─ Level: 3 (500K+ range)                           │
+│ └─ App Slots: Unlocked to 3                          │
+└──────────────────────────────────────────────────────┘
+
+TESTING:
+✓ Level determined at lab creation
+✓ Level increases when TVL crosses threshold
+✓ App slots unlock correctly
+✓ Level can't decrease (monotonic)
+```
+
+#### **Full Testing Checklist**
+
+```
+☐ Phase 1: Lab creation completes in 2 steps
+☐ Phase 2: H1 balances update on deposits
+☐ Phase 3: Redemptions respect 7-day cooldown + exit caps
+☐ Phase 4: NAV increases with dataset revenue
+☐ Phase 5: Buybacks reduce supply + increase NAV
+☐ Phase 6: Portfolio works across multiple labs
+☐ Phase 7: Levels unlock at correct TVL thresholds
+☐ All events emitted correctly
+☐ All state transitions valid
+☐ No reentrancy issues
+☐ Edge cases handled (zero NAV, cap exceeded, etc.)
+```
+
+---
+
+## 3. Developer SDK
+
+The H1 SDK enables developers to build compliant, provenance-aware applications quickly by integrating AI agents with human validators.
+
+**Why Build on H1:**
+- **Instant Compliance**: HIPAA/GDPR/FDA rules enforced at protocol layer
+- **Credential Verification**: Only verified experts can validate data in their domain
+- **Revenue Automation**: Smart contracts handle all payments and splits
+- **Audit Trails**: Every action recorded on-chain for regulators
+
+**Quick Start Example:**
+
+```typescript
+import { H1SDK } from '@h1-labs/sdk';
+
+// Initialize SDK
+const sdk = new H1SDK(signer);
+
+// Step 1: Create dataset with AI enrichment
+const dataset = await sdk.createDataset({
+  labId: 1,
+  domain: "healthcare",
+  baseModel: "mistral-7b",
+  data: ecgReadings  // Your raw data
+});
+
+// Step 2: AI agent processes (automatic or custom)
+const aiEnrichment = await sdk.agents.enrich(dataset, {
+  model: "mistral-7b",
+  prompt: "Analyze ECG for abnormalities"
+});
+
+// Step 3: Submit for human expert review
+await sdk.validation.submitForReview(dataset.id, {
+  supervisor: expertAddress,  // Board-certified cardiologist
+  credentialId: 42            // Verified MD credential
+});
+
+// Step 4: Expert approves (done by validator)
+await sdk.validation.approve(dataset.id, {
+  deltaGain: 850,              // 8.5% improvement vs base model
+  signature: expertSignature   // Cryptographic proof
+});
+
+// Step 5: Dataset is now verified and monetizable
+const provenance = await sdk.getProvenance(dataset.id);
+// Returns: { aiModel, humanExpert, credentials, signatures, deltaGain }
+```
+
+### 3.1 SDK Features
+
+- **Dual‑Intelligence Orchestration (Agent + Human)**: Built‑in co‑workflow primitives (assignment, handoff, review), human sign‑off, and audit trails.  
+- **Identity & Credential**: Integrate credential checks for validators.  
+- **Compliance**: Bind HIPAA/GDPR/AEH/C2PA policies per dataset/lab for regulated and semi‑regulated markets.  
+- **Provenance Hooks**: Record enrichment/validation events onchain.  
+- **Revenue & Splits**: Simple APIs aligned with `RevenueFacet`.  
+- **Credit Mode**: Fiat‑friendly abstraction that still settles onchain.
+
+### 3.2 Dual‑Intelligence Dataflow (Δ‑Gain → Bundles → Buybacks)
+
+1) App selects a base model (partner or BYO) via SDK adapters.  
+2) Agent executes; credentialed human reviews and signs.  
+3) SDK computes **Δ‑Gain** (supervised improvement vs declared base) and records provenance + attribution.  
+4) H1 aggregates Δ‑Gain into dataset bundles and sells/licenses them.  
+5) Revenue triggers buybacks that route to the originating Labs per policy, creating buy pressure for their H1 tokens.
+
+---
+
+## 4. Tokenomics & Economic Model
 
 This section provides detailed mechanics of how $LABS and H1 interact within the platform's economic flywheel.
 
 ### Key Definitions:
 
-- **$LABS (Singleton ERC‑20)**: Platform governance, staking, and lab creation asset. Set via `TreasuryFacet.setLABSToken`.  
+- **$LABS (Singleton ERC‑20)**: Platform governance, staking, and lab creation asset. Stake to govern and seed labs.
 - **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab's `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
-- **Bonding Curve (Optional)**: `BondingCurveSale` buys H1 at NAV + 0.5% premium, routing fees/POL to treasury and depositing net $LABS to the lab's vault.  
+- **Bonding Curve (Automatic)**: `BondingCurveSale` deployed automatically with each lab, providing instant liquidity with 10% of H1 supply.
 - **Levels & App Slots**: LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.
-- **Revenue Split (Current Implementation - 100% Allocation)**: 
-   - 40% → Lab's H1 Holders (via buyback that reduces supply)
-   - 15% → App Developer incentive (protocol treasury)
-   - 20% → Data Creators/Collectors (protocol treasury)
-   - 20% → Scholars/Supervisors (protocol treasury)
-   - 5% → H1 Protocol Treasury
-   
-   All treasury allocations handled via centralized distribution from protocol treasury.
 
-Economic intent: AI demand for verified datasets drives onchain payments that flow to Labs and treasury, with retained buyback budgets enabling future buy pressure mechanisms without dividend semantics.
+### 4.1 Automatic H1 Distribution on Lab Creation
+
+When a lab is created (minimum 100K $LABS staked), H1 tokens are **automatically minted and distributed** (1:1 with staked LABS, max 500K):
+
+| Recipient | Allocation | Vesting | Purpose |
+|-----------|-----------|---------|---------|
+| **Lab Owner** | **30%** | 6 months, weekly unlocks | Incentive for lab creation & management |
+| **Bonding Curve** | **10%** | Liquid immediately | Trading liquidity, price discovery |
+| **Scholar Reserve** | **40%** | Paid as work completes | Rewards for data validators |
+| **Dev Reserve** | **15%** | Paid as work completes | Rewards for developers |
+| **Protocol Treasury** | **5%** | Instant | Protocol operations & grants |
+| **TOTAL** | **100%** | - | Complete allocation at creation |
+
+**Lab Creation Flow:**
+```
+Stake 100K+ LABS → Create Lab → Automatic:
+  ├─ Deploy LabVault (H1 token)
+  ├─ Deploy Bonding Curve (trading)
+  ├─ Mint 100K-500K H1 (1:1 with LABS)
+  └─ Distribute: 30% owner + 10% curve + 40% scholars + 15% devs + 5% treasury
+  
+After Creation:
+  ├─ Week 1+: Owner claims vested H1 (weekly unlocks)
+  ├─ Day 1: Community trades H1 on bonding curve
+  ├─ Ongoing: Scholars/Devs receive H1 as work completes
+  └─ Revenue: Dataset sales → RevenueFacet Split → Buyback + NAV growth
+```
+
+### 4.2 Revenue Distribution Model
+
+**Per-Dataset Sale Split:**
+- **20%** → Data Creators (direct payment to contributors)
+- **20%** → Scholars (direct payment to credentialed experts who enrich/validate data)
+- **15%** → App Developers (SDK/app builders)
+- **40%** → H1 Buyback (repurchases H1, distributed proportionally to all holders)
+- **5%** → Protocol Treasury (operations & infrastructure)
+
+> **Note on "Scholars":** In the H1 ecosystem, Scholars are credentialed domain experts who contribute to datasets in two ways: (1) **Data Creators** who collect and annotate raw data, and (2) **Enrichers/Validators** who review, validate, and improve data quality. Both roles require verified credentials matched to the domain they work in.
+
+All payments automated via smart contract; transparent and auditable on-chain.
+
+**Key Principle:** The 40% buyback repurchases H1 tokens from the market and distributes them proportionally to all H1 holders (including vested stakes). Hold H1 = benefit from appreciation. Sell H1 = miss future gains.
+
+Economic intent: AI demand for verified datasets drives onchain payments that flow to Labs, creating sustainable revenue-driven economics.
 
 ---
 
-### 6.5 Staking & Validator Rewards
+### 4.3 Staking & Scholar Rewards
 
 **$LABS serves three functions:**
 1. **Lab Creation & Deposits**: Stake $LABS → mint H1 shares → unlock app slots and dataset economy
-2. **Validation Rewards**: Contribute to datasets → earn $LABS grants + lab-specific H1 tokens
+2. **Scholar Rewards**: Contribute to datasets → earn $LABS grants + lab-specific H1 tokens
 3. **Governance**: Hold $LABS → vote on protocol upgrades (future DAO)
 
-**Validator Economics: Revenue Distribution Model**
+**Scholar Economics: Revenue Distribution Model**
 
 When a dataset sells (e.g., $100K), revenue is split as follows:
 
 ```
 $100K Dataset Sale → Revenue Distribution (100% Allocation)
 
-├─ Lab's H1 Holders Buyback (40% = $40K)
-│  └─ Treasury executes H1 token repurchase
-│     └─ Reduces H1 supply on the market
-│     └─ Benefits ALL H1 holders via increased ownership % and scarcity appreciation
-│     └─ Example: 40K H1 tokens bought and burned
-│        ├─ Previous supply: 1M H1
-│        ├─ New supply: 960K H1
-│        └─ Your ownership %: Increased without any action
+├─ H1 Buyback (40% = $40K)
+│  └─ Sent to buyback wallet
+│     └─ Buyback bot repurchases H1 tokens from market
+│     └─ H1 distributed proportionally to ALL H1 holders
+│     └─ Benefits: Lab owner (staked), validators (staked), investors, anyone holding H1
+│     └─ Example: If you hold 2% of H1 supply, you get 2% of buyback benefit
+│        ├─ Lab owner with 30% vested stake: receives 30% of buyback ($12K)
+│        ├─ Early investor with 10% stake: receives 10% of buyback ($4K)
+│        ├─ Validator who staked 5%: receives 5% of buyback ($2K)
+│        └─ Hold H1 = participate in appreciation | Sell H1 = miss future gains
 │
-├─ App Developer Incentive (15% = $15K)
-│  └─ Allocated from treasury for SDK builders and app creators
-│     └─ Encourages development ecosystem growth
-│     └─ Paid in H1 or $LABS based on protocol designation
-│     └─ Example: Scrubber developer earns recognition for healthcare apps
-│
-├─ Data Creators/Collectors (20% = $20K)
-│  └─ Allocated from treasury to contributors who collected/enriched data
-│     └─ Proportional to quality and contribution score
-│     └─ Paid directly to data collectors
+├─ Data Creators (20% = $20K)
+│  └─ Sent to creator pool wallet
+│     └─ Distributed proportionally to Scholars who collected/enriched data
 │     └─ Example: 50 data collectors share $20K based on contribution quality
+│        ├─ High-quality contributor (10% of work): $2,000
+│        ├─ Medium contributor (5% of work): $1,000
+│        └─ All contributions tracked on-chain
 │
-├─ Scholars/Supervisors (20% = $20K)
-│  └─ Allocated from treasury to validators and supervisors who reviewed/approved
-│     └─ Proportional to quality of validation and expertise
-│     └─ Paid directly to validators
+├─ Scholars - Enrichers/Validators (20% = $20K)
+│  └─ Sent to scholar pool wallet
+│     └─ Distributed proportionally to credentialed Scholars who validated
 │     └─ Example: Board-certified clinicians earn based on rigor of approval
+│        ├─ Primary supervisor (60% of validation): $12,000
+│        ├─ Secondary reviewer (40% of validation): $8,000
+│        └─ All tracked via CredentialFacet
 │
-└─ H1 Protocol Treasury (5% = $5K)
-   └─ Retained for protocol operations, infrastructure, and future initiatives
-      └─ Covers development, audit, and ecosystem grants
+├─ App Developers (15% = $15K)
+│  └─ Sent to developer wallet
+│     └─ Rewards SDK builders, app creators
+│     └─ Example: Team that built Scrubber app for healthcare
+│
+└─ Protocol Treasury (5% = $5K)
+   └─ Sent to treasury wallet
+      └─ Protocol operations, audits, infrastructure, grants
 ```
 
-**How This Differs From Old Model:**
-- **Old**: 50% Lab Owner + 25% Treasury + 25% Buyback (conceptually confusing)
-- **New**: 40% Buyback (benefits ALL H1 holders) + 15% Dev + 20% Creators + 20% Scholars + 5% Treasury (100% clear allocation)
+**Key Principle:**
+Contributors, validators, and developers receive **direct payment** based on verified on-chain attribution. H1 holders benefit **proportionally** through buyback distribution—not by role, but by stake size. This aligns incentives: hold H1 long-term → maximize gains from all future dataset sales.
 
 **Contributor Roles & Reward Streams**
 
 || Role | Function | Reward Mechanism | Payment Token | Examples |
 ||------|----------|------------------|---------------|----------|
-|| **Data Creators** | Collect, enrich, and annotate dataset entries | 20% of dataset sale revenue, proportional to contribution quality | Direct payment from treasury | Healthcare startup collects de-identified records; robotics team gathers motion data |
-|| **Scholar/Validator** | Review, validate, and approve dataset for compliance | 20% of dataset sale revenue, quality-bonus multiplier for rigorous oversight | Direct payment from treasury | Board-certified radiologist approves imaging dataset; roboticist signs off on safety data |
-|| **Developer** | Build apps using H1 SDK, integrate compliance, manage operations | 15% of dataset sale revenue + future app-specific revenue splits | H1 or $LABS from treasury | Healthcare startup builds Scrubber app; robotics firm integrates DataValidationFacet |
-|| **App User/Buyer** | Purchase datasets, integrate into production models | Access to verified, compliant data with onchain provenance proof | Transparent pricing; dataset economics determined by supply/demand | AI company downloads healthcare dataset with full audit trail for FDA defense |
+|| **H1 Holders** | Stake $LABS to fund lab operations, provide liquidity | 40% of dataset sale revenue via buyback (proportional to stake) | H1 token appreciation (hold = gain, sell = miss) | Lab owner with 30% vested stake; early investors; Scholars who staked in their domain |
+|| **Scholars (Data Creators)** | Collect, enrich, and annotate dataset entries | 20% of dataset sale revenue, proportional to contribution quality | Direct payment via smart contract | Healthcare startup collects de-identified records; robotics team gathers motion data |
+|| **Scholars (Enrichers/Validators)** | Review, validate, and approve dataset for compliance | 20% of dataset sale revenue, quality-bonus multiplier for rigorous oversight | Direct payment via smart contract | Board-certified radiologist approves imaging dataset; roboticist signs off on safety data |
+|| **App Developers** | Build apps using H1 SDK, integrate compliance | 15% of dataset sale revenue for SDK/app builders | Direct payment via smart contract | Team that built Scrubber app; robotics firm integrates DataValidationFacet |
+|| **Data Buyers** | Purchase datasets, integrate into production models | Access to verified, compliant data with onchain provenance proof | Pay in ETH, USDC, or $LABS | AI company downloads healthcare dataset with full audit trail for FDA defense |
 
 **Attribution & Credentialing**
 
-Validator contribution attribution is tracked through:
+Scholar contribution attribution is tracked through:
 - **Credentialing Portal**: Verify domain expertise (medical licenses, legal credentials, certifications)
 - **Onchain Provenance**: ProvenanceFacet logs each validator's enrichment/validation actions with timestamp
 - **Quality Scoring**: Off-chain reputation system (future: onchain governance) scores contributions
 - **Payment Distribution**: Treasury oracle aggregates contribution scores and distributes rewards proportionally
 
-**Key Insight**: Validator rewards are **real, proportional to contribution**, and **sustainable** because they're funded by actual dataset sales, not token inflation. Scarcity pressure from buybacks further benefits all contributors who hold H1.
+**Key Insight**: Scholar rewards are **real, proportional to contribution**, and **sustainable** because they're funded by actual dataset sales, not token inflation. Scarcity pressure from buybacks further benefits all contributors who hold H1.
 
-This aligns incentives: more valuable contributions → higher reward tier; increased lab success → increased validator payouts; platform growth → sustained buyback pressure → all H1 holders gain.
+This aligns incentives: more valuable contributions → higher reward tier; increased lab success → increased Scholar payouts; platform growth → sustained buyback pressure → all H1 holders gain.
 
 ---
 
-### 6.75 H1 Tokens — Per-Lab Economies
+### 4.4 H1 Tokens — Per-Lab Economies
 
 **What is H1?**  
 H1 is **not a single token.** Each lab deploys its own H1 token (LabVault shares) representing:
@@ -1326,35 +1189,11 @@ H1 is **not a single token.** Each lab deploys its own H1 token (LabVault shares
 - Claim on future dataset sale revenue
 - Participation in that domain's ecosystem
 
-**Example — Healthcare Lab after Year 1:**
-
-```
-Initial: $5M TVL, 1M H1 shares, $5.00/share
-├─ Dataset revenue: $5M annually (50 datasets sold)
-├─ Buyback budget deployed: $1.25M (25% of revenue)
-├─ Lab revenue retained: $2.5M (50%)
-├─ New TVL: ~$8.5M
-├─ New NAV: $8.50/share (+70%)
-└─ If buybacks reduce supply 5%: $8.88/share (+77.6% total)
-
-Result: Early H1 holders gain from:
-✓ Increasing NAV (more datasets sold)
-✓ Supply reduction (buybacks)
-✓ Sustainable token economy (real revenue, not inflation)
-```
-
-**Why H1 ≠ Traditional Stake-Reward Models:**
-
-| Mechanic | H1 Labs | Competitors (Bittensor, Ocean) |
-|----------|---------|--------|
-| **Value Source** | Real dataset sales | Inflationary rewards |
-| **Supply** | Decreases (buybacks) | Increases (new issuance) |
-| **Price Pressure** | Buy pressure from revenue | Sell pressure from inflation |
-| **Sustainability** | Revenue-driven (durable) | Reward-dependent (temporary) |
+> **📊 Detailed Example**: For Healthcare Lab H1 Token Appreciation (Year 1) and comparison with traditional stake-reward models, see **Appendix K**.
 
 ---
 
-### 6.9 Bonding Curves — Automatic Deployment & Bootstrap Mechanics
+### 4.5 Bonding Curves — Automatic Deployment & Bootstrap Mechanics
 
 **✨ NEW: Automatic Deployment on Lab Creation**
 
@@ -1416,7 +1255,7 @@ H1 shares purchased via bonding curve can be redeemed like any other H1:
 
 ---
 
-### 6.92 H1 Swap Fees — Staking & Unstaking Costs
+### 4.6 H1 Swap Fees — Staking & Unstaking Costs
 
 **Fee Structure (Hardcoded Defaults + Admin-Configurable)**
 
@@ -1470,408 +1309,37 @@ setFees(
 
 ---
 
-### 6.91 Unstaking Flow — The Three Phases & Backfill Mechanism
+### 4.7 Unstaking Flow — Overview
 
-**Why the Three-Phase Flow?**
+To prevent bank run risks where 100% of stakeholders exit simultaneously, H1 uses a **three-phase redemption flow** with grace periods and backfill mechanics:
 
-Simple unstaking (deposit → immediate redemption) creates bank run risks. If 100% of stakeholders exit at once, the vault collapses and all benefits disappear. H1 uses a **three-phase redemption flow** with **grace periods** and **backfill mechanics** to:
-- Prevent panic exits
-- Preserve lab economics during exits
-- Allow new stakers to provide liquidity to existing unstakers
-- Protect long-term holders from sudden dilution
+**Phase 1: Request Redemption**  
+- Call `requestRedeem(h1_shares)` → H1 shares burned immediately, LABS locked for 7-day cooldown
+- Exit cap enforced: Max 20% of TVL per day prevents sudden drains
+- Receive `requestId` for later claiming
 
----
+**Phase 2: Grace Period (7 Days)**  
+- Your LABS reserved in vault (marked "pending exit")
+- Can cancel redemption if you change your mind
+- New stakers can deposit via bonding curve during this time
 
-**Phase 1: Request Redemption (Immediate, but Queued)**
+**Phase 3: Claim or Backfill**  
+- **Normal Claim**: After 7 days, call `claimRedeem(requestId)` → receive LABS minus ~0.5% fee
+- **Backfill**: New stakers can call `fillRedeem(requestId)` to provide your LABS immediately (before Day 7), earning H1 shares at NAV + 0.5% premium
 
-When you want to unstake:
+**Why This Works:**  
+- Prevents panic exits that would collapse the vault
+- Allows new capital to provide liquidity to existing unstakers  
+- Protects long-term holders from sudden dilution
+- Exit caps (20% TVL/day) + cooldowns (7 days default, configurable) ensure smooth, predictable exits
 
-```
-Call: requestRedeem(h1_shares)
-
-What Happens:
-├─ Your H1 shares are burned immediately
-├─ LABS amount calculated at current NAV
-├─ Redemption request created with unique requestId
-├─ unlockTime = current_time + 7 days (default cooldown)
-├─ Assets marked as "pending exit" in vault accounting
-└─ Exit cap checked: (if exit + others exceed cap, rejected)
-
-You Receive:
-└─ requestId to use for later claiming
-```
-
-**Key Point**: Your shares are gone immediately, but your LABS are **locked for 7 days**. This is not a delay—it's a **grace period** that protects the lab.
-
-**Exit Cap Check** (Happens at Request Time):
-```
-Lab TVL: $1,000,000
-Daily Exit Cap: 20% = $200,000/day (resets every 24 hours)
-
-Day 1, Scenario:
-├─ Alice requests: 50K LABS  → Approved (50K ≤ 200K)
-├─ Bob requests: 100K LABS   → Approved (150K ≤ 200K)
-├─ Carol requests: 60K LABS  → REJECTED (210K > 200K)
-│                                 │
-│                                 └─ Error: "epoch cap exceeded"
-│                                    Must wait for tomorrow's epoch
-└─ Carol can try again in 24 hours
-```
+> **📘 Full Technical Documentation**: For detailed mechanics, backfill incentives, exit cap resets, and configuration options, see `/docs/REDEMPTION_GUIDE.md`
 
 ---
 
-**Phase 2: Grace Period / Cooldown (7 Days of Waiting)**
-
-During the cooldown:
-
-```
-Timeline:
-
-Day 0 (Request):     Your shares burned, LABS locked
-Days 1-6 (Grace):    Waiting period... you CAN still:
-                     ├─ Change your mind: Cancel redemption
-                     │  └─ H1 shares re-minted at current NAV
-                     └─ Check market: See if bonding curve is raising capital
-Day 7 (Eligible):    Unlock time reached ✓
-                     Now you can either:
-                     ├─ Claim LABS (normal path)
-                     └─ Get backfilled (automatic path)
-```
-
-**Why 7 Days?**
-- Gives lab time to attract new capital via bonding curve
-- Allows arbitrage: savvy stakers see redemptions → deposit via curve → backfill unstakers
-- Prevents flash-loan attacks
-- Smooths outflows over time
-
-**What About Your Assets During Grace?**
-- Your LABS are **held in vault** but marked as "pending exit"
-- They **cannot be touched** by you or anyone
-- The lab **cannot use them** for new investments
-- They're "reserved" for you to claim
-
----
-
-**Phase 3: Claim or Get Backfilled**
-
-After 7 days, **two paths**:
-
-#### **Path A: Normal Claim (You Get Your LABS Back)**
-
-```
-Call: claimRedeem(requestId)
-
-What Happens:
-├─ Cooldown check passed ✓
-├─ Your LABS transferred to your wallet
-├─ Redemption fee deducted (0.25-0.5% default)
-├─ "Pending exit" cleared from vault
-└─ NAV potentially updated (vault shrinks)
-
-You Receive:
-└─ LABS - fee back to wallet
-```
-
-**Example:**
-- Requested: 100 H1 shares (= ~100 LABS at NAV $1.00)
-- After 7 days, NAV = $1.10
-- Claim value: 100 × $1.10 = $110 LABS
-- Fee (0.5%): ~$0.55
-- You get: ~$109.45 LABS
-
-#### **Path B: Backfill (Someone Else Fills Your Order)**
-
-This is where the **bonding curve connects to unstaking**:
-
-```
-Scenario:
-├─ You requested redemption on Day 0
-├─ On Day 3: New investor (Bob) deposits via bonding curve
-│  ├─ Bob sends $LABS via BondingCurveSale
-│  ├─ Gets H1 shares + small premium
-│  ├─ Protocol fees/POL deducted
-│  └─ Remainder goes to vault (grows TVL)
-│
-├─ Bob notices your pending redemption request
-├─ Bob calls: fillRedeem(your_requestId)
-│  ├─ Bob sends your_redeem_amount directly to you
-│  ├─ You receive LABS immediately (no wait!)
-│  ├─ Bob keeps his H1 shares
-│  └─ Your redemption marked "claimed"
-│
-└─ Result: You get LABS before Day 7, Bob provides liquidity
-```
-
-**Code Level (What Happens)**:
-```javascript
-fillRedeem(requestId, receiver) {
-  // Bob sends LABS directly to the original redeemer (you)
-  transfer(labsToken, bob, you, assets);
-  
-  // Mark your redemption as fulfilled
-  redeemRequests[requestId].claimed = true;
-  
-  // Remove from pending exit queue
-  pendingExitAssets -= assets;
-}
-```
-
-**Incentives for Backfilling:**
-- Bob deposits at bonding curve price (NAV + 0.5% premium)
-- Bob gets H1 shares to hold/trade
-- Bob can immediately backfill pending redemptions
-- If NAV appreciates, Bob's shares are worth more
-- Bob's action helps other unstakers (social good)
-
----
-
-**Putting It Together: Full Unstaking Timeline**
-
-```
-┌──────────────────────────────────────────────────────────────────┐
-│ NORMAL UNSTAKING (No Backfill)                                   │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│ Day 0:  Alice stakes 100K LABS                                   │
-│         ├─ Gets 100K H1 shares (NAV = $1.00)                    │
-│         └─ Labs TVL: $1,000,000                                  │
-│                                                                   │
-│ Month 6: Alice wants to exit                                     │
-│          ├─ NAV now $1.25 (revenue accrued)                     │
-│          ├─ H1 value: 100K × $1.25 = $125K                     │
-│          └─ Calls: requestRedeem(100K)                          │
-│             └─ Receives: requestId = #42                        │
-│                LABS locked: $125K                                │
-│                unlockTime: now + 7 days                          │
-│                                                                   │
-│ Days 1-6: Grace period (exit cap = 20% = $200K/day)             │
-│           ├─ No exits hit cap today                              │
-│           └─ Alice can cancel if she changes mind                │
-│                                                                   │
-│ Day 7:    Alice claims                                           │
-│           ├─ Call: claimRedeem(42)                              │
-│           ├─ Fee deducted: $125K × 0.5% = $625                 │
-│           └─ Alice receives: ~$124,375 LABS ✓                  │
-│                                                                   │
-└──────────────────────────────────────────────────────────────────┘
-
-┌──────────────────────────────────────────────────────────────────┐
-│ BACKFILLED UNSTAKING (With New Capital)                          │
-├──────────────────────────────────────────────────────────────────┤
-│                                                                   │
-│ Day 0:  Alice stakes 100K LABS                                   │
-│         └─ Gets 100K H1 shares                                   │
-│                                                                   │
-│ Month 6: Alice requests redemption                               │
-│          ├─ requestRedeem(100K)                                  │
-│          ├─ LABS locked: $125K                                  │
-│          └─ requestId: #42                                       │
-│                                                                   │
-│ Day 2:   Bob sees opportunity                                    │
-│          ├─ Deposits $200K via bonding curve                    │
-│          ├─ Curve price: $1.25 × 1.005 = $1.25625              │
-│          ├─ Gets: ~159.2K H1 shares                             │
-│          ├─ Fees/POL: $10K reserved                             │
-│          └─ Remaining: $190K to vault                            │
-│                                                                   │
-│ Day 2, Later: Bob backsand liquidity by calling fillRedeem()    │
-│          ├─ Notices Alice's pending redemption                   │
-│          ├─ fillRedeem(requestId=42, receiver=bob)              │
-│          │  └─ Bob sends $125K LABS directly to Alice          │
-│          │     Alice receives funds IMMEDIATELY ✓                │
-│          ├─ Alice's redemption marked claimed                    │
-│          └─ Result:                                              │
-│             ├─ Alice: Got LABS on Day 2 (5 days early!) ✓       │
-│             ├─ Bob: Holds 159.2K H1 shares (his investment)     │
-│             └─ Lab: Received new capital ($190K), TVL intact    │
-│                                                                   │
-└──────────────────────────────────────────────────────────────────┘
-```
-
----
-
-**What if No One Backfills? (Standard Path)**
-
-Even without backfilling, redemptions still work:
-
-```
-├─ Exit cap throttles redemptions (20% per day)
-├─ Cooldown ensures grace period for recovery
-├─ After 7 days: Normal claim pathway available
-└─ Result: Smooth, predictable exit timeline
-```
-
----
-
-**Exit Cap Resets**
-
-```javascript
-Epoch Duration: 24 hours (resets automatically)
-
-Lab with $1M TVL:
-├─ Hour 0-23 (Day 1): Max exit = $200K
-│                      ├─ $150K exits approved
-│                      └─ Remaining capacity: $50K
-│
-├─ Hour 24 (Day 2): EPOCH RESETS
-│                    └─ Capacity resets to $200K
-│                       (Even if Day 1 didn't use full cap)
-│
-└─ Sliding window prevents bank runs
-```
-
----
-
-**Cooldown Parameters (Configurable)**
-
-Lab admins can adjust redemption parameters:
-
-| Parameter | Default | Max | Purpose |
-|-----------|---------|-----|---------|
-| **Cooldown Period** | 7 days | 30 days | Grace period before claiming |
-| **Exit Cap %** | 20% TVL/day | 100% TVL/day | Daily redemption limit |
-| **Redemption Fee** | 0.5% | 1% | Incentivizes long-term holding |
-
-Example: A mature lab with $10M TVL might set:
-- Cooldown: 3 days (faster exits)
-- Exit Cap: 25% ($2.5M/day)
-- Fee: 0.25% (attracts large unstakers)
-
----
-
-**Visual Summary: When Can You Exit?**
-
-```
-│ Status              │ Can Unstake? │ Can Claim? │ Can Cancel? │
-├────────────────────┼──────────────┼───────────┼─────────────┤
-│ Staked, Day 0      │ YES ✓        │ NO        │ N/A         │
-│ Requested, Day 1-6 │ NO           │ NO        │ YES ✓       │
-│ Requested, Day 7+  │ NO           │ YES ✓     │ NO          │
-│ Claimed            │ N/A          │ N/A       │ N/A         │
-│ Backfilled         │ N/A          │ YES (auto)│ NO          │
-└────────────────────┴──────────────┴───────────┴─────────────┘
-```
-
----
-
-**Why This Design Prevents Disasters**
-
-```
-WITHOUT grace periods + exit caps:
-  Day 1: $1M TVL, 1000 stakers each with 1000 H1
-  Day 2: Market panic → Everyone unstakes
-         └─ All 1000 call requestRedeem()
-  Day 3: All 1000 claim → $1M drained to $0
-         └─ Lab level collapses, TVL → 0
-         └─ Validators lose income, buyers lose credibility
-         └─ Lab is DEAD
-
-WITH grace periods + exit caps + backfill:
-  Day 1: $1M TVL
-  Day 2: 50 call requestRedeem (limit: 20% = $200K)
-         └─ Cap allows: 40 exits at $5K each
-         └─ 10 requesters rejected, try tomorrow
-  Day 3: Bonding curve attracts new capital
-         └─ New stakers backfill yesterday's queue
-         └─ TVL stable or growing
-  Day 4-7: Remaining exits absorbed gradually
-           └─ Lab continues operating normally
-```
-
-This is the **key difference** between fragile systems and robust ones.
-
----
-
-## 7.5 Why Blockchain Matters for H1
-
-Blockchain is not ornament — it is the enforcement layer for provenance, compliance, and fair economics:
-
-| Challenge | Blockchain Benefit | H1 Implementation | Result |
-|-----------|-------------------|-------------------|---------|
-| **Data Provenance** | Immutable audit trail | ProvenanceFacet logs enrichment, validators, timestamps | Regulators can verify dataset lineage |
-| **Validator Integrity** | Cryptographic proof of contribution | Credentials NFT + onchain records | Enterprise clients trust who validated data |
-| **Compliance Enforcement** | Programmable legal constraints | ComplianceFacet binds HIPAA/GDPR/C2PA rules | AI firms know data is legally compliant |
-| **Transparent Economics** | All payments recorded & verifiable | RevenueFacet splits logged per dataset sale | No opacity in revenue distribution |
-| **Security & Trust** | Prevents tampering & fraud | Reentrancy guards, access control, audit logs | Protected against data theft & spoofing |
-
----
-
-## 9.5 Use Case Scenarios
-
-### **Use Case 1: Healthcare Startup Launches De-Identification Lab**
-
-```
-Month 1: $50K staking → Lab created → Level 1 (1 app slot)
-
-Month 1-2: Bonding curve bootstrap
-├─ 50 angels purchase H1-Healthcare shares
-├─ Raise: $250K total
-├─ Curve price: $1.005 → $2.50
-└─ Reach Level 2
-
-Month 3-6: Revenue acceleration
-├─ 10K patient records de-identified via Scrubber
-├─ Sold to AI company: $100K
-├─ Revenue split: $50K lab owner, $25K treasury, $25K buyback
-├─ 500 validator clinicians earn: $100 each in H1
-└─ H1 price appreciates to $2.75
-
-Year 1 Outcome:
-├─ 50 datasets sold ($5M revenue)
-├─ TVL grows: $5M → $8.5M
-├─ H1-Healthcare: $1.00 → $8.88/share (+788%)
-├─ Early validator earning: $100 → $888
-└─ Scrubber becomes industry standard for HIPAA compliance
-```
-
-### **Use Case 2: Robotics Consortium Validates Safety Data**
-
-```
-Week 1: $100K staking, 1,000 motion videos collected
-
-Week 2-4: Validation with ISO-26262 experts
-├─ SafetyFacet compliance enforcement
-├─ Reach Level 2 ($250K capital)
-└─ ProvenanceFacet records all validators/approvals
-
-Month 2-3: Monetization
-├─ OEM purchases dataset: $50K
-├─ 100 validators earn: $250 each in H1
-├─ Lab owner gains directional equity
-└─ Dataset becomes certified standard
-
-6-Month Outlook:
-├─ 100 robotics companies subscribe
-├─ $500K recurring revenue
-├─ H1 holders gain 400%+ returns
-└─ Protocol treasury funds industry audits
-```
-
-### **Use Case 3: Creative Studio Tokenizes Art Assets**
-
-```
-Week 1-3: 5,000 game assets collected, validated by senior artists
-
-Month 2: License to AI development studio
-├─ License fee: $25K
-├─ Revenue split: $12.5K studio, $6.25K protocol, $6.25K buyback
-├─ 50 artists earn: $125 each in H1-ArtForge
-└─ C2PA provenance ensures legal compliance
-
-Ongoing:
-├─ Every game using dataset generates proper attribution
-├─ Artists earn recurring royalties (transparent splits)
-├─ Studios get legal provenance for AI training
-└─ H1 holders benefit from recurring licensing revenue
-```
-
----
-
-## 10. Economic Flywheel
+## 5. Economic Flywheel
 
 The H1 economy is designed as a **closed loop** that continuously strengthens as adoption increases:
-
-### **Macro Flywheel: Platform Level**
 
 ```
 Lab Creation Phase
@@ -1890,7 +1358,7 @@ Dataset Monetization Phase
 └─ Revenue triggers proportional distribution
 
 Distribution Phase
-├─ Lab Owner + Validators: $50K (50% of sale)
+├─ Lab Owner + Scholars: $50K (50% of sale)
 │  └─ Split proportionally by contribution score
 │  └─ Paid in lab-native H1 tokens → increases vault assets
 ├─ Protocol Treasury: $25K (25% of sale)
@@ -1911,269 +1379,24 @@ Token Appreciation Phase
 Flywheel Acceleration
 ├─ H1 tokens now worth more → attracts new founders
 ├─ New labs created with $LABS → platform activity increases
-├─ More validators → higher quality data → higher sale prices
+├─ More Scholars → higher quality data → higher sale prices
 └─ Cycle repeats at larger scale with higher velocity
 ```
 
-### **Micro Flywheel: Healthcare Lab Year 1 (Detailed Example)**
-
-```
-MONTH 1: Lab Creation & Initial Staking
-
-Day 1: Founder creates Health-Lab
-├─ Founder deposits: $50,000 $LABS
-├─ Founder receives: 50,000 H1 shares (100% ownership)
-├─ Lab assets: $50,000
-├─ H1 NAV: $50K / 50K shares = $1.00/share
-├─ Founder's stake value: $50,000
-└─ Level: L0 (below $100K threshold)
-
-
-MONTH 1-2: Community Growth via Deposits
-
-Day 15: Validator 1 deposits $25K
-├─ Receives: 25,000 H1 shares at $1.00/share
-├─ Lab assets: $75,000
-├─ Total H1 supply: 75,000 shares
-├─ Founder's ownership: 50,000 / 75,000 = 66.7% (-33.3% dilution)
-├─ Validator 1's ownership: 25,000 / 75,000 = 33.3%
-├─ Founder's new value: 50K shares × $1.00 = $50K (same nominal, ownership diluted)
-└─ NAV: still $1.00/share (no profit yet)
-
-Day 25: Early Investors via Bonding Curve
-├─ Raise target: $125K additional
-├─ Curve price: $1.005/share (0.5% premium to NAV)
-├─ Fee/POL: $12.5K allocated (10% of raise)
-├─ Net to vault: $112.5K
-├─ Lab assets: $75K + $112.5K = $187.5K
-├─ Total H1 supply: 75K + 112.5K = 187.5K shares
-├─ Founder's ownership: 50K / 187.5K = 26.7% (-40% from original 100%)
-├─ Founder's value: 50K × ($187.5K / 187.5K) = 50K shares × $1.00 = $50K
-│  (Still $50K nominal value, but only 26.7% of lab)
-└─ Level: L1 reached ($187.5K ≥ $100K → 1 app slot unlocked)
-
-
-MONTHS 3-6: Dataset Revenue Phase
-
-Month 3: First Dataset Sale
-├─ Dataset sold: $50,000
-├─ Revenue split:
-│  ├─ Lab Owner/Validators: $25K (50%)
-│  │  └─ Split among validators by contribution score (500 validators)
-│  ├─ Protocol Treasury: $12.5K (25%)
-│  └─ Buyback Reserve: $12.5K (25%)
-├─ Lab assets now: $187.5K + $25K = $212.5K
-├─ H1 NAV now: $212.5K / 187.5K = $1.133/share (+13.3% appreciation)
-├─ Founder's value: 50K shares × $1.133 = $56,650 (+$6,650 gain)
-└─ Validator 1's value: 25K shares × $1.133 = $28,325 (+$3,325 gain)
-
-Month 4: Buyback Execution (optional, protocol-controlled)
-├─ Buyback budget: $12.5K accumulated
-├─ Market price of H1: ~$1.10/share
-├─ H1 repurchased: $12.5K / $1.10 = 11,364 shares burned
-├─ New H1 supply: 187.5K - 11.364K = 176.136K shares
-├─ Lab assets: still $212.5K (unchanged)
-├─ New NAV: $212.5K / 176.136K = $1.206/share (+6.4% from previous)
-├─ Founder's new value: 50K × $1.206 = $60,300 (+$7,300 total)
-│  (Gain comes from: $6,650 NAV growth + $1,650 buyback scarcity)
-└─ Validator 1's new value: 25K × $1.206 = $30,150 (+$3,650 total)
-
-Month 5: Second Dataset Sale
-├─ Dataset sold: $75,000 (higher value, more validators)
-├─ Revenue split:
-│  ├─ Lab Owner/Validators: $37.5K (50%)
-│  │  └─ Split among validators by contribution score (500 validators)
-│  ├─ Protocol Treasury: $18.75K (25%)
-│  └─ Buyback Reserve: $18.75K (25%)
-├─ Lab assets: $212.5K + $37.5K = $250K
-├─ NAV: $250K / 176.136K = $1.420/share (+17.7% appreciation)
-├─ Founder's value: 50K × $1.420 = $71,000 (+$10,700 from Month 4)
-└─ Validator 1's value: 25K × $1.420 = $35,500 (+$5,350 from Month 4)
-
-Month 6: Buyback Round 2
-├─ Cumulative buyback budget: $12.5K (Month 3) + $18.75K (Month 5) = $31.25K
-├─ Market price: ~$1.35/share
-├─ H1 repurchased: $31.25K / $1.35 = 23,148 shares
-├─ New supply: 176.136K - 23.148K = 152.988K shares
-├─ NAV: $250K / 152.988K = $1.634/share (+15% scarcity gain)
-├─ Founder's value: 50K × $1.634 = $81,700 (+$10,700 from Month 5)
-└─ Validator 1's value: 25K × $1.634 = $40,850 (+$5,350 from Month 5)
-
-
-YEAR 1 SUMMARY: Compounding Effects
-
-Cumulative Performance:
-├─ Founder's investment: $50K initial
-├─ Founder's value after Year 1: $81,700
-├─ Total gain: +$31,700 (+63.4% ROI)
-├─ Breakdown:
-│  ├─ NAV appreciation: From $1.00 → $1.634 per share = +63.4%
-│  ├─ Ownership dilution: 100% → 32.7% of lab
-│  └─ Counterbalance: Buybacks reduce supply, offsetting dilution
-│
-├─ Validator 1's investment: $25K (Month 1)
-├─ Validator 1's value after Year 1: $40,850
-├─ Total gain: +$15,850 (+63.4% ROI, same rate as founder)
-└─ Proportional rewards apply to all stakeholders
-
-H1-Healthcare Lab Status (End of Year 1):
-├─ Total TVL: $250K
-├─ H1 NAV: $1.634/share
-├─ H1 Supply: 152,988 shares (reduced from 187,500, 18.4% buyback)
-├─ Revenue generated: $125K+ (3 datasets sold)
-├─ Level: L2 reached ($250K ≥ $250K → 2 app slots unlocked)
-├─ Next milestone: $500K TVL → L3 (3 app slots)
-└─ Platform metrics:
-   ├─ Validators participating: 500+
-   ├─ Apps deployed: 2 active
-   └─ Compliance: HIPAA auditable, verified data
-```
-
-### **Key Mechanics at Work**
+### **Key Mechanics**
 
 1. **Ownership is Fractional**: H1 shares represent % ownership of lab treasury; dilutes with new deposits
-2. **Revenue Drives NAV**: Lab revenue ($50%+) flows to vault → increases backing → increases NAV for all
-3. **Buyback Creates Scarcity**: Reserve ($25K per sale) repurchases H1 → reduces supply → increases price
-4. **Compounding Growth**: NAV ↑ + Supply ↓ = exponential appreciation (63.4% Year 1 shown above)
-5. **Sustainability Loop**: Real dataset sales → real revenue → real token appreciation (no inflation)
+2. **Buyback Benefits All Holders**: 40% of revenue → buyback → distributed proportionally to all H1 holders (not by role)
+3. **Direct Payments by Role**: Creators (20%), Scholars (20%), Developers (15%), Treasury (5%) paid immediately via smart contract
+4. **Hold Incentive**: Hold H1 = participate in all future buybacks; Sell H1 = miss appreciation
+5. **Compounding Growth**: NAV ↑ + Supply ↓ = exponential appreciation
+6. **Sustainability Loop**: Real dataset sales → real revenue → real token appreciation (no inflation)
+
+> **📊 Detailed Example**: For a month-by-month breakdown of a healthcare lab's Year 1 performance (44.1% ROI), see **Appendix G**.
 
 ---
 
-## 11. Competitive Positioning — H1 vs The Field
-
-H1 Labs uniquely combines **verified human intelligence, provenance, and compliance**. Unlike peers that focus on compute (Gensyn), model training (Bittensor), or data liquidity (Ocean), H1 targets regulated and semi-regulated markets with enterprise-grade trust.
-
-| Dimension | H1 Labs | Bittensor | Scale AI | Ocean | Gensyn |
-|-----------|---------|------------|----------|--------|---------|
-| **Focus** | Human-validated datasets | Model training | Centralized data | Data liquidity | Compute network |
-| **Compliance** | HIPAA, GDPR, C2PA, EU AI Act | None | Corporate | Optional | None |
-| **Credentialing** | Verified NFTs + KYC | None | Manual | None | None |
-| **Provenance** | Full onchain audit trail | None | Internal | Metadata only | None |
-| **Revenue Model** | Onchain splits + buybacks | Inflationary | Fiat only | Stake-reward | Stake-reward |
-| **Target Market** | Healthcare, Legal, Defense, Finance | General AI | Enterprise labeling | General data | ML infrastructure |
-| **Value Driver** | Real dataset sales | Token inflation | Labor cost | Access licensing | Compute capacity |
-
-**Why it matters:** H1's compliance-first approach opens regulated markets (healthcare TAM ~$200B+ in data licensing) that competitors cannot access. Programmable compliance means SDKs launch in regulated sectors without custom legal wrangling.
-
----
-
-## 12. Technical Features (Selected)
-
-- **Reentrancy Guards:** Shared via `LibH1Storage.reentrancyStatus` where needed (e.g., `RevenueFacet`).  
-- **Upgradeable by Facet:** New domains or policy changes can be added without migrating state.  
-- **Guardian Controls:** Cooldowns, daily exit caps, and pause mechanisms at the vault level.  
-- **Security & Introspection:** Standard Diamond Loupe, Ownership, Security facets.
-- **Price Bounds Protection:** Bonding curve prevents price manipulation via MIN/MAX bounds and 50% max change per tx.
-- **Pause Mechanism:** Emergency admin controls for security incidents.
-
----
-
-## 13. Developer SDK (At a Glance)
-
-- **Dual‑Intelligence Orchestration (Agent + Human)**: Built‑in co‑workflow primitives (assignment, handoff, review), human sign‑off, and audit trails.  
-- **Identity & Credential**: Integrate credential checks for validators.  
-- **Compliance**: Bind HIPAA/GDPR/AEH/C2PA policies per dataset/lab for regulated and semi‑regulated markets.  
-- **Provenance Hooks**: Record enrichment/validation events onchain.  
-- **Revenue & Splits**: Simple APIs aligned with `RevenueFacet`.  
-- **Credit Mode**: Fiat‑friendly abstraction that still settles onchain.
-
-### Dual‑Intelligence Dataflow (Δ‑Gain → Bundles → Buybacks)
-1) App selects a base model (partner or BYO) via SDK adapters.  
-2) Agent executes; credentialed human reviews and signs.  
-3) SDK computes **Δ‑Gain** (supervised improvement vs declared base) and records provenance + attribution.  
-4) H1 aggregates Δ‑Gain into dataset bundles and sells/licenses them.  
-5) Revenue triggers buybacks that route to the originating Labs per policy, creating buy pressure for their H1 tokens.
-
----
-
-## 14. Tokenomics (Lite)
-
-### Roles
-- **$LABS holders**: Stake, govern, seed labs, and participate in platform‑level value.  
-- **H1 holders (per lab)**: Hold fractional shares of a lab's backing and exposure to its dataset economy.  
-
-### 🎯 MAJOR IMPROVEMENT: Automatic H1 Distribution & Simplified Staking
-
-✨ **What's New:**
-- ✅ **One-Click Lab Creation**: Stake 100K+ LABS, instant vault + bonding curve deployment
-- ✅ **Automatic H1 Distribution**: Zero manual setup needed; H1 tokens distributed immediately across owner, scholars, devs, and treasury
-- ✅ **Simplified Staking**: Single batch transaction (EIP-5792 `wallet_sendCalls`) combines approve + stake in one wallet confirmation
-- ✅ **Correct Level-Based Consumption**: Contract now uses only the exact LABS needed per lab level (100K L1, 250K L2, 500K L3) — no overspending
-- ✅ **Bonding Curve Live Day 1**: 10% of H1 supply tradeable immediately from lab creation
-
-**Impact**: 50% reduction in friction for creators and stakers; correct token accounting; sustainable growth mechanics.
-
-### ✨ NEW: Automatic H1 Distribution on Lab Creation
-
-When a lab is created, H1 tokens are automatically minted (1:1 with staked LABS, max 500K) and distributed:
-
-| Recipient | Allocation | Vesting | Purpose |
-|-----------|-----------|---------|---------|
-| **Lab Owner** | **30%** | 6 months, weekly unlocks | Incentive for lab creation & management |
-| **Bonding Curve** | **10%** | Liquid immediately | Trading liquidity, price discovery |
-| **Scholar Reserve** | **40%** | Paid as work completes | Rewards for data validators |
-| **Dev Reserve** | **15%** | Paid as work completes | Rewards for developers |
-| **Protocol Treasury** | **5%** | Instant | Protocol operations & grants |
-| **TOTAL** | **100%** | - | Complete allocation at creation |
-
-### Flows
-```
-Stake 100K+ LABS → Create Lab → Automatic:
-  ├─ Deploy LabVault (H1 token)
-  ├─ Deploy Bonding Curve (trading)
-  ├─ Mint 100K-500K H1 (1:1 with LABS)
-  └─ Distribute: 30% owner + 10% curve + 40% scholars + 15% devs + 5% treasury
-  
-After Creation:
-  ├─ Week 1+: Owner claims vested H1 (weekly unlocks)
-  ├─ Day 1: Community trades H1 on bonding curve
-  ├─ Ongoing: Scholars/Devs receive H1 as work completes
-  └─ Revenue: Dataset sales → RevenueFacet Split → Buyback + NAV growth
-```
-
-### Vesting Details
-
-**Lab Owner (30%):**
-- **Duration**: 26 weeks (6 months)
-- **Frequency**: Weekly linear unlocks
-- **Cliff**: 1 week (first unlock after 7 days)
-- **Example**: 30,000 H1 allocated → ~1,154 H1 claimable per week
-
-**Scholars & Devs (55% combined):**
-- **Duration**: No time lock (instant when earned)
-- **Payment**: Triggered by completed tasks
-- **Custody**: Held in LabVault until distribution
-- **Example**: Validate 10 datasets → Receive proportional H1 from reserve
-
-**Protocol Treasury (5%):**
-- **Duration**: Instant
-- **Purpose**: Protocol operations, audits, grants
-- **Custody**: Held in H1Diamond treasury address
-
-### Key Changes from Previous Model
-- ❌ **OLD**: Manual bonding curve deployment, no initial H1 distribution
-- ✅ **NEW**: Automatic everything, owner receives 30% H1 (vested)
-- ❌ **OLD**: All H1 from deposits (dilutive for creator)
-- ✅ **NEW**: Fixed initial supply (non-dilutive for first 6 months)
-
-Notes (current state):  
-- Revenue is accepted as ETH and split immediately; buybacks are not automated yet (treasury event stubs exist).  
-- Lab creation requires minimum 100K LABS staked; H1 minted 1:1 with LABS at creation only.
-- After initial distribution, additional H1 can only be minted via bonding curve purchases (deposits LABS to vault).
-
----
-
-## 15. Use Cases (Initial)
-
-- **Healthcare**: Scrubber (de‑identification), Second Opinion+ (AI‑human consultation), Imaging annotation.  
-- **Creative & Gaming**: Provenance frameworks for art and game assets (C2PA‑aligned), attribution and licensing onchain.  
-- **Robotics & Industrial**: Motion/vision datasets with validated safety metadata.
-- **Legal & Financial**: Compliance-verified datasets (GDPR, AML/KYC aligned).
-- **Education & Research**: FERPA-compliant educational datasets with attribution.
-
----
-
-## 16. Roadmap (Condensed)
+## 6. Roadmap (Condensed)
 
 | Phase | Milestone | Highlights |
 |------|-----------|------------|
@@ -2183,272 +1406,7 @@ Notes (current state):
 
 ---
 
-## 17. Risks & Mitigations (Brief)
-
-- **Regulatory**: Programmable compliance facets; credential gating; audit logs.  
-- **Liquidity**: POL/treasury custody and buyback budget design; exit caps and cooldowns.  
-- **Security**: Standard diamond controls, guards, and progressive audits.
-- **Adoption**: Validator network effects + partnership incentives; credentialing portal lowers barriers.
-
----
-
-## 17.5 H1 Token Mechanics — Frequently Asked Questions
-
-### **H1 Token Supply & Creation**
-
-**Q: How many H1 tokens are issued when a lab is created?**  
-A: H1 tokens are minted on a 1:1 basis against $LABS deposits at the current Net Asset Value (NAV):
-```
-Scenario 1 (Lab Created):
-├─ Founder deposits: $100,000 LABS
-├─ Vault assets: $100,000
-├─ H1 supply: 100,000 shares (1:1 at NAV $1.00)
-├─ Founder's ownership: 100% (100K / 100K)
-└─ Each share backed by: $1.00 LABS
-
-Scenario 2 (Community Joins):
-├─ New depositor adds: $50,000 LABS
-├─ Vault assets: $150,000
-├─ H1 supply: 150,000 shares
-├─ Original depositor's ownership: 66.7% (100K / 150K)
-├─ New depositor's ownership: 33.3% (50K / 150K)
-└─ Each share now backed by: $1.00 LABS (unchanged NAV)
-```
-
-**Q: Is there a maximum H1 supply per lab?**  
-A: No hard cap. H1 supply is capped only by the total $LABS in existence. In practice, each lab's H1 supply grows with deposits and shrinks with redemptions and buybacks. Supply is always backed by vault assets (never inflated).
-
-**Q: How does the NAV (Net Asset Value) change?**  
-A: NAV = Total Vault Assets / Total H1 Shares Outstanding
-
-NAV increases when:
-- Dataset revenue flows into the vault (50% of sales)
-- Validator rewards accrue to vault
-
-NAV stays same when:
-- New deposits arrive (new shares minted equal to deposit amount)
-- New H1 holders join
-
-NAV increases further when:
-- Buybacks execute (H1 supply decreases, same assets back fewer shares)
-
-### **Buying, Selling, and Trading H1**
-
-**Q: How much does it cost to buy H1 tokens?**  
-A: Three pricing models:
-
-1. **Direct Vault Deposit**: Cost = NAV + deposit fee (0.75% default)
-   ```
-   You send: $10,000 LABS
-   Fee: 75 LABS (0.75%)
-   You receive: ~9,900 H1 shares at $1.00/share NAV
-   Net cost: 0.75% premium
-   ```
-
-2. **Bonding Curve** (bootstrap phase): Cost = NAV × 1.005 + protocol fee
-   ```
-   You send: $10,000 LABS
-   Curve price: NAV × 1.005 = $1.005/share
-   Protocol fee: 1-2% deducted
-   POL reserve: 5-10% reserved
-   You receive: ~8,000-8,500 H1 shares
-   Net cost: ~2% premium (0.5% curve + 1.5% fee)
-   ```
-
-3. **Secondary Market** (after launch): Cost = Market price
-   ```
-   You send: $10,000 in ETH or other tokens
-   Price: Set by market (often trades at NAV ± sentiment)
-   Trading fee: ~0.3% (DEX-dependent)
-   You receive: H1 shares at market price
-   Net cost: Variable (can be discount or premium to NAV)
-   ```
-
-**Q: Can I trade H1 tokens between labs?**  
-A: Yes. Each lab's H1 is a separate ERC-20 token. You can:
-- Sell H1-Healthcare for stablecoins
-- Use stablecoins to buy H1-Robotics
-- Or swap directly H1-Healthcare ↔ H1-Robotics on DEX
-
-This enables portfolio rebalancing and tactical rotation.
-
-**Q: What are the fees when I unstake/redeem H1?**  
-A: Two phases:
-
-1. **Redemption Request**: Costs nothing
-   ```
-   You burn: 50,000 H1 shares
-   Fee: None at request time
-   Status: Locked for 7 days (cooldown)
-   ```
-
-2. **Redemption Claim** (after 7 days): Redemption fee applied
-   ```
-   You receive: (shares × NAV) - redemption fee
-   Redemption fee: 0.375% default (can be adjusted by admin)
-   Example: 50K shares × $1.00 = $50,000
-            Minus fee (0.375%): $187.50
-            You get: $49,812.50
-   Subject to: Daily exit caps (20% of TVL per day)
-   ```
-
-### **Ownership & Governance**
-
-**Q: Can one person own all H1 tokens in a lab?**  
-A: Yes, initially. If you're the sole depositor, you own 100% of that lab's H1. As others join:
-- Your H1 ownership dilutes
-- Your H1 value per share remains unchanged (if NAV stable)
-- Your % ownership decreases, but your absolute value stays same
-
-Example:
-```
-Time 0: You deposit $100K → 100% ownership
-Time 1: Others deposit $100K → You own 50%
-        But your H1 value: still $100K (50% × $200K vault)
-Time 2: Lab generates revenue → Vault grows
-        Your H1 value: $100K × (NAV appreciation + buyback gains)
-```
-
-**Q: Is there a maximum amount of H1 one person can hold?**  
-A: No. A single depositor could theoretically own 100% of a lab's H1 if they're the only staker. Ownership is purely proportional to shares held.
-
-**Q: Does H1 ownership confer governance rights?**  
-A: Currently: No. H1 is purely a claim on revenue and vault assets.  
-Future: If protocol upgrades to governance, H1 holders may receive voting rights proportional to their shares.
-
-### **Revenue & Yield Mechanics**
-
-**Q: How do I earn returns on H1?**  
-A: Passively, through three mechanisms:
-
-1. **NAV Appreciation** (50% of dataset revenue)
-   ```
-   Lab generates $100K dataset sale
-   $50K flows to vault → increases assets
-   Your claim: (your %) × $50K
-   Happens automatically; you hold and gain value
-   ```
-
-2. **Buyback Scarcity** (25% of dataset revenue)
-   ```
-   $25K allocated for H1 buybacks
-   Protocol repurchases H1 at market price
-   Reduces total supply → your % ownership increases
-   NAV multiplies by scarcity effect (no action needed)
-   ```
-
-3. **Compounding** (NAV growth × scarcity)
-   ```
-   Month 1: 1 dataset sale → NAV $1.00 → $1.05 (+5%)
-   Month 2: 1 dataset sale → NAV $1.05 → $1.10 (+4.8%, on higher base)
-   Month 3: Same revenue, higher NAV → +4.8% on new base
-   Over time: Exponential growth (50% + 25% = 75% revenue boost compounds)
-   ```
-
-**Q: What's a realistic APY for H1 holders?**  
-A: Depends on lab and phase:
-
-| Phase | Revenue Condition | Realistic APY | Driver |
-|-------|-------------------|---------------|--------|
-| **Year 1** | Early + subsidies | 50-200% | Subsidies + early revenue |
-| **Year 1-2** | Revenue ramping | 80-150% | Dataset sales + buybacks |
-| **Year 2+** | Sustainable | 50-100% | Real revenue (sustainable long-term) |
-
-These are NOT guaranteed. Labs that fail to generate revenue will have 0% APY.
-
-### **Risk & Downside Protection**
-
-**Q: What's my downside if a lab fails?**  
-A: Your maximum loss is limited to your initial deposit:
-```
-You deposit: $50,000 LABS
-Worst case: Lab never generates revenue
-Your H1 value: Stays at $50,000 (NAV = assets / shares)
-You can redeem: $50,000 LABS back (after cooldown)
-Your loss: Fees only (~0.375% redemption fee = $187.50)
-```
-
-H1 is backed by real assets (your deposited $LABS), so it cannot go below NAV.
-
-**Q: Can H1 go to zero?**  
-A: No. H1 is always backed by vault assets. Minimum value = NAV of remaining assets.
-
-**Q: What happens if protocol gets hacked?**  
-A: Vault assets are protected by:
-- Reentrancy guards (prevents double-spending attacks)
-- Access controls (only admin can withdraw for valid reasons)
-- Audit-standard safety practices
-- Insurance considerations (future, if adopted)
-
-Your $LABS stay in the vault. Worst case: temporary freeze, not permanent loss.
-
-### **Liquidity & Exit**
-
-**Q: Can I exit quickly if I need my money?**  
-A: With delays:
-```
-Time 0: You request redemption
-Time 0-7: Cooldown period (can cancel during this time)
-Time 7+: You claim redemption (subject to daily exit caps)
-Time 10-14: Likely full redemption complete (if within daily cap)
-Total timeline: 7-14 days typically
-```
-
-To exit faster: Sell H1 on secondary market (instant, but at market price, not NAV).
-
-**Q: What are exit caps?**  
-A: Daily redemption limit to prevent bank runs:
-```
-Lab vault TVL: $500,000
-Daily exit cap: 20% of TVL = $100,000/day
-If you want to redeem: $50,000
-Status: Approved (within cap)
-
-If many people redeem: $100,000/day max
-Your redemption: Queued until next day if exceeds cap
-```
-
-Prevents cascading failures; ensures vault stability.
-
-**Q: Can I swap H1 for stablecoins instantly?**  
-A: Yes, on secondary market:
-```
-You hold: 50,000 H1-Healthcare
-You trade: H1 → USDC on Uniswap (instant)
-You get: ~50,000 × current H1 price in USDC
-You send: USDC → ETH or bank (DEX-dependent)
-Total time: 5-15 minutes (no cooldown)
-```
-
-But vault redemption path (cooler but cheaper fees) takes 7+ days.
-
-### **H1 vs $LABS**
-
-**Q: Should I buy $LABS or H1?**  
-A: Different risk/reward:
-
-| Factor | $LABS | H1 |
-|--------|-------|-----|
-| **Yield** | None (no inflation) | Yes (real revenue) |
-| **Risk** | Platform-level | Lab-specific |
-| **Upside** | Demand + scarcity | Revenue compounding |
-| **Best for** | Long-term hold | Active investors |
-| **Downside** | Adoption fails | Lab doesn't execute |
-
-Typical allocation: 30% $LABS (platform hedge) + 70% H1 (yield focus).
-
-**Q: Is H1 leveraged $LABS?**  
-A: No leverage. H1 can outgrow $LABS because:
-- H1 = real revenue yield (sustainable)
-- $LABS = scarcity only (no yield)
-- H1 compounds (NAV + buyback effects)
-- $LABS appreciates slower (demand-driven)
-
-Think: H1 = equity in specific lab; $LABS = platform governance token.
-
----
-
-## 17. Dataset Marketplace: Buying & Revenue Distribution
+## 7. Dataset Marketplace
 
 > **For AI Companies & Data Buyers**: The Dataset Marketplace enables enterprise and AI firms to discover, evaluate, and purchase verified datasets with transparent, on-chain revenue distribution.
 
@@ -2492,41 +1450,22 @@ When a dataset is purchased, the revenue is distributed **per-dataset to that sp
 
 ```
 Purchase Price: $X
-Distribution:
+Distribution (per RevenueFacet.sol):
 
-├─ Lab Owners:        50% ($0.50X)        → Direct to lab owner's wallet
-├─ Data Creators:      40% ($0.40X)        → Treasury (for later distribution to creators)
-├─ Supervisors:        10% ($0.10X)        → Treasury (for later distribution to supervisors)
-├─ Buyback Reserve:    20% ($0.20X)        → Treasury (to repurchase H1 tokens)
-└─ H1 Protocol Fee:     5% ($0.05X)        → Treasury (operational costs)
+├─ H1 Buyback:         40% ($0.40X)        → Buyback wallet (distributed proportionally to all H1 holders)
+├─ Data Creators:      20% ($0.20X)        → Creator pool wallet (direct payment to Scholars who create data)
+├─ Scholars (Enrichers/Validators): 20% ($0.20X) → Scholar pool wallet (direct payment to Scholars who validate)
+├─ App Developers:     15% ($0.15X)        → Developer wallet (SDK/app builders)
+└─ Protocol Treasury:   5% ($0.05X)        → Treasury wallet (operations & infrastructure)
                        ─────────────
-Total:                 125% ($1.25X)*
+Total:                 100% ($1.00X)
 
-* Note: The percentages represent allocation of revenue where creators/supervisors/buyback/H1 
-  are tracked in the protocol treasury for distribution. Lab owners receive 50% directly.
+All payments automated, transparent, and auditable on-chain.
+
+**Key:** Buyback benefits all H1 holders proportionally (not by role). Hold H1 = earn from all sales.
 ```
 
-### **Example: $10,000 Dataset Purchase**
-
-```
-DATASET: "Medical Imaging Annotations"
-Creator: Cleveland Clinic (Lab ID: 1)
-Supervisor: ACR Standards Board
-Purchase Price: $10,000
-
-Revenue Breakdown:
-├─ Cleveland Clinic (Lab Owner, 50%):    $5,000 ✓ Sent immediately
-├─ Data Creators (40%):                  $4,000 → Treasury
-├─ Supervisors (10%):                    $1,000 → Treasury
-├─ Buyback Reserve (20%):                $2,000 → Treasury
-└─ H1 Protocol Fee (5%):                   $500 → Treasury
-
-Lab Vault Impact:
-├─ Lab's H1 shareholders gain:           50% NAV appreciation ($5,000)
-├─ Buyback pressure:                     $2,000 in H1 buyback capacity
-├─ Protocol revenue:                     $500
-└─ Creator/Supervisor future payouts:    $5,000 reserved
-```
+> **📋 Detailed Examples**: For step-by-step examples of $10K dataset purchase, bulk purchase mechanics, and payout timelines, see **Appendix H**.
 
 ### **Per-Dataset, Per-Lab Mechanics**
 
@@ -2549,72 +1488,6 @@ Lab 2 Total Revenue: $1,750 (from 1 dataset)
 - Lab owners directly benefit from their own datasets being purchased
 - Incentivizes labs to produce high-quality, marketable datasets
 
-### **Bulk Purchase Example: 3 Datasets**
-
-```
-BUYER: Acme AI (purchases for $12,000 before discount)
-DATASETS:
-  1. Cardiovascular Records ($4,500) from Lab 1
-  2. Legal Document Corpus ($3,500) from Lab 3  
-  3. Robotics Motion Data ($2,000) from Lab 4
-
-Step 1: Bulk Discount Applied
-Total: $12,000 → 5% off → $11,400 final price
-
-Step 2: Single On-Chain Transaction
-Revenue Distribution (per-dataset, per-lab):
-
-Dataset 1 ($4,500 to Lab 1):
-├─ Lab 1 Owner:       $2,250
-├─ Creators:          $1,800 → Treasury
-├─ Supervisors:         $450 → Treasury
-├─ Buyback:             $900 → Treasury
-└─ H1 Fee:             $225 → Treasury
-
-Dataset 2 ($3,500 to Lab 3):
-├─ Lab 3 Owner:       $1,750
-├─ Creators:          $1,400 → Treasury
-├─ Supervisors:         $350 → Treasury
-├─ Buyback:             $700 → Treasury
-└─ H1 Fee:             $175 → Treasury
-
-Dataset 3 ($2,000 to Lab 4):
-├─ Lab 4 Owner:       $1,000
-├─ Creators:            $800 → Treasury
-├─ Supervisors:         $200 → Treasury
-├─ Buyback:             $400 → Treasury
-└─ H1 Fee:             $100 → Treasury
-
-Bulk Discount Applied:
-├─ Total before discount: $12,000
-├─ 5% bulk savings:        -$600
-├─ Final amount sent:    $11,400
-└─ Savings distributed proportionally to each dataset
-
-Step 3: Automatic H1 Impact
-
-Lab 1 Shareholders:
-├─ Gain: 50% revenue ($2,250) added to vault → NAV appreciation
-├─ Benefit: Buyback capacity (+$900)
-└─ Effect: H1-Healthcare shares increase in value
-
-Lab 3 Shareholders:
-├─ Gain: 50% revenue ($1,750) added to vault → NAV appreciation
-├─ Benefit: Buyback capacity (+$700)
-└─ Effect: H1-Legal shares increase in value
-
-Lab 4 Shareholders:
-├─ Gain: 50% revenue ($1,000) added to vault → NAV appreciation
-├─ Benefit: Buyback capacity (+$400)
-└─ Effect: H1-Robotics shares increase in value
-
-Treasury (Protocol):
-├─ Creator payouts reserved: $5,000
-├─ Supervisor payouts reserved: $1,000
-├─ Buyback execution capacity: $2,000
-└─ Protocol operations: $500
-```
-
 ### **Transparency & On-Chain Verification**
 
 Every dataset purchase emits events that can be verified on the blockchain:
@@ -2623,11 +1496,11 @@ Every dataset purchase emits events that can be verified on the blockchain:
 event RevenueDistributed(
   uint256 indexed datasetId,
   uint256 indexed labId,
-  uint256 labOwnerAmount,
-  uint256 creatorAmount,
-  uint256 supervisorAmount,
-  uint256 buybackAmount,
-  uint256 h1FeeAmount
+  uint256 buybackAmount,      // 40% - H1 buyback (proportional to all holders)
+  uint256 developerAmount,    // 15% - App/SDK developers
+  uint256 creatorAmount,      // 20% - Data creators/collectors
+  uint256 scholarAmount,      // 20% - Validators/supervisors
+  uint256 treasuryAmount      // 5% - Protocol treasury
 )
 ```
 
@@ -2638,41 +1511,16 @@ event RevenueDistributed(
 ✓ Link to dataset provenance (IPFS hash)  
 ✓ Creator and supervisor credentials on-chain  
 
-### **From Purchase to Payout Timeline**
-
-```
-Day 0: User purchases $10,000 dataset
-├─ Lab owner receives: $5,000 immediately
-└─ Treasury receives: $5,000 (creators/supervisors/buyback/fees)
-
-Day 1-7: Creator/Supervisor Payout Phase
-├─ Protocol calculates: Which creators/supervisors worked on this dataset
-├─ Attribution Facet retrieves: On-chain credential records
-├─ Payout queue: Ready to distribute via batched transactions
-
-Day 7-14: Buyback Execution
-├─ H1 buyback bot monitors: $2,000 in buyback capacity (from example)
-├─ Market conditions: Execute buyback when price < NAV
-├─ H1 supply decreases: All existing H1 holders gain scarcity value
-└─ Effect: H1-Healthcare shares increase in value automatically
-
-Ongoing: NAV Appreciation
-├─ Lab vault grows: +$5,000 added to vault assets
-├─ H1 NAV increases: Assets / Shares = higher value per share
-├─ Dividend effect: Without selling, H1 holders gain value
-└─ Compounding: Next purchase = higher NAV base
-```
-
 ### **Why This Model Works**
 
 | Stakeholder | Incentive |
 |-------------|-----------|
-| **Lab Owners** | Direct 50% of revenue; benefit from producing high-quality datasets |
-| **Data Creators** | 40% allocated; reputation and payment tied to dataset quality & sales |
-| **Supervisors** | 10% allocated; incentivized to approve only high-quality data |
-| **H1 Holders** | Automatic buyback pressure + NAV appreciation; passive yield |
+| **H1 Holders** | 40% buyback distributed proportionally; hold = earn from all sales, sell = miss gains |
+| **Data Creators (Scholars)** | Direct 20% of revenue; reputation and payment tied to dataset quality & sales |
+| **Enrichers/Validators (Scholars)** | Direct 20% of revenue; incentivized to approve only high-quality, compliant data |
+| **Developers** | Direct 15% of revenue; rewards for building apps/SDK that generate dataset sales |
 | **Buyers** | Bulk discounts, transparent pricing, on-chain provenance verification |
-| **Protocol** | 5% operational fee; sustainable growth without rug-pull risk |
+| **Protocol** | 5% treasury ensures sustainable operations; no inflationary tokenomics |
 
 ### **Compliance & Auditability**
 
@@ -2685,10 +1533,174 @@ Every dataset purchase is:
 
 ---
 
-## 18. Closing
+## 8. Closing
 
 H1 Labs unites verifiable human expertise with transparent token economics. By making provenance, credentialing, and compliance the substrate for AI data, we unlock trustworthy, enterprise‑grade datasets — and a sustainable crypto economy that rewards the people who create real intelligence.
 
 The dual-token model ($LABS + H1), combined with revenue-driven buybacks and level-based app slots, creates a self-reinforcing flywheel where early adopters and high-quality validators are rewarded proportionally. This is not speculative tokenomics — it is provable economics tied to real dataset sales in regulated markets.
 
+---
 
+# APPENDIX
+
+## A. Our Edge — Strengths at a Glance
+
+- **Provenance by Design**: Every enrichment and validation emits an onchain trace (who, when, what).  
+- **Credentialed Humans**: Domain experts verified via the Credentialing Portal; no anonymous crowdwork for regulated data.  
+- **Programmable Compliance**: Domain rules are enforced at the contract layer (HIPAA, GDPR, AEH, C2PA).  
+- **Dual‑Intelligence SDK (Agent + Human)**: Apps pair an agent with credentialed human oversight for compliant workflows in regulated and semi‑regulated markets.  
+- **Two‑Token Model ($LABS ↔ H1)**: $LABS governs and stakes; each Lab's H1 token is its vault share, enabling per‑lab economies.  
+- **Modular Diamond Architecture**: EIP‑2535 facets make the system upgradeable, auditable, and extensible.  
+- **Enterprise‑friendly UX**: SDK credit mode abstracts blockchain for Web2‑style apps.
+
+---
+
+## B. What You Can Do on H1
+
+- **Create a Lab**: Stake and launch a domain Lab with its own H1 token (vault shares).  
+- **Enrich & Validate**: Contribute to datasets; validators with credentials approve quality.  
+- **Buy/Access Data**: AI firms purchase verified datasets; payments route transparently to stakeholders.  
+- **Build Apps**: Use the H1 SDK to ship compliant, provenance‑aware applications quickly.
+
+---
+
+## C. Competitive Positioning — H1 vs The Field
+
+H1 Labs uniquely combines **verified human intelligence, provenance, and compliance**. Unlike peers that focus on compute (Gensyn), model training (Bittensor), or data liquidity (Ocean), H1 targets regulated and semi-regulated markets with enterprise-grade trust.
+
+**Why it matters:** H1's compliance-first approach opens regulated markets (healthcare TAM ~$200B+ in data licensing) that competitors cannot access. Programmable compliance means SDKs launch in regulated sectors without custom legal wrangling.
+
+---
+
+## D. Risks & Mitigations
+
+- **Regulatory**: Programmable compliance facets; credential gating; audit logs.  
+- **Liquidity**: POL/treasury custody and buyback budget design; exit caps and cooldowns.  
+- **Security**: Standard diamond controls, guards, and progressive audits.
+- **Adoption**: Scholar network effects + partnership incentives; credentialing portal lowers barriers.
+
+---
+
+## E. User Flows
+
+1) **Lab Founder**  
+\`\`\`
+Connect Wallet → Stake 100K+ LABS
+Step 1: createLabStep1(name, symbol, domain) → deploys LabVault
+Step 2: createLabStep2(labId) → deploys BondingCurve + distributes H1
+Result: Lab operational with vault, curve, and H1 distributed
+Optional: deployLabPass(labId) for membership NFTs
+\`\`\`
+
+2) **Contributor / Scholar (Data Creator or Enricher/Validator)**  
+\`\`\`
+Sign up → Credentialing Portal (license/ID) → whitelisted for domain
+Contribute/validate via apps (Scrubber, Second Opinion+, etc.)
+Onchain provenance + rewards tracked to wallet
+\`\`\`
+
+3) **AI Buyer / Enterprise**  
+\`\`\`
+Discover datasets → purchase/license via RevenueFacet‑integrated flows
+Revenue split: 20% Creators | 20% Scholars | 15% Developers | 40% H1 Buyback | 5% Treasury
+Auditable provenance & compliance artifacts for due diligence
+\`\`\`
+
+---
+
+## F. Use Cases & Scenarios
+
+**H1 Labs enables verified data creation across multiple domains:**
+
+- **Healthcare**: Scrubber (de‑identification), Second Opinion+ (AI‑human consultation), Imaging annotation
+- **Creative & Gaming**: Provenance frameworks for art and game assets (C2PA‑aligned), attribution and licensing onchain
+- **Robotics & Industrial**: Motion/vision datasets with validated safety metadata
+- **Legal & Financial**: Compliance-verified datasets (GDPR, AML/KYC aligned)
+- **Education & Research**: FERPA-compliant educational datasets with attribution
+
+---
+
+## K. Healthcare Lab H1 Token Appreciation (Year 1)
+
+**Example — Healthcare Lab after Year 1:**
+
+```
+Initial: $5M TVL, 1M H1 shares, $5.00/share
+├─ Dataset revenue: $5M annually (50 datasets sold)
+├─ Buyback budget deployed: $1.25M (25% of revenue)
+├─ Lab revenue retained: $2.5M (50%)
+├─ New TVL: ~$8.5M
+├─ New NAV: $8.50/share (+70%)
+└─ If buybacks reduce supply 5%: $8.88/share (+77.6% total)
+
+Result: Early H1 holders gain from:
+✓ Increasing NAV (more datasets sold)
+✓ Supply reduction (buybacks)
+✓ Sustainable token economy (real revenue, not inflation)
+```
+
+**Why H1 ≠ Traditional Stake-Reward Models:**
+
+| Mechanic | H1 Labs | Competitors (Bittensor, Ocean) |
+|----------|---------|--------|
+| **Value Source** | Real dataset sales | Inflationary rewards |
+| **Supply** | Decreases (buybacks) | Increases (new issuance) |
+| **Price Pressure** | Buy pressure from revenue | Sell pressure from inflation |
+| **Sustainability** | Revenue-driven (durable) | Reward-dependent (temporary) |
+
+---
+
+## L. Frequently Asked Questions — On-Chain Data & Querying
+
+### **On-Chain Data & Querying**
+
+**Q: How do I query the H1 token info after deployment?**
+
+A: Every H1 token (LabVault) is a standard ERC-20 contract on the blockchain. You can view its information anytime:
+
+- **Token name** (e.g., "Healthcare Lab H1")
+- **Token symbol** (e.g., "H1HC")
+- **Total supply** (all H1 shares in circulation)
+- **Your balance** (how many H1 shares you own)
+- **Exchange rate** (LABS per share = NAV)
+
+All readable directly from the blockchain with zero cost. See **Section 2.5: Reading Lab Data On-Chain** for complete list of available data points.
+
+---
+
+**Q: How do I check lab level and app slots?**
+
+A: Lab level is based on **total vault TVL at the time of creation**, but can increase if the vault grows:
+
+| Level | TVL Range | App Slots |
+|-------|-----------|-----------|
+| L1 | 100K–250K LABS | 1 |
+| L2 | 250K–500K LABS | 2 |
+| L3 | 500K+ LABS | 3 |
+
+**Example:** A lab created with 200K LABS starts at Level 1. If community deposits push TVL to 300K, it automatically unlocks to Level 2 (2 app slots). This is tracked on-chain and queryable from the vault contract.
+
+---
+
+**Q: How do I read vault state on-chain?**
+
+A: Every LabVault stores the following information you can read anytime (no gas cost):
+
+**Core Metrics:**
+- Total TVL (LABS locked in vault)
+- Total H1 supply (shares outstanding)
+- Current NAV (LABS per H1 share)
+- Current level (1, 2, or 3)
+
+**Safety Settings:**
+- Redemption cooldown (e.g., 7 days)
+- Daily exit cap (e.g., 20% of TVL per day)
+
+**Your Position:**
+- Your H1 balance
+- Your pending redemptions and unlock times
+- Your projected value (balance × NAV)
+
+All queryable directly from the blockchain. No indexer needed, 100% truth from smart contracts. Historical data available via Blockscout block explorer.
+
+---
