@@ -37,7 +37,6 @@ const DEFAULT_TRAINING_APPS = [
   { name: "MedScribe", icon: PenTool, route: "/medscribe" },
   { name: "MedLoop", icon: "image", route: "/medloop", iconSrc: medloopIcon },
   { name: "MedReps", icon: "image", route: "/medreps", iconSrc: medrepsIcon },
-  { name: "Datasets", icon: Database, route: "/marketplace" },
 ];
 
 // Mock data for lab display info only
