@@ -133,52 +133,8 @@ Total: 100% allocated at creation
 
 ---
 
-### 2.2 Lab Creation Flow — Visual Overview
+#### 2.1.1 Lab Creation Flow — Visual Overview
 
-```
-STEP 1: Creator Preparation
-├─ Wallet Connected
-├─ 100K+ LABS Available
-└─ Decision: Name, Symbol, Domain
-
-           ↓
-
-STEP 2: Create Lab (Step 1)
-├─ Calls: createLabStep1()
-├─ Action: Deploys LabVault (H1 token contract)
-└─ Result: Lab ID assigned
-
-           ↓
-
-STEP 3: Determine Level
-├─ 100K–250K LABS → Level 1 (1 app slot)
-├─ 250K–500K LABS → Level 2 (2 app slots)
-└─ 500K+ LABS → Level 3 (3 app slots)
-
-           ↓
-
-STEP 4: Deploy Curve & Distribute (Step 2)
-├─ Calls: createLabStep2()
-├─ Deploys: Bonding Curve contract
-└─ Mints: H1 tokens
-
-           ↓
-
-STEP 5: Automatic H1 Allocation (from 100K example)
-├─ 30% → Lab Owner (vested 6 months, weekly unlocks)
-├─ 10% → Bonding Curve (liquid, tradeable immediately)
-├─ 40% → Scholar Reserve (vested)
-├─ 15% → Dev Reserve (vested)
-└─ 5% → Protocol Treasury (instant)
-
-           ↓
-
-STEP 6: Lab Live
-├─ Creator: Can claim vested H1 from week 1
-├─ Community: Can buy H1 on bonding curve
-├─ Optional: Deploy LabPass for membership
-└─ Ready: For data creation & monetization
-```
 
 **Key Outcome:** Complete lab setup in 2 transactions, H1 tradeable from day 1, no manual setup required.
 
@@ -206,52 +162,19 @@ Example Timeline:
 └─ Creator's ownership: Diluted but NAV increases with community participation
 ```
 
-### 2.3 Revenue Accrual & NAV Growth
+### 2.1.2 Revenue Accrual & NAV Growth
 
 As the lab generates revenue from dataset sales, the vault's total assets increase, which increases the NAV (assets per share) for all H1 holders:
 
-```
-Ownership Dilution & Value Growth Example:
+### Ownership Dilution & Value Growth Example
 
-Time T0 (Lab Creation):
-├─ Creator deposits: $100K
-├─ Creator's H1: 100K shares (100% ownership)
-├─ Lab assets: $100K
-├─ NAV: $1.00/share
-└─ Creator's value: $100K
-
-Time T1 (After Bonding Curve - 200K raise):
-├─ New investors deposit: $200K via bonding curve
-├─ Fee + POL allocated: $30K
-├─ New vault assets: $100K + $170K = $270K
-├─ Total H1 supply: ~270K shares
-├─ Creator's ownership: 100K/270K = 37% of lab
-├─ New NAV: $270K/270K = $1.00/share
-└─ Creator's value: 100K × $1.00 = $100K (same, but now owns 37% instead of 100%)
-
-Time T2 (After $100K Dataset Revenue):
-├─ Dataset sale: $100K
-├─ Lab owner/Scholars: $50K (flows to vault)
-├─ Treasury: $25K (protocol custody)
-├─ Buyback reserve: $25K
-├─ New vault assets: $270K + $50K = $320K
-├─ Total H1 supply: ~270K shares (pre-buyback)
-├─ New NAV: $320K/270K = $1.185/share
-└─ Creator's value: 100K × $1.185 = $118.5K (+18.5% appreciation)
-
-Time T3 (After Buyback Execution):
-├─ Buyback reserves: $25K used to repurchase H1 at market
-├─ H1 supply reduced: 270K → ~260K shares (assuming $0.96 average price)
-├─ Vault assets: $320K (unchanged)
-├─ New NAV: $320K/260K = $1.231/share
-└─ Creator's value: 100K × $1.231 = $123.1K (+23.1% total appreciation)
-```
+<OwnershipDilutionTimeline />
 
 **Key Mechanic**: H1 holders don't receive new tokens; instead, their existing shares increase in value as (1) vault backing grows from revenue and (2) buybacks reduce total supply. This aligns incentives for lab success without dilution.
 
 ---
 
-### 2.4 H1 Distribution & Allocation
+### 2.1.3 H1 Distribution & Allocation
 
 When a lab is created (minimum 100K $LABS staked), H1 tokens are **automatically minted and distributed** (1:1 with staked LABS, max 500K):
 
@@ -279,7 +202,7 @@ After Creation:
   └─ Revenue: Dataset sales → RevenueFacet Split → Buyback + NAV growth
 ```
 
-### 2.5 Credentialing & Data Validation
+### 2.2 Credentialing & Data Validation
 
 > **The Chain of Trust**: From verified identity → credentialed contributions → provable datasets → fair revenue distribution.
 
@@ -369,7 +292,7 @@ Flow Diagram:
                     Ready for Monetization
 ```
 
-### 2.7 **Attribution & Revenue Distribution**
+### 2.4 **Attribution & Revenue Distribution**
 
 Approved datasets carry **immutable attribution** that enables fair revenue splits:
 
@@ -460,7 +383,7 @@ TIER 3: REVENUE ATTRIBUTION
 
 ---
 
-### 2.8 Revenue Distribution Model
+#### 2.4.1 Revenue Distribution Model
 
 **Per-Dataset Sale Split:**
 - **20%** → Data Creators (direct payment to contributors)
@@ -479,7 +402,7 @@ Economic intent: AI demand for verified datasets drives onchain payments that fl
 
 ---
 
-### 2.9 Prototype Testing Workflow
+### 2.5 Prototype Testing Workflow
 
 **Testing the H1 Labs platform follows a natural progression from setup through full economic simulation.**
 

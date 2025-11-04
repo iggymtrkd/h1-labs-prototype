@@ -29,6 +29,7 @@ import RoadmapTimeline from "@/components/litepaper/RoadmapTimeline";
 import RiskMatrix from "@/components/litepaper/RiskMatrix";
 import RevenueDistributionPie from "@/components/litepaper/RevenueDistributionPie";
 import LabLevelUnlocking from "@/components/litepaper/LabLevelUnlocking";
+import OwnershipDilutionTimeline from "@/components/litepaper/OwnershipDilutionTimeline";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -390,6 +391,17 @@ export default function Whitepaper() {
                               {children}
                             </h3>
                             <LabLevelUnlocking />
+                          </>
+                        );
+                      }
+                      
+                      if (text.includes("Ownership Dilution")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <OwnershipDilutionTimeline />
                           </>
                         );
                       }
