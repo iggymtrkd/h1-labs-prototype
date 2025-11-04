@@ -29,12 +29,14 @@ import { CONTRACTS } from "@/config/contracts";
 import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI, BondingCurveFacet_ABI } from "@/contracts/abis";
 
 import medloopIcon from '@/assets/medloop-icon.png';
+import medrepsIcon from '@/assets/medreps-icon.png';
 
 // Default training apps available for all labs
 const DEFAULT_TRAINING_APPS = [
   { name: "MedVault", icon: FileStack, route: "/medvault" },
   { name: "MedScribe", icon: PenTool, route: "/medscribe" },
   { name: "MedLoop", icon: "image", route: "/medloop", iconSrc: medloopIcon },
+  { name: "MedReps", icon: "image", route: "/medreps", iconSrc: medrepsIcon },
   { name: "Datasets", icon: Database, route: "/marketplace" },
 ];
 

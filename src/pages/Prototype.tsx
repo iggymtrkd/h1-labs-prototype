@@ -23,6 +23,10 @@ import { CONTRACTS } from '@/config/contracts';
 import { LABSToken_ABI, LABSCoreFacet_ABI, DataValidationFacet_ABI, CredentialFacet_ABI, RevenueFacet_ABI, DiamondLoupeFacet_ABI, TestingFacet_ABI, BondingCurveFacet_ABI, BondingCurveSale_ABI, LabVault_ABI, H1VestingFacet_ABI } from '@/contracts/abis';
 import { fetchAllLabEvents } from '@/lib/eventScanner';
 import protocolFlowGuide from '@/assets/protocol-flow-guide.jpg';
+import medvaultIcon from '@/assets/medvault-icon.png';
+import medscribeIcon from '@/assets/medscribe-icon.png';
+import medloopIcon from '@/assets/medloop-icon.png';
+import medrepsIcon from '@/assets/medreps-icon.png';
 
 // Available domains for lab creation
 const AVAILABLE_DOMAINS = ['healthcare', 'medical', 'biotech', 'finance', 'legal', 'education', 'research', 'robotics', 'art', 'music', 'climate', 'agriculture', 'manufacturing', 'logistics', 'retail', 'other'] as const;
@@ -3060,8 +3064,8 @@ export default function Prototype() {
                   </div>
                 </div>
                 <Link to="/medvault" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg">
-                    <FileStack className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg overflow-hidden">
+                    <img src={medvaultIcon} alt="MedVault" className="w-full h-full object-cover" />
                   </div>
                   <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedVault</span>
                 </Link>
@@ -3125,9 +3129,9 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-accent/20 text-accent">Issue Credentials & Verify Enrichment</Badge>
                   </div>
                 </div>
-                <Link to="/medtag" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg">
-                    <PenTool className="w-8 h-8 text-white" />
+                <Link to="/medscribe" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+                  <div className="w-16 h-16 rounded-2xl bg-white flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg overflow-hidden">
+                    <img src={medscribeIcon} alt="MedScribe" className="w-full h-full object-cover" />
                   </div>
                   <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedScribe</span>
                 </Link>
