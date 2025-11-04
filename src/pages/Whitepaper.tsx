@@ -28,6 +28,7 @@ import UseCaseROIComparison from "@/components/litepaper/UseCaseROIComparison";
 import RoadmapTimeline from "@/components/litepaper/RoadmapTimeline";
 import RiskMatrix from "@/components/litepaper/RiskMatrix";
 import RevenueDistributionPie from "@/components/litepaper/RevenueDistributionPie";
+import LabLevelUnlocking from "@/components/litepaper/LabLevelUnlocking";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -516,6 +517,11 @@ export default function Whitepaper() {
                       // Blockchain Benefits table
                       if (tableStr.includes("Challenge") && tableStr.includes("Blockchain Benefit")) {
                         return <BlockchainBenefits />;
+                      }
+                      
+                      // Lab Level Unlocking table
+                      if (tableStr.includes("Level") && tableStr.includes("LABS Staked") && tableStr.includes("App Slots")) {
+                        return <LabLevelUnlocking />;
                       }
                       
                       // Default table rendering
