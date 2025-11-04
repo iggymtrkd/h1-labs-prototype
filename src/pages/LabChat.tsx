@@ -30,8 +30,8 @@ import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI, BondingCurveFacet_AB
 
 // Default training apps available for all labs
 const DEFAULT_TRAINING_APPS = [
-  { name: "MedAtlas", icon: FileStack, route: "/medatlas" },
-  { name: "MedTagger", icon: PenTool, route: "/medtag" },
+  { name: "MedVault", icon: FileStack, route: "/medvault" },
+  { name: "MedScribe", icon: PenTool, route: "/medscribe" },
   { name: "Datasets", icon: Database, route: "/marketplace" },
 ];
 

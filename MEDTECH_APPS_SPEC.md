@@ -2,12 +2,12 @@
 
 ## Overview
 Two demonstrator apps showcasing onchain medical data marketplace:
-1. **MedAtlas** - De-identifies and monetizes medical records
-2. **MedTagger** - Enriches and validates de-identified records through clinical collaboration
+1. **MedVault** - De-identifies and monetizes medical records
+2. **MedScribe** - Enriches and validates de-identified records through clinical collaboration
 
 ---
 
-## App 1: MedAtlas (Medical Record De-Identifier)
+## App 1: MedVault (Medical Record De-Identifier)
 
 ### Purpose
 Upload raw patient records → Remove PII → Prepare for enrichment marketplace
@@ -56,7 +56,7 @@ Upload raw patient records → Remove PII → Prepare for enrichment marketplace
 
 ---
 
-## App 2: MedTagger (Medical Record Enrichment)
+## App 2: MedScribe (Medical Record Enrichment)
 
 ### Purpose
 Collaborate to enrich records with clinical tags → Unlock revenue → Build credentials
@@ -67,7 +67,7 @@ Collaborate to enrich records with clinical tags → Unlock revenue → Build cr
 - **Current Bounty Card**
   - Record ID
   - Reward amount (H1)
-  - From Lab (MedAtlas Lab)
+  - From Lab (MedVault Lab)
 - **Reviewers List** (all 4 with avatars)
   - 3 completed (with checkmarks)
   - 1 in progress (You)
@@ -103,7 +103,7 @@ Collaborate to enrich records with clinical tags → Unlock revenue → Build cr
 ### Mock Data
 ```
 Record: MED-2025-10-22-001
-- Same de-ID'd record from MedAtlas
+- Same de-ID'd record from MedVault
 - Pre-tagged with 1 REASONING tag
 - 3 clinicians completed (Dr. Sarah Chen, Dr. Michael Brown, Dr. James Wilson)
 - You are the 4th reviewer
@@ -183,7 +183,7 @@ Record: MED-2025-10-22-001
 
 ## User Flows
 
-### MedAtlas Flow
+### MedVault Flow
 1. Doctor uploads patient record (file)
 2. System de-identifies automatically
 3. Doctor reviews before/after
@@ -191,7 +191,7 @@ Record: MED-2025-10-22-001
 5. Watches revenue dashboard as it's enriched
 6. Receives H1 tokens when dataset is sold
 
-### MedTagger Flow
+### MedScribe Flow
 1. Clinician views available enrichment bounties
 2. Selects record to enrich
 3. Reads de-identified medical record
@@ -205,12 +205,12 @@ Record: MED-2025-10-22-001
 
 ## Onchain Transactions
 
-### MedAtlas Transactions
+### MedVault Transactions
 1. `uploadDataset(recordId, deIdHash, metadata)` → DataValidationFacet
 2. `updateRecordStatus(recordId, 'ready_for_enrichment')` → DataValidationFacet
 3. Revenue split updated when sold
 
-### MedTagger Transactions
+### MedScribe Transactions
 1. `issueCredential(reviewerWallet, recordId, credentialType)` → CredentialFacet
 2. `recordEnrichmentContribution(reviewerWallet, recordId, tags)` → DataValidationFacet
 3. `deductTokens(userWallet, 0.5)` → LABSToken on AI assist

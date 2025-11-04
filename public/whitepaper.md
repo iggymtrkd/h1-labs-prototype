@@ -231,7 +231,7 @@ flowchart LR
 
 ## 12. App Ecosystem Map
 ```
-Healthcare (MedAtlas)
+Healthcare (MedVault)
 │   ├── Scrubber
 │   └── Second Opinion+
 │
@@ -498,20 +498,13 @@ Demonstrate that H1 Labs’ decentralized enrichment pipeline produces measurabl
 
 **Sample Entry:**
 ```json
-{"input":"Patient ECG shows ST elevation.","output":"STEMI, PCI indicated.","source":"MedAtlas Cardiology, Dr. Silva"}
-```
+{"input":"Patient ECG shows ST elevation.","output":"STEMI, PCI indicated.","source":"MedVault Cardiology, Dr. Silva"}
+...
+**Expected:** Mistral 65.3% → MedVault-Mistral 82.4% (+17.1%)
 
-### **4. Benchmarking**
-HealthBench evaluation methodology:
-1. Baseline test on Mistral
-2. Fine-tune on MEC
-3. Compare score delta
-
-**Expected:** Mistral 65.3% → MedAtlas-Mistral 82.4% (+17.1%)
-
-### **5. MedAtlas Branding**
-- MedAtlas Corpus v1.0 – Cardiology/Internal Med.
-- MedAtlas v1.2 – Oncology/Imaging.
+### **5. MedVault Branding**
+- MedVault Corpus v1.0 – Cardiology/Internal Med.
+- MedVault v1.2 – Oncology/Imaging.
 - Future: LawAtlas, RoboAtlas, ArtAtlas.
 
 ### **6. Scientific Proof Layers**

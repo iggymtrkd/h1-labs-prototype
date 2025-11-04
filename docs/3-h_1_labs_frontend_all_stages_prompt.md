@@ -89,12 +89,12 @@ Style references: Base UI aesthetic, futuristic medical tech theme (neon blue/wh
 **Goal:** Build a multi-domain dashboard for the Atlas Network.
 
 ### Features
-1. **Cross-Domain Dashboard** – MedAtlas, ArtAtlas, GameAtlas tiles.
+1. **Cross-Domain Dashboard** – MedVault, ArtAtlas, GameAtlas tiles.
 2. **Fiat Gateway / Credit Adapter UI** – purchase credits → H1 conversion.
 3. **Marketplace 2.0** – dataset + app trading with provenance badges.
 4. **Provenance Viewer (3D Map)** – visualize data flow across validators.
 5. **DAO Control Center** – governance proposals, treasury charts.
-6. **AI Demo Page** – MedAtlas-Mistral comparison live demo.
+6. **AI Demo Page** – MedVault-Mistral comparison live demo.
 
 ### Integrations
 - SDK credit mode for whitelabel partners.

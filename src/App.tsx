@@ -39,8 +39,8 @@ import DatasetDetails from "./pages/DatasetDetails";
 import CheckoutCart from "./pages/CheckoutCart";
 import Prototype from "./pages/Prototype";
 import GetStarted from "./pages/GetStarted";
-import MedAtlas from "./pages/MedAtlas";
-import MedTagger from "./pages/MedTagger";
+import MedVault from "./pages/MedVault";
+import MedScribe from "./pages/MedScribe";
 
 const queryClient = new QueryClient();
 
@@ -50,7 +50,7 @@ const AppContent = () => {
   const isHomePage = location.pathname === "/";
   const isGetStartedPage = location.pathname === "/get-started";
   const isPrototypePage = location.pathname === "/prototype";
-  const isTrainingAppPage = ["/medatlas", "/medtag", "/marketplace"].includes(location.pathname);
+  const isTrainingAppPage = ["/medvault", "/medscribe", "/marketplace"].includes(location.pathname);
   const { isConnected, address, labsBalance, connectWallet } = useBaseAccount();
   const [sidebarCollapsed, setSidebarCollapsed] = useState(() => {
     return localStorage.getItem("sidebar_collapsed") === "true";
@@ -161,8 +161,8 @@ const AppContent = () => {
           <Route path="/dataset/:id" element={<DatasetDetails />} />
           <Route path="/checkout" element={<CheckoutCart />} />
           <Route path="/prototype" element={<Prototype />} />
-          <Route path="/medatlas" element={<MedAtlas />} />
-          <Route path="/medtag" element={<MedTagger />} />
+          <Route path="/medvault" element={<MedVault />} />
+          <Route path="/medscribe" element={<MedScribe />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="*" element={<NotFound />} />

@@ -153,14 +153,10 @@ This section provides simple numeric examples. Values are illustrative.
 ## Example A — Create a Lab with Custom Ticker
 
 Inputs:
-- Name: "MedAtlas Cardio"
-- Symbol: "H1CARD"
-- Domain: "Healthcare/Cardiology"
-- Defaults: cooldown = 7 days, exit cap = 20%/day
-
-Flow:
-1. Call `createLab("MedAtlas Cardio", "H1CARD", "Healthcare/Cardiology")`.
-2. Lab created and `LabVault` auto‑deployed; H1 token = vault shares with name "MedAtlas Cardio" and symbol "H1CARD".
+- Name: "MedVault Cardio"
+...
+1. Call `createLab("MedVault Cardio", "H1CARD", "Healthcare/Cardiology")`.
+2. Lab created and `LabVault` auto‑deployed; H1 token = vault shares with name "MedVault Cardio" and symbol "H1CARD".
 3. Lab is active; app slots determined by level once deposits arrive.
 
 ## Example B — Deposit and Redeem with Cooldown

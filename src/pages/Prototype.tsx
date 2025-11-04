@@ -1416,7 +1416,7 @@ export default function Prototype() {
       // Parse DataCreated event with correct signature
       const dataCreatedEvent = receipt.logs.find((log: any) => log.topics[0] === ethers.id("DataCreated(uint256,uint256,address,bytes32,string,address,uint256)"));
       const dataId = dataCreatedEvent ? ethers.toNumber(dataCreatedEvent.topics[1]) : "unknown";
-      addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedTagger.`, createTx.hash);
+      addLog('success', 'Stage 2: Create Data', `✅ STEP 2 COMPLETE: De-identified dataset recorded onchain (ID: ${dataId}). Clinicians can now enrich this data on MedScribe.`, createTx.hash);
       toast.success(`Step 2 Complete! Dataset ID: ${dataId}`);
       
       // Track created data ID for dropdowns
@@ -1482,7 +1482,7 @@ export default function Prototype() {
       addLog('info', 'Stage 3: Credentials', '🔍 Checking for existing clinician registration...');
       let userId = await diamond.getUserId(userAddress);
       if (userId === 0n) {
-        addLog('info', 'Stage 3: Credentials', '📝 Registering clinician to MedTagger and creating user ID...');
+        addLog('info', 'Stage 3: Credentials', '📝 Registering clinician to MedScribe and creating user ID...');
         const createUserTx = await diamond.createUserId(userAddress, credentialDomain);
         await createUserTx.wait();
         userId = await diamond.getUserId(userAddress);
@@ -3059,11 +3059,11 @@ export default function Prototype() {
                     <Badge className="mt-2 bg-secondary/20 text-secondary">Create Training Data (De-identify & Upload Medical Records)</Badge>
                   </div>
                 </div>
-                <Link to="/medatlas" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
+                <Link to="/medvault" className="flex flex-col items-center gap-1 hover:scale-105 transition-transform">
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg">
                     <FileStack className="w-8 h-8 text-white" />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedAtlas</span>
+                  <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedVault</span>
                 </Link>
               </div>
 
@@ -3102,7 +3102,7 @@ export default function Prototype() {
                 </div>
                 <div className="rounded-lg bg-secondary/10 border border-secondary/20 p-3">
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-semibold text-secondary">💡 MedAtlas Workflow:</span> Upload de-identified medical records (from MedAtlas app). This calls <span className="font-mono text-xs">createData()</span> on DataValidationFacet, storing the record hash with metadata. Clinicians enrich these records on MedTagger, and you receive revenue share when datasets are sold.
+                    <span className="font-semibold text-secondary">💡 MedVault Workflow:</span> Upload de-identified medical records (from MedVault app). This calls <span className="font-mono text-xs">createData()</span> on DataValidationFacet, storing the record hash with metadata. Clinicians enrich these records on MedScribe, and you receive revenue share when datasets are sold.
                   </p>
                 </div>
                 <Button onClick={handleCreateData} disabled={loading === 'createData'} className="w-full">
@@ -3129,7 +3129,7 @@ export default function Prototype() {
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center flex-shrink-0 cursor-pointer hover:shadow-lg">
                     <PenTool className="w-8 h-8 text-white" />
                   </div>
-                  <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedTagger</span>
+                  <span className="text-xs font-medium text-muted-foreground hover:text-primary">MedScribe</span>
                 </Link>
               </div>
 
@@ -3153,7 +3153,7 @@ export default function Prototype() {
                 </div>
                 <div className="rounded-lg bg-accent/10 border border-accent/20 p-3">
                   <p className="text-xs text-muted-foreground">
-                    <span className="font-semibold text-accent">💡 MedTagger Workflow:</span> Issue credentials to clinicians who complete enrichment work on MedTagger. This calls <span className="font-mono text-xs">issueCredential()</span> on CredentialFacet, verifying their contributions and building onchain reputation. Approved enrichments trigger revenue distribution via RevenueFacet.
+                    <span className="font-semibold text-accent">💡 MedScribe Workflow:</span> Issue credentials to clinicians who complete enrichment work on MedScribe. This calls <span className="font-mono text-xs">issueCredential()</span> on CredentialFacet, verifying their contributions and building onchain reputation. Approved enrichments trigger revenue distribution via RevenueFacet.
                   </p>
                 </div>
                 <Button onClick={handleCreateCredential} disabled={loading === 'createCredential'} className="w-full">
@@ -3316,7 +3316,7 @@ export default function Prototype() {
                               {/* App Used */}
                               <div>
                                 <span className="text-muted-foreground font-semibold">App Used:</span>
-                                <p className="font-mono text-xs">MedTagger</p>
+                                <p className="font-mono text-xs">MedScribe</p>
                               </div>
 
                               <div>
@@ -3459,7 +3459,7 @@ export default function Prototype() {
                             </div>
                             <div>
                               <span className="text-muted-foreground">App Used:</span>
-                              <p className="font-mono text-xs">MedTagger (example app)</p>
+                              <p className="font-mono text-xs">MedScribe (example app)</p>
                             </div>
                             <div>
                               <span className="text-muted-foreground">App Developer:</span>
@@ -4667,7 +4667,7 @@ export default function Prototype() {
                                   </div>
                                   <div>
                                     <span className="text-muted-foreground">App Used:</span>
-                                    <p className="font-mono text-xs">MedTagger (example app)</p>
+                                    <p className="font-mono text-xs">MedScribe (example app)</p>
                                   </div>
                                   <div>
                                     <span className="text-muted-foreground">App Developer:</span>

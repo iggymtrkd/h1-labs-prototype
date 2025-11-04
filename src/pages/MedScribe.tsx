@@ -93,7 +93,7 @@ export default function MedTagger() {
     },
     {
       id: '3',
-      sender: 'MedTagger AI',
+      sender: 'MedScribe AI',
       senderType: 'ai',
       message: 'Suggested MEDICINE_DOMAIN tags added for respiratory and cardiology sections.',
       timestamp: new Date(Date.now() - 60000)
@@ -244,7 +244,7 @@ export default function MedTagger() {
     setTimeout(() => {
       const aiMessage: ChatMessage = {
         id: String(chatMessages.length + 1),
-        sender: 'MedTagger AI',
+        sender: 'MedScribe AI',
         senderType: 'ai',
         message: 'I\'ve analyzed the assessment section and identified 2 additional reasoning statements and 1 potential hallucination about cardiac risk. Cost: 0.5 H1',
         timestamp: new Date()
@@ -284,7 +284,7 @@ export default function MedTagger() {
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
             <Stethoscope className="w-8 h-8 text-blue-500" />
-            <h1 className="text-4xl font-bold text-white">MedTagger</h1>
+            <h1 className="text-4xl font-bold text-white">MedScribe</h1>
           </div>
           <p className="text-slate-400">Enrich and validate medical records</p>
         </div>

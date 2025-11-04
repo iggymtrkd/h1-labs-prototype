@@ -67,7 +67,7 @@ LAB CREATION & STAKING
   │
   ├─► 1. User navigates to "Create Lab" interface
   ├─► 2. Inputs lab details:
-  │     ├─► Lab Name (e.g., "MedAtlas Cardio")
+  │     ├─► Lab Name (e.g., "MedVault Cardio")
   │     ├─► H1 Token Symbol (e.g., "H1CARD")
   │     └─► Domain (e.g., "Healthcare/Cardiology")
   │
@@ -405,7 +405,7 @@ Current gap: No swap mechanism exists.
 3. **Create Lab**
    ```typescript
    const createTx = await diamondContract.createLab(
-     "MedAtlas Cardio",      // name
+     "MedVault Cardio",      // name
      "H1CARD",               // symbol
      "Healthcare/Cardiology" // domain
    );

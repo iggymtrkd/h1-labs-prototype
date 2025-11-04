@@ -392,7 +392,7 @@ export default function MedAtlas() {
             {/* Info Card */}
             <Card className="p-4 bg-slate-800 border-slate-700">
               <p className="text-xs text-slate-400 leading-relaxed">
-                <span className="text-emerald-400 font-semibold">MedAtlas</span> removes PII from medical records and prepares them for enrichment. Your records will be enriched by clinical professionals on MedTagger, and you'll receive revenue share from every dataset sold.
+                <span className="text-emerald-400 font-semibold">MedVault</span> removes PII from medical records and prepares them for enrichment. Your records will be enriched by clinical professionals on MedScribe, and you'll receive revenue share from every dataset sold.
               </p>
             </Card>
           </div>

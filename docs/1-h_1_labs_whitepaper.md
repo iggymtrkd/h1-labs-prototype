@@ -391,7 +391,7 @@ Create → Validate → Publish → Train → License → Earn → Reinvest
 #### **5️⃣ Unified Atlas Expansion Map**
 ```
                   ┌───────────────┐
-                  │   MedAtlas    │
+                  │   MedVault    │
                   │ (Healthcare)  │
                   └──────┬────────┘
                          │
@@ -761,20 +761,20 @@ library LibH1Storage {
 
 ---
 
-## Appendix: Proof of Enrichment — Demonstrating the Power of the MedAtlas Enriched Corpus
+## Appendix: Proof of Enrichment — Demonstrating the Power of the MedVault Enriched Corpus
 
 ### **1. Purpose and Strategy**
-The **MedAtlas Enriched Corpus (MEC)** is designed as a proof of the H1 Labs thesis: that verifiable, credentialed, and compliant human enrichment produces superior AI models compared to unverified data. MEC showcases how the H1 protocol advances medical AI accuracy, safety, and provenance through decentralized validation.
+The **MedVault Enriched Corpus (MEC)** is designed as a proof of the H1 Labs thesis: that verifiable, credentialed, and compliant human enrichment produces superior AI models compared to unverified data. MEC showcases how the H1 protocol advances medical AI accuracy, safety, and provenance through decentralized validation.
 
 The objective is to demonstrate that H1 Labs’ decentralized enrichment pipeline — credentialed clinicians, AEH verification, and programmable compliance — produces a measurable lift in model performance using open benchmarks such as **HealthBench**.
 
 ---
 
 ### **2. Concept Overview**
-Rather than competing with OpenAI or Anthropic, H1 Labs fine-tunes open-weight models to **showcase the quantifiable benefit of MedAtlas data**. The model serves as a *demonstration of enriched data efficacy*, not as a commercial AI product.
+Rather than competing with OpenAI or Anthropic, H1 Labs fine-tunes open-weight models to **showcase the quantifiable benefit of MedVault data**. The model serves as a *demonstration of enriched data efficacy*, not as a commercial AI product.
 
-- **Project Codename:** MedAtlas-Mistral v1  
-- **Dataset:** MedAtlas Enriched Corpus v1.0 (Healthcare)
+- **Project Codename:** MedVault-Mistral v1  
+- **Dataset:** MedVault Enriched Corpus v1.0 (Healthcare)
 - **Goal:** Show performance lift vs. baseline using HealthBench metrics.
 
 ---
@@ -791,20 +791,9 @@ Rather than competing with OpenAI or Anthropic, H1 Labs fine-tunes open-weight m
 The open-weight model is fine-tuned using **LoRA adapters** or parameter-efficient fine-tuning (PEFT). This allows quick iteration while preserving the base model weights.
 
 #### **Training Data Composition**
-The **MedAtlas Enriched Corpus (MEC)** aggregates multiple H1 Healthcare Apps outputs:
-- De-identified patient notes (Scrubber App)
-- Structured reasoning logs from Second Opinion+
-- AEH-validated summaries and pre-chart templates
-- Imaging metadata and diagnostic annotations
-
-Each record carries its provenance hash, credential reference, and domain facet signature.
-
-**Sample JSON structure:**
-```json
-{
-  "input": "Patient presents with acute chest pain and ECG shows ST elevation. Likely diagnosis?",
-  "output": "ST-Elevation Myocardial Infarction (STEMI). Immediate PCI indicated.",
-  "source": "MedAtlas Cardiology Corpus, validated by Dr. J. Silva, AEH certified"
+The **MedVault Enriched Corpus (MEC)** aggregates multiple H1 Healthcare Apps outputs:
+...
+  "source": "MedVault Cardiology Corpus, validated by Dr. J. Silva, AEH certified"
 }
 ```
 
@@ -820,7 +809,7 @@ Each record carries its provenance hash, credential reference, and domain facet 
 
 **Expected Result:**  
 > Baseline Mistral: 65.3% average score  
-> MedAtlas-Mistral (MEC): 82.4% average score (+17.1%)
+> MedVault-Mistral (MEC): 82.4% average score (+17.1%)
 
 These results would illustrate that **human-enriched, verifiable datasets improve AI precision and compliance**.
 
@@ -828,8 +817,8 @@ These results would illustrate that **human-enriched, verifiable datasets improv
 
 ### **5. Model Branding and Versions**
 The MEC naming scheme establishes a scalable branding structure for future domain expansions:
-- **MedAtlas Enriched Corpus v1.0 — Cardiology & Internal Medicine**
-- **MedAtlas Enriched Corpus v1.2 — Oncology & Imaging Extensions**
+- **MedVault Enriched Corpus v1.0 — Cardiology & Internal Medicine**
+- **MedVault Enriched Corpus v1.2 — Oncology & Imaging Extensions**
 
 Future variants:
 - **LawAtlas Corpus** (Legal AI)
@@ -858,7 +847,7 @@ Future variants:
 | 2 | Format into corpus | JSON / Parquet data format |
 | 3 | Fine-tune base model | Hugging Face PEFT / LoRA |
 | 4 | Evaluate | HealthBench (HF + Stanford) |
-| 5 | Publish results | MedAtlas Whitepaper / Dashboard |
+| 5 | Publish results | MedVault Whitepaper / Dashboard |
 | 6 | Optional deployment | Gradio / lightweight API wrapper |
 
 ---
@@ -867,12 +856,12 @@ Future variants:
 - **Not a medical device:** Demonstration model only, no clinical claims.  
 - **No PHI:** All data processed through Scrubber’s de-identification pipeline.  
 - **AEH Review:** All validation flows audited under AEH ethical framework.  
-- **Open Science Intent:** MedAtlas reports intended for research transparency.
+- **Open Science Intent:** MedVault reports intended for research transparency.
 
 ---
 
 ### **9. Summary Statement**
-> The MedAtlas Enriched Corpus proves that decentralized, credentialed, and compliant human intelligence can outperform traditional AI pipelines. Through verifiable provenance, programmatic compliance, and transparent economic incentives, H1 Labs demonstrates how the fusion of blockchain and AI can advance healthcare safely and ethically.
+> The MedVault Enriched Corpus proves that decentralized, credentialed, and compliant human intelligence can outperform traditional AI pipelines. Through verifiable provenance, programmatic compliance, and transparent economic incentives, H1 Labs demonstrates how the fusion of blockchain and AI can advance healthcare safely and ethically.
 
 ---
 
@@ -887,18 +876,9 @@ Clinicians / Validators ──► Scrubber App ──► De-Identification & Tag
                                       │
                                       ▼
                    ┌──────────────────────────────────────┐
-                   │   MedAtlas Enriched Corpus (MEC)     │
-                   │   • De-identified patient data        │
-                   │   • Structured diagnostic reasoning   │
-                   │   • Imaging annotations               │
-                   │   • Provenance hashes + credentials   │
-                   └──────────────────────────────────────┘
-                                      │
-                                      ▼
-                              Fine-Tuning Pipeline
-                                      │
-                                      ▼
-                       MedAtlas-Mistral v1 Demonstration Model
+                   │   MedVault Enriched Corpus (MEC)     │
+...
+                       MedVault-Mistral v1 Demonstration Model
                                       │
                                       ▼
                              HealthBench Evaluation
@@ -909,10 +889,10 @@ Clinicians / Validators ──► Scrubber App ──► De-Identification & Tag
 
 ---
 
-#### **2️⃣ MedAtlas Corpus Architecture**
+#### **2️⃣ MedVault Corpus Architecture**
 ```
 ┌──────────────────────────────────────────────┐
-│              MedAtlas Enriched Corpus        │
+│              MedVault Enriched Corpus        │
 │----------------------------------------------│
 │  DATA SOURCES:                               │
 │   • Scrubber App (EHR De-ID)                 │
@@ -941,13 +921,13 @@ Clinicians / Validators ──► Scrubber App ──► De-Identification & Tag
            │  Fine-Tune via PEFT / LoRA
            ▼
 ┌────────────────────────────┐
-│ MedAtlas Enriched Corpus   │
+│ MedVault Enriched Corpus   │
 │  (Cardiology / General IM) │
 └──────────┬────────────────┘
            │
            ▼
 ┌────────────────────────────┐
-│  MedAtlas-Mistral v1       │
+│  MedVault-Mistral v1       │
 │  Fine-Tuned Healthcare LLM │
 └──────────┬────────────────┘
            │  Evaluate
@@ -963,7 +943,7 @@ Clinicians / Validators ──► Scrubber App ──► De-Identification & Tag
 ┌────────────────────────────┐
 │ Baseline vs. Enriched      │
 │  • Mistral: 65.3%          │
-│  • MedAtlas-Mistral: 82.4% │
+│  • MedVault-Mistral: 82.4% │
 │  • Δ = +17.1% Improvement  │
 └────────────────────────────┘
 ```
@@ -975,7 +955,7 @@ Clinicians / Validators ──► Scrubber App ──► De-Identification & Tag
 HealthBench Scores (Illustrative)
 
 Baseline (Mistral):          ██████████████████░░░░ 65.3%
-MedAtlas-Mistral (MEC):      ████████████████████████████ 82.4%
+MedVault-Mistral (MEC):      ████████████████████████████ 82.4%
 
 Category Breakdown:
 - Diagnostic Reasoning:      +21.0%
@@ -989,7 +969,7 @@ Category Breakdown:
 #### **5️⃣ Cross-Domain “Atlas” Expansion Map**
 ```
                           ┌─────────────────────┐
-                          │   MedAtlas (v1)     │
+                          │   MedVault (v1)     │
                           │  Healthcare Domain  │
                           └────────┬────────────┘
                                    │
