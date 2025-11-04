@@ -333,11 +333,23 @@ export default function Whitepaper() {
                               {children}
                             </h3>
                             <LabOwnershipPie />
-                            <LabCreationFlow />
                           </>
                         );
                       }
                       
+                      // Check if this is a section that should render a custom diagram
+                      if (text.includes("Lab Creation & GrowthFlow") || text.includes("Lab Lifecycle")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <LabCreationFlow />
+                          </>
+                        );
+                      }
+
+
                       if (text.includes("Credential Lifecycle")) {
                         return (
                           <>
