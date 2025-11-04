@@ -82,22 +82,37 @@ export default function Whitepaper() {
         .map((section) => document.getElementById(section.id))
         .filter((el): el is HTMLElement => el !== null);
 
+      if (headings.length === 0) return;
+
       // Find the current section based on scroll position
       let currentSection = "";
-      const scrollTop = scrollArea.scrollTop;
-      const offset = 150; // Offset for triggering highlight
+      const scrollAreaRect = scrollArea.getBoundingClientRect();
+      const offset = 100; // Offset for triggering highlight
 
-      // Find headings visible in viewport
-      for (let i = headings.length - 1; i >= 0; i--) {
-        const heading = headings[i];
-        const rect = heading.getBoundingClientRect();
-        const scrollAreaRect = scrollArea.getBoundingClientRect();
-        
-        // Check if heading is in or above viewport
-        if (rect.top - scrollAreaRect.top <= offset) {
-          currentSection = heading.id;
-          break;
+      // Check if we're at the bottom of the scroll area
+      const isAtBottom = scrollArea.scrollHeight - scrollArea.scrollTop - scrollArea.clientHeight < 10;
+      
+      if (isAtBottom) {
+        // If at bottom, highlight the last section
+        currentSection = headings[headings.length - 1].id;
+      } else {
+        // Find headings visible in viewport - iterate from bottom to top
+        for (let i = headings.length - 1; i >= 0; i--) {
+          const heading = headings[i];
+          const rect = heading.getBoundingClientRect();
+          
+          // Check if heading is in or above viewport
+          const relativeTop = rect.top - scrollAreaRect.top;
+          if (relativeTop <= offset) {
+            currentSection = heading.id;
+            break;
+          }
         }
+      }
+
+      // If no section found yet, use the first one
+      if (!currentSection && headings.length > 0) {
+        currentSection = headings[0].id;
       }
 
       if (currentSection && currentSection !== activeSection) {
