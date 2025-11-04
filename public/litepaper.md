@@ -170,6 +170,14 @@ Level 1 (Starter)
 
 <LabLevelUnlocking />
 
+### Level Unlocking Visualization
+
+**Key Insights:**
+- **Progressive unlocking**: Each tier unlocks additional app slots and H1 tokens
+- **No step back**: Levels increase monotonically; can't decrease once reached
+- **Cap at L3**: Maximum H1 minting is 500K per lab regardless of stake
+- **Proportional rewards**: H1 minted scales with initial LABS up to the cap
+
 ---
 
 ### 2.2 Lab Creation Flow — Visual Overview

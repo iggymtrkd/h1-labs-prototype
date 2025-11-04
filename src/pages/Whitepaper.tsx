@@ -371,6 +371,17 @@ export default function Whitepaper() {
                         );
                       }
                       
+                      if (text.includes("Level Unlocking")) {
+                        return (
+                          <>
+                            <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
+                              {children}
+                            </h3>
+                            <LabLevelUnlocking />
+                          </>
+                        );
+                      }
+                      
                       return (
                         <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
                           {children}
@@ -532,12 +543,6 @@ export default function Whitepaper() {
                       // Blockchain Benefits table
                       if (tableStr.includes("Challenge") && tableStr.includes("Blockchain Benefit")) {
                         return <BlockchainBenefits />;
-                      }
-                      
-                      // Lab Level Unlocking table
-                      if ((tableStr.includes("Level") && tableStr.includes("App Slots") && tableStr.includes("Implications")) ||
-                          (tableStr.includes("L1") && tableStr.includes("L2") && tableStr.includes("L3") && tableStr.includes("100K"))) {
-                        return <LabLevelUnlocking />;
                       }
                       
                       // Default table rendering
