@@ -326,7 +326,7 @@ export default function Whitepaper() {
                         .replace(/\s+/g, "-");
                       
                       // Check if this is a section that should render a custom diagram
-                      if (text.includes("Lab Creation") || text.includes("Lab Lifecycle")) {
+                      if (text.includes("Lab Creation & Growth") || text.includes("Lab Lifecycle")) {
                         return (
                           <>
                             <h3 id={id} className="text-lg md:text-xl font-bold mb-2 mt-4 scroll-mt-24 text-secondary break-words" {...props}>
