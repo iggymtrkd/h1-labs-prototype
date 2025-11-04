@@ -7,9 +7,10 @@ import { Label } from '@/components/ui/label';
 import { Textarea } from '@/components/ui/textarea';
 import { Separator } from '@/components/ui/separator';
 import {
-  Stethoscope, MessageCircle, Send, Zap, Tag, CheckCircle2, 
+  MessageCircle, Send, Zap, Tag, CheckCircle2, 
   AlertCircle, Pill, Heart, Brain, Award, User, Bot, ArrowLeft
 } from 'lucide-react';
+import medscribeIcon from '@/assets/medscribe-icon.png';
 import { toast } from 'sonner';
 import { useNavigate, useLocation } from 'react-router-dom';
 
@@ -283,7 +284,7 @@ export default function MedTagger() {
         {/* Header */}
         <div className="mb-8">
           <div className="flex items-center gap-3 mb-2">
-            <Stethoscope className="w-8 h-8 text-blue-500" />
+            <img src={medscribeIcon} alt="MedScribe" className="w-10 h-10" />
             <h1 className="text-4xl font-bold text-white">MedScribe</h1>
           </div>
           <p className="text-slate-400">Enrich and validate medical records</p>
