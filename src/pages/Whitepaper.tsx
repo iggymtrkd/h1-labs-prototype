@@ -27,6 +27,7 @@ import TokenAppreciationTimeline from "@/components/litepaper/TokenAppreciationT
 import UseCaseROIComparison from "@/components/litepaper/UseCaseROIComparison";
 import RoadmapTimeline from "@/components/litepaper/RoadmapTimeline";
 import RiskMatrix from "@/components/litepaper/RiskMatrix";
+import RevenueDistributionPie from "@/components/litepaper/RevenueDistributionPie";
 
 export default function Whitepaper() {
   const [content, setContent] = useState("");
@@ -551,6 +552,9 @@ export default function Whitepaper() {
                       }
                       if (text.includes('Risk matrix chart')) {
                         return <RiskMatrix />;
+                      }
+                      if (text.includes('Revenue distribution model') || text.includes('per-dataset to that specific dataset')) {
+                        return <RevenueDistributionPie />;
                       }
                       
                       return <p className="mb-4 text-muted-foreground leading-relaxed break-words" {...props}>{children}</p>;
