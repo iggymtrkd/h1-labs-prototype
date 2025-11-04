@@ -10,37 +10,15 @@ Table of Contents
 Main Sections
 1. [The Problem It Solves](#1-the-problem-it-solves)
 2. [Lab Mechanics](#2-lab-mechanics)
-   - 2.1 [Lab Creation & Growth](#21-lab-creation--growth)
-   - 2.2 [H1 Distribution & Allocation](#22-h1-distribution--allocation)
-   - 2.3 [Credentialing & Data Validation](#23-credentialing--data-validation)
-   - 2.4 [Revenue Distribution Model](#24-revenue-distribution-model)
-   - 2.5 [Prototype Testing Workflow](#25-prototype-testing-workflow)
 3. [Technical Architecture](#3-technical-architecture)
-   - 3.1 [Smart Contract Architecture](#31-smart-contract-architecture)
-   - 3.2 [Technical Features & Security](#32-technical-features--security)
-   - 3.3 [Reading Lab Data On-Chain](#33-reading-lab-data-on-chain)
 4. [Developer SDK](#4-developer-sdk)
 5. [Tokenomics & Economic Model](#5-tokenomics--economic-model)
-   - 5.1 [Automatic H1 Distribution](#51-automatic-h1-distribution-on-lab-creation)
-   - 5.2 [Staking & Scholar Rewards](#52-staking--scholar-rewards)
-   - 5.3 [H1 Tokens — Per-Lab Economies](#53-h1-tokens--per-lab-economies)
-   - 5.4 [Bonding Curves](#54-bonding-curves--automatic-deployment--bootstrap-mechanics)
-   - 5.5 [H1 Swap Fees](#55-h1-swap-fees--staking--unstaking-costs)
-   - 5.6 [Unstaking Flow](#56-unstaking-flow--overview)
 6. [Economic Flywheel](#6-economic-flywheel)
 7. [Roadmap](#7-roadmap-condensed)
 8. [Dataset Marketplace](#8-dataset-marketplace)
 9. [Closing](#9-closing)
+[Appendix]()
 
-Appendix
-- [A. Our Edge — Strengths at a Glance](#a-our-edge--strengths-at-a-glance)
-- [B. What You Can Do on H1](#b-what-you-can-do-on-h1)
-- [C. Competitive Positioning](#c-competitive-positioning--h1-vs-the-field)
-- [D. Risks & Mitigations](#d-risks--mitigations)
-- [E. User Flows](#e-user-flows)
-- [F. Use Cases & Scenarios](#f-use-cases--scenarios)
-- [G. Micro Flywheel: Healthcare Lab Year 1](#g-micro-flywheel-healthcare-lab-year-1-detailed-example)
-- [K. Healthcare Lab H1 Token Appreciation (Year 1)](#k-healthcare-lab-h1-token-appreciation-year-1)
 
 ---
 
@@ -154,7 +132,7 @@ Total: 100% allocated at creation
 
 ---
 
-### 2.2 **Lab Creation Flow — Visual Overview**
+### 2.2 Lab Creation Flow — Visual Overview
 
 ```
 STEP 1: Creator Preparation
@@ -227,7 +205,7 @@ Example Timeline:
 └─ Creator's ownership: Diluted but NAV increases with community participation
 ```
 
-### 2.3 **Revenue Accrual & NAV Growth**
+### 2.3 Revenue Accrual & NAV Growth
 
 As the lab generates revenue from dataset sales, the vault's total assets increase, which increases the NAV (assets per share) for all H1 holders:
 
