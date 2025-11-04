@@ -15,9 +15,6 @@ import {
   Send,
   Loader2,
   ExternalLink,
-  FileStack,
-  PenTool,
-  Database,
 } from "lucide-react";
 import { LineChart, Line, ResponsiveContainer } from "recharts";
 import { useBaseAccount } from "@/hooks/useBaseAccount";
@@ -30,11 +27,13 @@ import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI, BondingCurveFacet_AB
 
 import medloopIcon from '@/assets/medloop-icon.png';
 import medrepsIcon from '@/assets/medreps-icon.png';
+import medvaultIcon from '@/assets/medvault-icon.png';
+import medscribeIcon from '@/assets/medscribe-icon.png';
 
 // Default training apps available for all labs
 const DEFAULT_TRAINING_APPS = [
-  { name: "MedVault", icon: FileStack, route: "/medvault" },
-  { name: "MedScribe", icon: PenTool, route: "/medscribe" },
+  { name: "MedVault", icon: "image", route: "/medvault", iconSrc: medvaultIcon },
+  { name: "MedScribe", icon: "image", route: "/medscribe", iconSrc: medscribeIcon },
   { name: "MedLoop", icon: "image", route: "/medloop", iconSrc: medloopIcon },
   { name: "MedReps", icon: "image", route: "/medreps", iconSrc: medrepsIcon },
 ];
@@ -661,7 +660,6 @@ export default function LabChat() {
           </h3>
           <div className="grid grid-cols-4 gap-3">
             {DEFAULT_TRAINING_APPS.map((app, i) => {
-              const IconComponent = app.icon;
               return (
                 <Link 
                   key={i} 
@@ -670,11 +668,7 @@ export default function LabChat() {
                   className="flex flex-col items-center gap-1 hover:scale-105 transition-transform"
                 >
                   <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center cursor-pointer hover:shadow-lg overflow-hidden">
-                    {app.icon === 'image' && app.iconSrc ? (
-                      <img src={app.iconSrc} alt={app.name} className="w-full h-full object-cover" />
-                    ) : (
-                      <IconComponent className="w-8 h-8 text-white" />
-                    )}
+                    <img src={app.iconSrc} alt={app.name} className="w-full h-full object-cover" />
                   </div>
                   <p className="text-xs font-medium text-muted-foreground hover:text-primary">{app.name}</p>
                 </Link>
