@@ -41,6 +41,7 @@ import Prototype from "./pages/Prototype";
 import GetStarted from "./pages/GetStarted";
 import MedVault from "./pages/MedVault";
 import MedScribe from "./pages/MedScribe";
+import MedLoop from "./pages/MedLoop";
 
 const queryClient = new QueryClient();
 
@@ -163,6 +164,7 @@ const AppContent = () => {
           <Route path="/prototype" element={<Prototype />} />
           <Route path="/medvault" element={<MedVault />} />
           <Route path="/medscribe" element={<MedScribe />} />
+          <Route path="/medloop" element={<MedLoop />} />
           <Route path="/terms" element={<Terms />} />
           <Route path="/upcoming-features" element={<UpcomingFeatures />} />
           <Route path="*" element={<NotFound />} />

@@ -28,10 +28,13 @@ import { ethers } from "ethers";
 import { CONTRACTS } from "@/config/contracts";
 import { LABSToken_ABI, BondingCurveSale_ABI, LabVault_ABI, BondingCurveFacet_ABI } from "@/contracts/abis";
 
+import medloopIcon from '@/assets/medloop-icon.png';
+
 // Default training apps available for all labs
 const DEFAULT_TRAINING_APPS = [
   { name: "MedVault", icon: FileStack, route: "/medvault" },
   { name: "MedScribe", icon: PenTool, route: "/medscribe" },
+  { name: "MedLoop", icon: "image", route: "/medloop", iconSrc: medloopIcon },
   { name: "Datasets", icon: Database, route: "/marketplace" },
 ];
 
@@ -655,7 +658,7 @@ export default function LabChat() {
           <h3 className="text-sm font-semibold mb-3 text-muted-foreground uppercase tracking-wider">
             Training Apps
           </h3>
-          <div className="grid grid-cols-3 gap-3">
+          <div className="grid grid-cols-4 gap-3">
             {DEFAULT_TRAINING_APPS.map((app, i) => {
               const IconComponent = app.icon;
               return (
@@ -665,8 +668,12 @@ export default function LabChat() {
                   state={{ from: `/lab/${id}/chat` }}
                   className="flex flex-col items-center gap-1 hover:scale-105 transition-transform"
                 >
-                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center cursor-pointer hover:shadow-lg">
-                    <IconComponent className="w-8 h-8 text-white" />
+                  <div className="w-16 h-16 rounded-2xl bg-gradient-to-br from-primary to-secondary flex items-center justify-center cursor-pointer hover:shadow-lg overflow-hidden">
+                    {app.icon === 'image' && app.iconSrc ? (
+                      <img src={app.iconSrc} alt={app.name} className="w-full h-full object-cover" />
+                    ) : (
+                      <IconComponent className="w-8 h-8 text-white" />
+                    )}
                   </div>
                   <p className="text-xs font-medium text-muted-foreground hover:text-primary">{app.name}</p>
                 </Link>
