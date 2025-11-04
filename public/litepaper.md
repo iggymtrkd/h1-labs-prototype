@@ -122,13 +122,53 @@ Total: 100% allocated at creation
   - Week 13: ~15,000 H1 claimable (50% of total)
   - Week 26: 30,000 H1 fully claimable (100% of total)
 
-**Level Unlocking (Based on Staked LABS at Creation):**
+**Level Unlocking Progression:**
 
-| Level | LABS Staked | App Slots | H1 Minted | Implications |
-|-------|-------------|-----------|-----------|--------------|
-| **L1** | 100K–250K | 1 | 100K–250K H1 | Can run 1 backend/frontend app pair |
-| **L2** | 250K–500K | 2 | 250K–500K H1 | Can run 2 app slots in parallel |
-| **L3** | 500K+ | 3 | 500K H1 (capped) | Can run 3 app slots in parallel |
+```
+LABS Staked Range        App Slots      H1 Minted        Tier Benefits
+─────────────────────────────────────────────────────────────────────────
+
+Level 3 (Premium)
+┌───────────────────────────────────────────────────────────────────┐
+│  500K+ LABS                  3 Slots        500K H1 (Capped)      │
+│                              ◆◆◆            Unlock all features  │
+│                                             Maximum capacity      │
+└───────────────────────────────────────────────────────────────────┘
+                                    ▲
+                                    │ +250K deposit
+                                    │
+Level 2 (Growth)
+┌───────────────────────────────────────────────────────────────────┐
+│  250K–500K LABS              2 Slots        250K–500K H1          │
+│                              ◆◆              2 app slots unlock  │
+│                                             Scale operations     │
+└───────────────────────────────────────────────────────────────────┘
+                                    ▲
+                                    │ +150K deposit
+                                    │
+Level 1 (Starter)
+┌───────────────────────────────────────────────────────────────────┐
+│  100K–250K LABS              1 Slot         100K–250K H1          │
+│                              ◆               Launch lab          │
+│                                             1 app slot available │
+└───────────────────────────────────────────────────────────────────┘
+                                    ▲
+                                    │ Minimum 100K
+                                    │
+                            Entry Point
+```
+
+**Key Insights:**
+- **Progressive unlocking**: Each tier unlocks additional app slots and H1 tokens
+- **No step back**: Levels increase monotonically; can't decrease once reached
+- **Cap at L3**: Maximum H1 minting is 500K per lab regardless of stake
+- **Proportional rewards**: H1 minted scales with initial LABS up to the cap
+
+**Level Unlocking Progression:**
+
+> See interactive visualization: `<LabLevelUnlocking />` - Beautiful card-based UI showing the 3-tier system with lock/unlock icons, color-coded levels, and detailed benefits for each tier.
+
+<LabLevelUnlocking />
 
 ---
 
