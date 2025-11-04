@@ -4,10 +4,11 @@ import { PieChart, Pie, Cell, ResponsiveContainer, Legend, Tooltip } from "recha
 import { PieChart as PieChartIcon } from "lucide-react";
 
 const initialOwnershipData = [
-  { name: "Founder Initial Stake", value: 60, color: "hsl(var(--primary))" },
-  { name: "Available for Public Staking", value: 30, color: "hsl(var(--secondary))" },
-  { name: "Protocol Liquidity Reserve", value: 7, color: "hsl(var(--accent))" },
-  { name: "Protocol Treasury Fee", value: 3, color: "hsl(142, 76%, 36%)" },
+  { name: "Lab Owner (Vested 6mo)", value: 30, color: "hsl(var(--primary))" },
+  { name: "Bonding Curve (Liquid)", value: 10, color: "hsl(var(--secondary))" },
+  { name: "Scholar Reserve (Vested)", value: 40, color: "hsl(142, 76%, 36%)" },
+  { name: "Dev Reserve (Vested)", value: 15, color: "hsl(var(--accent))" },
+  { name: "Protocol Treasury (Instant)", value: 5, color: "hsl(0, 84%, 60%)" },
 ];
 
 export default function LabOwnershipPie() {
@@ -60,7 +61,7 @@ export default function LabOwnershipPie() {
             <div>
               <Badge className="mb-3 bg-primary">At Launch</Badge>
               <p className="text-xs text-muted-foreground mb-4">
-                Example: $100K initial lab creation
+                Example: 100,000 H1 minted from 100,000 LABS staked
               </p>
             </div>
 
@@ -77,10 +78,11 @@ export default function LabOwnershipPie() {
                   <span className="text-sm font-bold">{item.value}%</span>
                 </div>
                 <p className="text-xs text-muted-foreground pl-5">
-                  {item.name === "Founder Initial Stake" && "$60K → Founder receives H1 tokens, controls lab"}
-                  {item.name === "Available for Public Staking" && "$30K → Available for others to buy H1 shares"}
-                  {item.name === "Protocol Liquidity Reserve" && "$7K → POL for market stability and liquidity"}
-                  {item.name === "Protocol Treasury Fee" && "$3K → Platform development and operations"}
+                  {item.name === "Lab Owner (Vested 6mo)" && "30% → Vested H1 tokens for 6 months"}
+                  {item.name === "Bonding Curve (Liquid)" && "10% → Liquid H1 tokens on the bonding curve"}
+                  {item.name === "Scholar Reserve (Vested)" && "40% → Vested H1 tokens for the scholar reserve"}
+                  {item.name === "Dev Reserve (Vested)" && "15% → Vested H1 tokens for the dev reserve"}
+                  {item.name === "Protocol Treasury (Instant)" && "5% → Instant H1 tokens for the protocol treasury"}
                 </p>
               </div>
             ))}
@@ -106,6 +108,25 @@ export default function LabOwnershipPie() {
                 <li>• Proportional governance rights</li>
                 <li>• Share in dataset revenue via H1 appreciation</li>
                 <li>• Benefit from buyback mechanisms</li>
+              </ul>
+            </div>
+
+            <div>
+              <p className="font-semibold mb-2 text-primary">Lab Owner</p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Receives 30% of initial H1 allocation</li>
+                <li>• Vested over 6 months (weekly unlocks)</li>
+                <li>• Can claim vested tokens from week 1</li>
+                <li>• Receives 50% of all dataset revenue</li>
+              </ul>
+            </div>
+            <div>
+              <p className="font-semibold mb-2 text-secondary">H1 Distribution Model</p>
+              <ul className="space-y-1 text-muted-foreground">
+                <li>• Scholar Reserve (40%) - Pays validators & data creators</li>
+                <li>• Dev Reserve (15%) - Rewards SDK/app developers</li>
+                <li>• Bonding Curve (10%) - Immediate community trading</li>
+                <li>• Protocol Treasury (5%) - Operations & infrastructure</li>
               </ul>
             </div>
           </div>
