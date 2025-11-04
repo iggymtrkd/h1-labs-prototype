@@ -520,7 +520,8 @@ export default function Whitepaper() {
                       }
                       
                       // Lab Level Unlocking table
-                      if (tableStr.includes("Level") && tableStr.includes("LABS Staked") && tableStr.includes("App Slots")) {
+                      if ((tableStr.includes("Level") && tableStr.includes("App Slots") && tableStr.includes("Implications")) ||
+                          (tableStr.includes("L1") && tableStr.includes("L2") && tableStr.includes("L3") && tableStr.includes("100K"))) {
                         return <LabLevelUnlocking />;
                       }
                       
