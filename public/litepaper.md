@@ -5,9 +5,9 @@
 
 ---
 
-## Table of Contents
+Table of Contents
 
-### Main Sections
+Main Sections
 1. [The Problem It Solves](#1-the-problem-it-solves)
 2. [Lab Mechanics](#2-lab-mechanics)
    - 2.1 [Lab Creation & Growth](#21-lab-creation--growth)
@@ -32,7 +32,7 @@
 8. [Dataset Marketplace](#8-dataset-marketplace)
 9. [Closing](#9-closing)
 
-### Appendix
+Appendix
 - [A. Our Edge — Strengths at a Glance](#a-our-edge--strengths-at-a-glance)
 - [B. What You Can Do on H1](#b-what-you-can-do-on-h1)
 - [C. Competitive Positioning](#c-competitive-positioning--h1-vs-the-field)
@@ -48,14 +48,14 @@
 
 **H1 Labs makes AI training data trustworthy, compliant, and economically fair** — solving the provenance crisis that puts companies at legal, compliance, and financial risk.
 
-### What You Can Use It For
+### 1.1 What You Can Use It For
 
 - **Prove Compliance to Regulators**: Generate immutable audit trails showing credentialed experts validated your training data — critical for HIPAA (healthcare), GDPR (privacy), ITAR (defense), and emerging AI regulations
 - **Verify Data Quality Before Buying**: Every dataset comes with on-chain proof of who created it, who validated it, and what quality improvement they achieved — no more blind purchases
 - **Monetize Your Expertise**: Domain experts (doctors, engineers, compliance officers) earn fair revenue shares by validating data — staking credentials once creates passive yield across all datasets they validate
 - **Build Compliant AI Products Faster**: Use the H1 SDK to add credential verification and audit trails to your app without rebuilding compliance infrastructure from scratch
 
-### How It Makes Things Easier and Safer
+### 1.2 How It Makes Things Easier and Safer
 
 Instead of today's broken system where:
 - Data provenance is unknowable (safety risk)
@@ -71,7 +71,7 @@ H1 Labs gives you:
 
 This is especially critical in **regulated markets** (Healthcare, Finance, Defense) where compliance violations mean fines, shutdowns, and criminal liability, and **semi-regulated markets** (Legal, Robotics, Art) where companies operate in legal gray zones with massive future enforcement risk.
 
-### Our Solution: Aligned Incentives Through Tokenized Ownership
+### 1.3 Our Solution: Aligned Incentives Through Tokenized Ownership
 
 H1 Labs creates a fair data economy by combining three breakthroughs:
 
@@ -92,7 +92,7 @@ H1 Labs creates a fair data economy by combining three breakthroughs:
    - Buyback distributes proportionally to all H1 holders (hold = gain, sell = miss appreciation)
    - Contributors earn based on verified quality, not broker negotiations
 
-### Why Now
+### 1.4 Why Now
 
 **The Cost of Not Solving This:**
 - 85% of enterprise AI projects fail due to compliance issues
@@ -154,7 +154,7 @@ Total: 100% allocated at creation
 
 ---
 
-### **Lab Creation Flow — Visual Overview**
+### 2.2 **Lab Creation Flow — Visual Overview**
 
 ```
 STEP 1: Creator Preparation
@@ -227,7 +227,7 @@ Example Timeline:
 └─ Creator's ownership: Diluted but NAV increases with community participation
 ```
 
-### **Revenue Accrual & NAV Growth**
+### 2.3 **Revenue Accrual & NAV Growth**
 
 As the lab generates revenue from dataset sales, the vault's total assets increase, which increases the NAV (assets per share) for all H1 holders:
 
@@ -272,7 +272,7 @@ Time T3 (After Buyback Execution):
 
 ---
 
-### 2.2 H1 Distribution & Allocation
+### 2.4 H1 Distribution & Allocation
 
 When a lab is created (minimum 100K $LABS staked), H1 tokens are **automatically minted and distributed** (1:1 with staked LABS, max 500K):
 
@@ -300,11 +300,11 @@ After Creation:
   └─ Revenue: Dataset sales → RevenueFacet Split → Buyback + NAV growth
 ```
 
-### 2.3 Credentialing & Data Validation
+### 2.5 Credentialing & Data Validation
 
 > **The Chain of Trust**: From verified identity → credentialed contributions → provable datasets → fair revenue distribution.
 
-### **Credentialing System: On-Chain Identity**
+**Credentialing System: On-Chain Identity**
 
 Before contributing to regulated datasets, users must create **on-chain credentials** with verified expertise:
 
@@ -333,7 +333,7 @@ User now has:
 - **Revocation Support**: Credentials can be revoked for misconduct; blocks future operations
 - **Immutable History**: All credential actions (issue, verify, revoke) recorded as events
 
-### **Dataset Validation: Proof of Provenance**
+### 2.6 **Dataset Validation: Proof of Provenance**
 
 Once credentialed, users create and validate datasets with **proof of provenance** on-chain:
 
@@ -390,7 +390,7 @@ Flow Diagram:
                     Ready for Monetization
 ```
 
-### **Attribution & Revenue Distribution**
+### 2.7 **Attribution & Revenue Distribution**
 
 Approved datasets carry **immutable attribution** that enables fair revenue splits:
 
@@ -481,7 +481,7 @@ TIER 3: REVENUE ATTRIBUTION
 
 ---
 
-### 2.4 Revenue Distribution Model
+### 2.8 Revenue Distribution Model
 
 **Per-Dataset Sale Split:**
 - **20%** → Data Creators (direct payment to contributors)
@@ -500,7 +500,7 @@ Economic intent: AI demand for verified datasets drives onchain payments that fl
 
 ---
 
-### 2.5 Prototype Testing Workflow
+### 2.9 Prototype Testing Workflow
 
 **Testing the H1 Labs platform follows a natural progression from setup through full economic simulation.**
 
@@ -730,7 +730,7 @@ H1Diamond (Proxy Router)
 
 All facets share state via **LibH1Storage** (centralized storage library), enabling seamless upgrades without data migration.
 
-### **Credentialing & Validation Facets**
+### 3.2 **Credentialing & Validation Facets**
 
 The credentialing and validation systems are implemented as **Diamond facets** (EIP-2535):
 
@@ -772,7 +772,7 @@ Attribution:
   └─ revenueShare: allocated to creator + supervisor
 ```
 
-### **Per-Lab Vault & Pass Architecture (Deployed on Demand)**
+###3.3 **Per-Lab Vault & Pass Architecture (Deployed on Demand)**
 
 While facets are **global and deployed once** to the H1Diamond, each Lab gets its own **isolated vault and pass contracts**:
 
@@ -933,7 +933,7 @@ contract LabPass is ERC721 {
 
 ---
 
-### 3.2 Technical Features & Security
+### 3.4 Technical Features & Security
 
 - **Reentrancy Guards:** Shared via `LibH1Storage.reentrancyStatus` where needed (e.g., `RevenueFacet`).  
 - **Upgradeable by Facet:** New domains or policy changes can be added without migrating state.  
@@ -944,7 +944,7 @@ contract LabPass is ERC721 {
 
 ---
 
-### 3.3 Reading Lab Data On-Chain
+### 3.5 Reading Lab Data On-Chain
 
 **All lab and vault information is publicly queryable on the blockchain at any time, with no gas costs.** This enables transparency for investors, developers, and analysts without relying on external indexers or APIs.
 
@@ -1098,14 +1098,14 @@ const provenance = await sdk.getProvenance(dataset.id);
 
 This section provides detailed mechanics of how $LABS and H1 interact within the platform's economic flywheel.
 
-### Key Definitions:
+### 5.2 Key Definitions:
 
 - **$LABS (Singleton ERC‑20)**: Platform governance, staking, and lab creation asset. Stake to govern and seed labs.
 - **H1 (Per‑Lab ERC‑20 Shares)**: Each Lab's `LabVault` is its own H1 token. Depositing $LABS mints H1 shares at NAV; redemptions return $LABS subject to cooldown and exit caps.  
 - **Bonding Curve (Automatic)**: `BondingCurveSale` deployed automatically with each lab, providing instant liquidity with 10% of H1 supply.
 - **Levels & App Slots**: LabVault tracks total assets to derive levels (L1/L2/L3) unlocking 1/2/3 app slots.
 
-### 5.1 Automatic H1 Distribution on Lab Creation
+### 5.2 Automatic H1 Distribution on Lab Creation
 
 When a lab is created (minimum 100K $LABS staked), H1 tokens are **automatically minted and distributed** (1:1 with staked LABS, max 500K):
 
@@ -1133,7 +1133,7 @@ After Creation:
   └─ Revenue: Dataset sales → RevenueFacet Split → Buyback + NAV growth
 ```
 
-### 5.2 Staking & Scholar Rewards
+### 5.3 Staking & Scholar Rewards
 
 **$LABS serves three functions:**
 1. **Lab Creation & Deposits**: Stake $LABS → mint H1 shares → unlock app slots and dataset economy
@@ -1211,7 +1211,7 @@ This aligns incentives: more valuable contributions → higher reward tier; incr
 
 ---
 
-### 5.3 H1 Tokens — Per-Lab Economies
+### 5.4 H1 Tokens — Per-Lab Economies
 
 **What is H1?**  
 H1 is **not a single token.** Each lab deploys its own H1 token (LabVault shares) representing:
@@ -1223,7 +1223,7 @@ H1 is **not a single token.** Each lab deploys its own H1 token (LabVault shares
 
 ---
 
-### 5.4 Bonding Curves — Automatic Deployment & Bootstrap Mechanics
+### 5.5 Bonding Curves — Automatic Deployment & Bootstrap Mechanics
 
 **✨ NEW: Automatic Deployment on Lab Creation**
 
@@ -1285,7 +1285,7 @@ H1 shares purchased via bonding curve can be redeemed like any other H1:
 
 ---
 
-### 5.5 H1 Swap Fees — Staking & Unstaking Costs
+### 5.6 H1 Swap Fees — Staking & Unstaking Costs
 
 **Fee Structure (Hardcoded Defaults + Admin-Configurable)**
 
@@ -1339,7 +1339,7 @@ setFees(
 
 ---
 
-### 5.6 Unstaking Flow — Overview
+### 5.76 Unstaking Flow — Overview
 
 To prevent bank run risks where 100% of stakeholders exit simultaneously, H1 uses a **three-phase redemption flow** with grace periods and backfill mechanics:
 
